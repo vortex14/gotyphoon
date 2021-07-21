@@ -1,0 +1,59 @@
+# Default values for {{PROJECT_NAME}}.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+typhoon:
+  image:
+    repository: registry.trgdev.com/typhoon-lite/typhoon
+    pullPolicy: IfNotPresent
+    tag: "v1.8.3"
+  version: 1
+  projectPath: "/usr/local/{{PROJECT_NAME}}"
+
+
+resources: &resources
+  requests:
+    cpu: 30m
+    memory: 64Mi
+  limits:
+    memory: "256Mi"
+    cpu: "500m"
+
+components:
+  fetcher:
+    enabled: true
+    name: fetcher
+    resources:
+      <<: *resources
+  processor:
+    enabled: true
+    name: processor
+    resources:
+      <<: *resources
+  scheduler:
+    enabled: true
+    name: scheduler
+    resources:
+      <<: *resources
+  result_transporter:
+    enabled: true
+    name: result-transporter
+    resources:
+      <<: *resources
+  donor:
+    enabled: true
+    name: donor
+    resources:
+      <<: *resources
+
+gitlab:
+  enabled: true
+  user: typhoon-kube
+  password: Ush4eRaa
+
+hub:
+  enabled: true
+  host: registry.trgdev.com
+  user: dviharev
+  password: pA3QunSQ61
+

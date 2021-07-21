@@ -1,0 +1,58 @@
+version: '2.4'
+services:
+  {{.projectName}}_processor:
+    image: hub.oz.net.ru/typhoon-lite:{{.tag}}
+    restart: always
+    mem_limit: 1024m
+    volumes:
+      - ./:/var/project/
+    command: python3.8 processor.py --config=config.prod.yaml
+    networks:
+      - local
+
+  {{.projectName}}_donor:
+    image: hub.oz.net.ru/typhoon-lite:{{.tag}}
+    restart: always
+    mem_limit: 1024m
+    ports:
+      - "12000:12000"
+    volumes:
+      - ./:/var/project/
+    command: python3.8 donor.py --config=config.prod.yaml
+    networks:
+      - local
+
+  {{.projectName}}_scheduler:
+    image: hub.oz.net.ru/typhoon-lite:{{.tag}}
+    restart: always
+    mem_limit: 1024m
+    volumes:
+      - ./:/var/project/
+    command: python3.8 scheduler.py --config=config.prod.yaml
+    networks:
+      - local
+
+  {{.projectName}}_transporter:
+    image: hub.oz.net.ru/typhoon-lite:{{.tag}}
+    restart: always
+    mem_limit: 1024m
+    volumes:
+      - ./:/var/project/
+    command: python3.8 result_transporter.py --config=config.prod.yaml
+    networks:
+      - local
+
+  {{.projectName}}_fetcher:
+    image: hub.oz.net.ru/typhoon-lite:{{.tag}}
+    restart: always
+    mem_limit: 1024m
+    volumes:
+      - ./:/var/project/
+    command: python3.8 fetcher.py --config=config.prod.yaml
+    networks:
+      - local
+
+networks:
+  local:
+    external:
+      name: discovery

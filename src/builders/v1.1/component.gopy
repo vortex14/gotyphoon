@@ -1,0 +1,9 @@
+from typhoon.run import ConfigurationComponent
+from typhoon.components.{{.component}}.{{.executeFile}} import {{.componentClass}}
+from typhoon.components.{{.component}}.api.api import {{.apiClass}}
+from typhoon.components.{{.component}}.state.state import StateManager
+
+
+if __name__ == "__main__":
+    component = ConfigurationComponent("{{.component}}", {{.componentClass}}, {{.apiClass}}, StateManager)
+    component.run()

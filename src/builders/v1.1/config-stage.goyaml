@@ -1,0 +1,338 @@
+project_name: &project_name {{.projectName}}
+debug: true
+default_retries_delay: 15
+priority_depth_check_delay: 15
+task_timeout: 120
+port: 80
+instances_bucket_limit: 20
+finished_tasks: 0
+proxy-manager-api: ${PROXYMANAGER_URL}
+max_retries: 15
+auto_throttling: false
+is_running: false
+nsqlookupd_ip: http://${NSQDLOOKUP_HOST}:4161
+nsqd_nodes:
+  - ip: ${NSQD_NODE0_HOST}:4150
+  - ip: ${NSQD_NODE1_HOST}:4150
+waiting_tasks: 0
+pause_time: 0
+max_processor_retries: 15
+max_failed: 5
+memory_limit: 0.01
+retrying_delay: 5
+
+consolidator:
+  endpoints:
+    price: ${CONSOLIDATOR_PRICE_URL}
+    product: ${CONSOLIDATOR_PRODUCT_URL}
+  auth:
+    login: ${CONSOLIDATOR_USERNAME}
+    password: ${CONSOLIDATOR_PASSWORD}
+
+ty_components:
+  fetcher:
+    port: 80
+    queues:
+      priority:
+        concurrent: 1
+        msg_timeout: 300
+        channel: tasks
+        topic: priority_f
+        share: true
+        writable: true
+        readable: true
+      processor_priority:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: priority_p
+        share: true
+        writable: true
+        readable: false
+      deferred:
+        concurrent: 5
+        msg_timeout: 300
+        channel: tasks
+        topic: deferred_f
+        share: true
+        writable: true
+        readable: true
+      retries:
+        concurrent: 1
+        msg_timeout: 300
+        channel: tasks
+        topic: retries
+        writable: true
+        readable: true
+      exceptions:
+        channel: tasks
+        topic: exceptions_f
+        concurrent: 0
+        msg_timeout: 0
+        share: true
+        writable: true
+        readable: false
+  result_transporter:
+    port: 80
+    queues:
+      priority:
+        concurrent: 2
+        msg_timeout: 30
+        channel: tasks
+        topic: priority_rt
+        share: true
+        writable: false
+        readable: true
+      scheduler_priority:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: priority_s
+        share: true
+        writable: true
+        readable: false
+      fetcher_priority:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: priority_f
+        share: true
+        writable: true
+        readable: false
+      processor_priority:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: priority_p
+        share: true
+        writable: true
+        readable: false
+      exceptions:
+        concurrent: 20
+        msg_timeout: 30
+        channel: tasks
+        topic: exceptions_rt
+        share: true
+        writable: true
+        readable: true
+      fetcher_exceptions:
+        concurrent: 20
+        msg_timeout: 30
+        channel: tasks
+        topic: exceptions_f
+        share: true
+        writable: false
+        readable: true
+      processor_exceptions:
+        concurrent: 20
+        msg_timeout: 30
+        channel: tasks
+        topic: exceptions_p
+        share: true
+        writable: false
+        readable: true
+      scheduler_exceptions:
+        concurrent: 20
+        msg_timeout: 30
+        channel: tasks
+        topic: exceptions_s
+        share: true
+        writable: false
+        readable: true
+  scheduler:
+    port: 80
+    queues:
+      priority:
+        concurrent: 20
+        msg_timeout: 300
+        channel: tasks
+        topic: priority_s
+        share: true
+        writable: false
+        readable: true
+      fetcher_priority:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: priority_f
+        share: true
+        writable: true
+        readable: false
+      processor_priority:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: priority_p
+        share: true
+        writable: true
+        readable: false
+      processor_deferred:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: deferred_p
+        share: true
+        writable: true
+        readable: false
+      fetcher_deferred:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: deferred_f
+        share: true
+        writable: true
+        readable: false
+      exceptions:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: exceptions_s
+        share: true
+        writable: true
+        readable: false
+  processor:
+    port: 80
+    queues:
+      priority:
+        concurrent: 2
+        msg_timeout: 30
+        channel: tasks
+        topic: priority_p
+        share: true
+        writable: false
+        readable: true
+      scheduler_priority:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: priority_s
+        share: true
+        writable: true
+        readable: false
+      result_transporter_priority:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: priority_rt
+        share: true
+        writable: true
+        readable: false
+      fetcher_retries:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: retries_f
+        share: true
+        writable: true
+        readable: false
+      deferred:
+        concurrent: 20
+        msg_timeout: 60
+        channel: tasks
+        topic: deferred_p
+        share: true
+        writable: true
+        readable: true
+      exceptions:
+        concurrent: 0
+        msg_timeout: 0
+        channel: tasks
+        topic: exceptions_p
+        share: true
+        writable: true
+        readable: false
+  donor:
+    port: 80
+    queues:
+      priority:
+        channel: tasks
+        concurrent: 0
+        msg_timeout: 0
+        readable: false
+        share: true
+        topic: priority_p
+        writable: true
+      fetcher_deferred:
+        channel: tasks
+        concurrent: 0
+        msg_timeout: 0
+        readable: false
+        share: true
+        topic: deferred_f
+        writable: true
+      fetcher_priority:
+        channel: tasks
+        concurrent: 0
+        msg_timeout: 0
+        readable: false
+        share: true
+        topic: priority_f
+        writable: true
+      processor_deferred:
+        channel: tasks
+        concurrent: 0
+        msg_timeout: 0
+        readable: false
+        share: true
+        topic: deferred_p
+        writable: true
+      processor_priority:
+        channel: tasks
+        concurrent: 0
+        msg_timeout: 0
+        readable: false
+        share: true
+        topic: priority_p
+        writable: true
+      result_transporter_priority:
+        channel: tasks
+        concurrent: 0
+        msg_timeout: 0
+        readable: false
+        share: true
+        topic: priority_rt
+        writable: true
+      scheduler_priority:
+        channel: tasks
+        concurrent: 0
+        msg_timeout: 0
+        readable: false
+        share: true
+        topic: priority_s
+        writable: true
+
+services:
+  mongo:
+    production:
+    - name: main
+      details:
+        authSource: admin
+        host: ${MONGO_HOST}
+        password: ${MONGO_PASSWORD}
+        username: ${MONGO_USERNAME}
+        port: 27017
+      db_names:
+      - *project_name
+    debug:
+    - name: main
+      details:
+        authSource: admin
+        host: ${MONGO_HOST}
+        password: ${MONGO_PASSWORD}
+        username: ${MONGO_USERNAME}
+        port: 27017
+      db_names:
+        - *project_name
+  redis:
+    production:
+    - name: main
+      details:
+        host: ${REDIS_HOST}
+        port: 6379
+        password: ${REDIS_PASSWORD}
+    debug:
+    - name: main
+      details:
+        host: ${REDIS_HOST}
+        port: 6379
+        password: ${REDIS_PASSWORD}

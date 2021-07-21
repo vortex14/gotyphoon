@@ -1,0 +1,83 @@
+
+# donor will be "main" service because it receive some data via api
+deployment:
+  enabled: true
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/auth-realm: Authentication Required
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 12.155.61.114, 5.9.124.70, 74.206.242.148/28, 78.47.119.192/26, 69.162.124.224/28, 63.143.42.240/28"
+  tls:
+    enabled: true
+    secretName: gotrg.dev-tls
+
+service:
+  internalPort: 80
+  externalPort: 80
+
+
+livenessProbe: &livenessProbe
+  httpGet:
+    path: /ping
+    port: 80
+    scheme: HTTP
+  initialDelaySeconds: 5
+  timeoutSeconds: 15
+  failureThreshold: 3
+readinessProbe: &readinessProbe
+  httpGet:
+    path: /ping
+    port: 80
+    scheme: HTTP
+  initialDelaySeconds: 5
+  timeoutSeconds: 15
+  failureThreshold: 3
+
+
+baseWorker: &baseWorker
+  workingDir: /app
+  replicaCount: 1
+  terminationGracePeriodSeconds: 60
+  resources:
+    requests:
+      cpu: 30m
+      memory: 64Mi
+    limits:
+      memory: "256Mi"
+      cpu: "500m"
+  livenessProbe:
+    <<: *livenessProbe
+  readinessProbe:
+    <<: *readinessProbe
+
+
+workers:
+  fetcher:
+    <<: *baseWorker
+    command:
+      - python
+      - fetcher.py
+      - --config=config.kube-stage.yaml
+      - --level=DEBUG
+  processor:
+    <<: *baseWorker
+    command:
+      - python
+      - processor.py
+      - --config=config.kube-stage.yaml
+      - --level=DEBUG
+  scheduler:
+    <<: *baseWorker
+    command:
+      - python
+      - scheduler.py
+      - --config=config.kube-stage.yaml
+      - --level=DEBUG
+  result-transporter:
+    <<: *baseWorker
+    command:
+      - python
+      - result_transporter.py
+      - --config=config.kube-stage.yaml
+      - --level=DEBUG
