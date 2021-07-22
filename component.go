@@ -36,6 +36,9 @@ type Component struct {
 	isException bool
 	isDebug bool
 	Active bool
+	Producers map[string] *interfaces.Producer
+	Consumers map[string] [] *interfaces.Consumer
+	Pipelines map[string] *interfaces.Pipeline
 	Worker *Worker
 	Promise sync.WaitGroup
 }

@@ -1,0 +1,107 @@
+package task
+
+import (
+	"github.com/fatih/color"
+	"github.com/segmentio/nsq-go"
+)
+
+
+type TyphoonTask struct {
+	Fetcher           FetcherTask   `json:"fetcher"`
+	Processor         ProcessorTask `json:"processor"`
+	Scheduler         SchedulerTask `json:"scheduler"`
+	Priority          int           `json:"priority" default:"3"`
+	URL               string        `json:"url" default:"https://httpstat.us/200"`
+	Taskid            string        `json:"taskid" default:"task-id"`
+	ResultTransporter struct {
+	} `json:"result_transporter"`
+	ProjectName string `json:"project_name"`
+	Msg nsq.Message
+}
+
+
+func init()  {
+	//fmt.Println("TEST STATUSES", errorStatuses)
+}
+
+func (t *TyphoonTask) IsMaxRetry() bool {
+	status := false
+	if t.Fetcher.IsMaxFailedRetry() {
+		status = true
+	} else if t.Fetcher.IsBadStatus() && t.Fetcher.IsResponseRetry() {
+		status = true
+	} else if t.Fetcher.IsBadStatus() == false && t.Processor.IsMaxProcessorRetry(){
+		status = true
+	} else if t.Fetcher.IsMaxResponseRetry() {
+		status = true
+	}
+
+	color.Red(`
+		DEBUG IsMaxRetry: %t 
+		
+		IsMaxFailedRetry: %t
+		IsBadStatus && IsMaxResponseRetry: %t
+			
+	`, status, t.Fetcher.IsMaxFailedRetry(), t.Fetcher.IsBadStatus() && t.Processor.IsMaxProcessorRetry())
+
+
+
+	return status
+
+
+}
+
+
+func (t *TyphoonTask) UpdateRetriesCounter() {
+
+	if t.Fetcher.Response.Code == 599 {
+		t.Fetcher.Save.System.Failed += 1
+	} else if t.Fetcher.Response.Code == 200 && t.Processor.ErrorResponse {
+		t.Processor.Save.System.ProcessorRetries += 1
+	} else {
+		t.Fetcher.Save.System.Retries += 1
+	}
+
+
+
+}
+
+func (t *TyphoonTask) IsRetry() bool{
+	var status = false
+
+	if t.Fetcher.IsBadStatus() && t.Fetcher.IsFailedRetry() {
+		status = true
+	} else if t.Fetcher.IsBadStatus() && t.Fetcher.IsResponseRetry() {
+		status = true
+	} else if t.Fetcher.IsBadStatus() && t.Processor.IsMaxProcessorRetry() {
+		status = true
+	}
+
+
+	color.Red(`
+		DEBUG FETCHER RESPONSE. Task id %s
+			
+			Is retry? - %t
+			Is bad Status? - %t
+			Is failed retry? - %t
+			Is max processor retry? - %t
+			Is response retry? - %t
+			Is max processor retry? - %t
+			
+			t.Fetcher.Save.System.Failed - %d
+			t.Fetcher.Save.System.Retries - %d
+	`, t.Taskid,
+		status,
+		t.Fetcher.IsBadStatus(),
+		t.Fetcher.IsFailedRetry(),
+		t.Processor.IsMaxProcessorRetry(),
+		t.Fetcher.IsResponseRetry(),
+		t.Processor.IsMaxProcessorRetry(),
+		t.Fetcher.Save.System.Failed,
+		t.Fetcher.Save.System.Retries,
+	)
+
+
+	return status
+}
+

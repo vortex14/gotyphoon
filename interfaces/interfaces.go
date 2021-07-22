@@ -136,6 +136,23 @@ type CloudManagement interface {
 	Deploy()
 }
 
+type Producer interface {
+	Pub()
+}
+
+type Consumer interface {
+	Read()
+}
+
+type Pipeline interface {
+	Run()
+	Crawl()
+	Finish()
+	Switch()
+	Retry()
+	Await()
+}
+
 type Group interface {
 	CheckNodesHealth() bool
 	GetServers() []*Server

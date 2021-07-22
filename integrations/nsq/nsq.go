@@ -9,6 +9,8 @@ import (
 
 type Service struct {
 	Config *config.Config
+	Producers map[string] *nsq.Producer
+	Consumers map[string] []*nsq.Consumer
 }
 
 func (s *Service) TestConnect() bool  {
@@ -24,5 +26,13 @@ func (s *Service) TestConnect() bool  {
 	}
 
 	return status
+}
+
+func (s *Service) Pub()  {
+
+}
+
+func (s *Service) Read()  {
+
 }
 
