@@ -153,6 +153,12 @@ type Pipeline interface {
 	Await()
 }
 
+
+
+type Producers map[string] Producer
+type Consumers map[string] [] Consumer
+type Pipelines map[string] Pipeline
+
 type Group interface {
 	CheckNodesHealth() bool
 	GetServers() []*Server

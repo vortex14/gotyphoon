@@ -6,6 +6,7 @@ require (
 	github.com/Microsoft/hcsshim v0.8.20 // indirect
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/containerd/containerd v1.5.4 // indirect
+	github.com/deliveryhero/pipeline v0.3.1
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/fatih/color v1.12.0
