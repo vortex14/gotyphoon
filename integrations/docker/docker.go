@@ -315,7 +315,7 @@ func (d *Docker) ProjectBuild()  {
 	projectConfig := d.Project.LoadConfig()
 	opts := types.ImageBuildOptions{
 		Dockerfile: "Dockerfile",
-		Tags:       []string{"typhoon-lite-" + projectConfig.Config.ProjectName},
+		Tags:       []string{"typhoon-lite-" + projectConfig.ProjectName},
 		Remove:     true,
 
 	}

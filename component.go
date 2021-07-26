@@ -38,6 +38,7 @@ type Component struct {
 	Active bool
 	Producers interfaces.Producers
 	Consumers interfaces.Consumers
+	QueuesSettings interfaces.Queue
 	Pipelines interfaces.Pipelines
 	Worker *Worker
 	Promise sync.WaitGroup
@@ -330,6 +331,30 @@ func (c *Component) CheckComponent() bool {
 
 
 	return status
+}
+
+func (c *Component) InitConsumers(project interfaces.Project)  {
+	config := project.LoadConfig()
+	queueSettings :=  config.TyComponents.Fetcher.Queues
+	color.Yellow("current fetcher settings %+v", queueSettings)
+	color.Yellow("InitConsumers for %s", c.Name)
+}
+
+func (c *Component) InitProducers()  {
+
+}
+
+
+func (c *Component) StopConsumers()  {
+
+}
+
+func (c *Component) StopProducers()  {
+
+}
+
+func (c *Component) RunQueues() {
+
 }
 
 func (w *Worker) Run(project interfaces.Project) {

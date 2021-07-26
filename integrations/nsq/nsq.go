@@ -5,51 +5,57 @@ import (
 	"github.com/deliveryhero/pipeline"
 	"github.com/fatih/color"
 	"github.com/segmentio/nsq-go"
-	"github.com/vortex14/gotyphoon/config"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"strings"
 	"time"
 )
 
 type Consumer struct {
+	total int
 	Name string
 	Topic string
-	Channel string
 	Concurrent int
+	Channel string
 	Worker *nsq.Consumer
 }
 
+
 type Producer struct {
+	total int
 	Worker *nsq.Producer
 }
 
 type Producers map[string] *Producer
 type Consumers map[string] [] *Consumer
 
-type Yield struct {
-	Name string
-	Topic string
-	Channel string
-	Msg *nsq.Message
-}
 
 type Service struct {
-	Config *config.Config
+	Config *interfaces.ConfigProject
 	Project interfaces.Project
 	Producers Producers
 	Consumers Consumers
 }
 
-func (s *Service) TestConnect() bool  {
-	status := false
-	var projectConfig config.Config
-	if s.Config != nil {
-		projectConfig = *s.Config
-	} else {
-		projectConfig = s.Project.LoadConfig().Config
+func (s *Service) initConfig()  {
+	if s.Config == nil {
+		s.Config = s.Project.LoadConfig()
+	}
+}
+
+func (s *Service) InitQueue(settings *interfaces.Queue)  {
+	if settings.Readable {
+		s.InitConsumer(settings)
 	}
 
-	NsqlookupdIP := strings.ReplaceAll(projectConfig.NsqlookupdIP, "http://","")
+	if settings.Writable {
+		s.InitProducer(settings)
+	}
+}
+
+func (s *Service) Ping() bool  {
+	status := false
+	s.initConfig()
+	NsqlookupdIP := strings.ReplaceAll(s.Config.NsqlookupdIP, "http://","")
 	client := nsq.Client{Address: NsqlookupdIP}
 	err := client.Ping()
 	if err != nil {
@@ -62,13 +68,18 @@ func (s *Service) TestConnect() bool  {
 }
 
 func (s *Service) initProjectConfig()  {
-	projectConfig := s.Project.LoadConfig().Config
-	s.Config = &projectConfig
+	projectConfig := s.Project.LoadConfig()
+	s.Config = projectConfig
 
 }
 
-func (s *Service) InitProducer(name string) {
-	color.Yellow("init %s nsq producer", name)
+func (s *Service) InitProducer(settings *interfaces.Queue) {
+	name := settings.GetGroupName()
+	color.Yellow(`init NSQ producer. 
+	Group:%s 
+	Topic: %s 
+	Channel: %s`,  name, settings.Topic, settings.Channel,
+	)
 	if s.Config == nil {
 		s.initProjectConfig()
 	}
@@ -76,46 +87,54 @@ func (s *Service) InitProducer(name string) {
 		Address: s.Config.NsqdNodes[0].IP,
 	})
 
-	s.Producers = Producers{
-		name: &Producer{Worker: producer},
+
+	if s.Producers == nil {
+		s.Producers = Producers{
+			name: &Producer{Worker: producer},
+		}
+	} else {
+		s.Producers[name] = &Producer{Worker:producer}
 	}
 
 }
 
 func (s *Service) InitConsumer(
-	name string,
-	topic string,
-	channel string,
-	concurrent int,
+	settings *interfaces.Queue,
 	) *nsq.Consumer {
 
-	color.Yellow("init %s nsq consumer", name)
+	name := settings.GetGroupName()
+	color.Blue(`init NSQ consumer. 
+	Group:%s 
+	Topic: %s 
+	Channel: %s`,  name, settings.Topic, settings.Channel,
+	)
+
 	if s.Config == nil {
 		s.initProjectConfig()
 	}
 	consumer, _ := nsq.StartConsumer(nsq.ConsumerConfig{
-		Topic:   topic,
-		Channel: channel,
+		Topic:   settings.Topic,
+		Channel: settings.Channel,
 		Address: s.Config.NsqdNodes[0].IP,
 		ReadTimeout: time.Duration(60) * time.Second,
-		MaxInFlight: concurrent,
+		MaxInFlight: settings.Concurrent,
 	})
 	if s.Consumers == nil {
 		s.Consumers = Consumers{
 			name: {
 				&Consumer{
-					Topic:      topic,
-					Channel:    channel,
-					Concurrent: concurrent,
+					Topic:      settings.Topic,
+					Channel:    settings.Channel,
+					Concurrent: settings.Concurrent,
 					Worker:     consumer,
 				},
 			},
 		}
 	} else {
 		s.Consumers[name] = append(s.Consumers[name], &Consumer{
-			Topic:      topic,
-			Channel:    channel,
-			Concurrent: concurrent,
+			Topic:      settings.Topic,
+			Channel:    settings.Channel,
+			Concurrent: settings.Concurrent,
 			Worker:     consumer,
 		})
 	}
@@ -158,11 +177,13 @@ func (s *Service) read(consumer *Consumer) <-chan interface{} {
 	go func() {
 		defer close(out)
 		for msg := range consumer.Worker.Messages() {
-			out <- &Yield{
+			out <- &interfaces.YieldNsqMessage{
 				Msg:     &msg,
-				Name: consumer.Name,
-				Topic:   consumer.Topic,
-				Channel: consumer.Channel,
+				Yield: &interfaces.Yield{
+					Name: consumer.Name,
+					Topic:   consumer.Topic,
+					Channel: consumer.Channel,
+				},
 			}
 		}
 	}()
@@ -183,48 +204,15 @@ func (s *Service) mergeConsumerChannels()[]<-chan interface{} {
 
 }
 
-func (s *Service) mergeRead(ins ...<-chan interface{}) <-chan interface{} {
-	out := make(chan interface{})
-	for i := range ins {
-		go func(in <-chan interface{}) {
-			for i := range in {
-				out <- i
-			}
-		}(ins[i])
-	}
+func (s *Service) Read() <-chan *interfaces.YieldNsqMessage {
+	out := make(chan *interfaces.YieldNsqMessage)
+	go func() {
+		defer close(out)
+		for source := range pipeline.Merge(s.mergeConsumerChannels()...) {
+			out <- source.(*interfaces.YieldNsqMessage)
+		}
+	}()
 	return out
-}
-
-
-func (s *Service) Read() {
-
-
-	for source := range pipeline.Merge(s.mergeConsumerChannels()...) {
-		yield := source.(*Yield)
-
-		color.Red("%+v", yield)
-		yield.Msg.Finish()
-
-	}
-
-	//for yield := range s.mergeRead(s.mergeConsumerChannels()...) {
-	//	color.Green(`
-	//
-	//	Topic read: %s
-	//	Channel read: %s
-	//	Body: %s
-	//	Name: %s
-	//
-	//	`,
-	//	yield.Topic,
-	//	yield.Channel,
-	//	string(yield.Msg.Body),
-	//	yield.Name,
-	//	)
-	//
-	//	yield.Msg.Finish()
-	//}
-
 }
 
 
@@ -360,26 +348,3 @@ func (s *Service) BatchRead()  {
 
 
 	}
-
-
-
-//	//ctx, cancel := context.WithTimeout(context.Background(), args.ctxTimeout)
-//
-//
-//	for yield := range s.mergeRead(s.mergeConsumerChannels()...) {
-//		color.Green(`
-//
-//		Topic read: %s
-//		Channel read: %s
-//		Body: %s
-//		Name: %s
-//
-//		`,
-//			yield.Topic,
-//			yield.Channel,
-//			string(yield.Msg.Body),
-//			yield.Name,
-//		)
-//
-//		yield.Msg.Finish()
-//	} }

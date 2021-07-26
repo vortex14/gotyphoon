@@ -8,9 +8,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-git/go-git/v5"
-	"github.com/vortex14/gotyphoon/config"
 	"github.com/vortex14/gotyphoon/data"
 	"github.com/vortex14/gotyphoon/environment"
+	"github.com/vortex14/gotyphoon/integrations/mongo"
 	"github.com/vortex14/gotyphoon/integrations/redis"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/migrates/v1.1"
@@ -42,7 +42,10 @@ type Task struct {
 	wg     sync.WaitGroup
 }
 
-
+type Services struct {
+	Mongo map[string] mongo.Service
+	Redis map[string] redis.Service
+}
 
 type Project struct {
 	task              *Task
@@ -57,7 +60,8 @@ type Project struct {
 	SelectedComponent []string
 	components        components
 	repo              *git.Repository
-	Config            *config.Project
+	Config            *interfaces.ConfigProject
+	Services		  *services.Services
 	Watcher           fsnotify.Watcher
 	EnvSettings       *environment.Settings
 	BuilderOptions    *interfaces.BuilderOptions
@@ -70,6 +74,14 @@ func (p *Project) GetDockerImageName() string {
 
 func (p *Project) GetLabels() *interfaces.ClusterProjectLabels {
 	return p.Labels
+}
+
+func (p *Project) RunFetcherQueues()  {
+	p.LoadConfig()
+	if p.components.ActiveComponents == nil {
+		p.initComponents()
+	}
+	p.components.ActiveComponents["fetcher"].InitConsumers(p)
 }
 
 func (p *Project) GetRepo() (error, *git.Repository) {
@@ -146,7 +158,7 @@ func watchDirTeet(path string, fi os.FileInfo, err error) error {
 }
 
 func (p *Project) GetComponentPort(name string) int {
-	return p.Config.Config.GetComponentPort(name)
+	return p.Config.GetComponentPort(name)
 }
 
 func (p *Project) WatchDir(path string, fi os.FileInfo, err error) error {
@@ -177,9 +189,9 @@ func (p *Project) ImportResponseData(url string, sourceFile string)  {
 	taskid := md5.Sum([]byte(url))
 	redisPath := fmt.Sprintf("%s:%s", p.GetName(), hex.EncodeToString(taskid[:]))
 
-	redisService := redis.Service{Config: &p.Config.Config}
+	redisService := redis.Service{Project: p}
 
-	_ = redisService.TestConnect()
+	_ = redisService.Ping()
 	redisService.Set(redisPath, string(dat))
 
 	color.Green(redisPath)
@@ -359,7 +371,7 @@ func (p *Project) Run()  {
 
 	color.Magenta("start components")
 	p.AddPromise()
-	go p.initComponents()
+	go p.StartComponents(true)
 	//
 	p.AddPromise()
 	go p.task.Run()
@@ -524,11 +536,31 @@ func (p *Project) Build()  {
 	color.Yellow("builder run... options %+v", p.BuilderOptions)
 }
 
+func (p *Project) GetSelectedComponent() []string {
+	return p.SelectedComponent
+}
+
+func (p *Project) RunQueues()  {
+	if len(p.SelectedComponent) == 0 {
+		color.Red("No set components for project")
+		return
+	}
+	p.Services.RunNSQ()
+}
 
 func (p *Project) initComponents()  {
 	p.components.ActiveComponents = make(map[string]*Component)
-	p.Name = p.Config.Config.ProjectName
-	defer p.PromiseDone()
+	p.Name = p.Config.ProjectName
+	for _, componentName := range p.SelectedComponent {
+		component := &Component{
+			Name: componentName,
+		}
+
+		p.components.ActiveComponents[componentName] = component
+	}
+}
+
+func (p *Project) StartComponents(promise bool)  {
 
 	fmt.Printf(`
 												╭━┳━╭━╭━╮╮
@@ -544,18 +576,17 @@ func (p *Project) initComponents()  {
 	
 `)
 
-	for _, componentName := range p.SelectedComponent {
-		component := &Component{
-			Name: componentName,
-		}
-
-		p.components.ActiveComponents[componentName] = component
-
-
-		component.Start(p)
-
+	if p.components.ActiveComponents == nil {
+		p.initComponents()
 	}
 
+	if promise {
+		defer p.PromiseDone()
+	}
+
+	for _, componentName := range p.SelectedComponent {
+		p.components.ActiveComponents[componentName].Start(p)
+	}
 }
 
 
@@ -582,7 +613,7 @@ func (p *Project) CreateSymbolicLink() error {
 func (p *Project) GetName() string {
 	projectName := p.Name
 	if len(projectName) == 0 {
-		projectName = p.Config.Config.ProjectName
+		projectName = p.Config.ProjectName
 	}
 	return projectName
 }
@@ -615,20 +646,35 @@ func (p *Project) GetLogLevel() string {
 	return p.LogLevel
 }
 
-func (p *Project) LoadConfig() (configProject *config.Project) {
+func (p *Project) LoadServices()  {
+
+	projectServices := services.Services{
+		Project: p,
+	}
+
+	projectServices.LoadProjectServices()
+
+	p.Services = &projectServices
+}
+
+func (p *Project) LoadConfig() (configProject *interfaces.ConfigProject) {
+	if p.Config != nil {
+		return p.Config
+	}
 	configPath := fmt.Sprintf("%s/%s", p.GetProjectPath(), p.ConfigFile)
+	color.Yellow("Load config from file: %s", configPath)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		color.Red("Config %s does not exists in project :%s", p.ConfigFile, configPath )
 		os.Exit(1)
 	}
 
-	var config config.Project
+	var loadedConfig interfaces.ConfigProject
 	yamlFile, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		log.Printf("config.yaml err   #%v ", err)
 		os.Exit(1)
 	} else {
-		err = yaml.Unmarshal(yamlFile, &config.Config)
+		err = yaml.Unmarshal(yamlFile, &loadedConfig)
 		if err != nil {
 			//log.Fatalf("Unmarshal: %v", err)
 			color.Red("Config load error: %s", err )
@@ -636,15 +682,22 @@ func (p *Project) LoadConfig() (configProject *config.Project) {
 		}
 
 	}
-	config.ConfigFile = configPath
 
-	p.Config = &config
+	loadedConfig.SetConfigName(p.ConfigFile)
+
+	loadedConfig.SetConfigPath(configPath)
+
+	//color.Yellow("Set Config details ... %s, %s", configLoad.GetConfigName(), configLoad.GetConfigPath())
+
+	p.Config = &loadedConfig
 
 	env := &environment.Environment{}
 	_, settings := env.GetSettings()
 
 	p.EnvSettings = settings
-	return p.Config
+
+
+	return &loadedConfig
 }
 
 func (p *Project) CheckProject() {

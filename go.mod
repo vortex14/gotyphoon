@@ -10,6 +10,7 @@ require (
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/fatih/color v1.12.0
+	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/go-cmd/cmd v1.3.0
@@ -22,10 +23,12 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.6.8
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/moby/sys/mount v0.2.0 // indirect
+	github.com/mongodb/mongo-tools v0.0.0-20210723181737-9fcadb98cca5
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/rivo/tview v0.0.0-20210624165335-29d673af0ce2
 	github.com/segmentio/nsq-go v1.2.4
+	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/xanzy/go-gitlab v0.50.1
 	go.mongodb.org/mongo-driver v1.7.0
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
