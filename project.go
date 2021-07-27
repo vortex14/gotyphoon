@@ -191,7 +191,11 @@ func (p *Project) ImportResponseData(url string, sourceFile string)  {
 
 	redisService := redis.Service{Project: p}
 
-	_ = redisService.Ping()
+	status := redisService.Ping()
+	if !status {
+		color.Red("Redis Ping Error")
+		os.Exit(1)
+	}
 	redisService.Set(redisPath, string(dat))
 
 	color.Green(redisPath)
@@ -552,10 +556,30 @@ func (p *Project) initComponents()  {
 	p.components.ActiveComponents = make(map[string]*Component)
 	p.Name = p.Config.ProjectName
 	for _, componentName := range p.SelectedComponent {
-		component := &Component{
-			Name: componentName,
+
+		var componentFileName string
+
+		switch componentName {
+		case interfaces.FETCHER:
+			componentFileName = interfaces.TYPHOON2PYTHON2FETCHER
+		case interfaces.PROCESSOR:
+			componentFileName = interfaces.TYPHOON2PYTHON2PROCESSOR
+		case interfaces.DONOR:
+			componentFileName = interfaces.TYPHOON2PYTHON2DONOR
+		case interfaces.TRANSPORTER:
+			componentFileName = interfaces.TYPHOON2PYTHON2TRANSPORTER
+		case interfaces.SCHEDULER:
+			componentFileName = interfaces.TYPHOON2PYTHON2SCHEDULER
+
 		}
 
+		component := &Component{
+			Name: componentName,
+			file: file{
+				Language: interfaces.PYTHON,
+				FileExt: fmt.Sprintf("%s.py", componentFileName),
+			},
+		}
 		p.components.ActiveComponents[componentName] = component
 	}
 }
