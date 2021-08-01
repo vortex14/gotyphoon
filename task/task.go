@@ -10,13 +10,12 @@ type TyphoonTask struct {
 	Fetcher           FetcherTask   `json:"fetcher"`
 	Processor         ProcessorTask `json:"processor"`
 	Scheduler         SchedulerTask `json:"scheduler"`
-	Priority          int           `json:"priority" default:"3"`
-	URL               string        `json:"url" default:"https://httpstat.us/200"`
-	Taskid            string        `json:"taskid" default:"task-id"`
-	ResultTransporter struct {
-	} `json:"result_transporter"`
-	ProjectName string `json:"project_name"`
-	Msg nsq.Message
+	ResultTransporter TransporterTask `json:"result_transporter"`
+	Priority          int           `json:"priority" default:"3" fake:"{randomstring:[3]}"`
+	URL               string        `json:"url" default:"https://httpstat.us/200" fake:"{url}"`
+	Taskid            string        `json:"taskid" default:"task-id" fake:"{uuid}"`
+	ProjectName string `json:"project_name" fake:"skip"`
+	msg *nsq.Message
 }
 
 

@@ -71,3 +71,19 @@ func (q *Queue) SetGroupName(name string)  {
 func (q *Queue) GetGroupName() string {
 	return q.group
 }
+
+func (q *Queue) SetComponentName(name string)  {
+	q.component = name
+}
+
+func (q *Queue) GetComponentName() string {
+	return q.component
+}
+
+func (q *Queue) GetPriority() int {
+	return q.priority
+}
+
+func (q *Queue) SetPriority(number int) {
+	q.priority = number
+}

@@ -27,45 +27,66 @@ type Services struct {
 	Config      *interfaces.ConfigProject
 }
 
+func (s *Services) getSettings() <-chan *interfaces.Queue {
+	ch := make(chan*interfaces.Queue)
+
+	go func(ch chan *interfaces.Queue) {
+		for _, component := range s.Project.GetSelectedComponent() {
+			queueSettings := reflect.ValueOf(s.Config.TyComponents).
+				FieldByName(component).
+				FieldByName("Queues").Interface()
+			queueSettingsMap := structs.Map(queueSettings)
+			for groupName, settingsMap := range queueSettingsMap {
+				sourceData, _ := json.Marshal(settingsMap)
+				var qSettings interfaces.Queue
+				err := json.Unmarshal(sourceData, &qSettings)
+				if err != nil {
+					color.Red("%s", err.Error())
+					os.Exit(1)
+				}
+				qSettings.SetGroupName(groupName)
+				qSettings.SetComponentName(component)
+				//color.Yellow("%+v", qSettings)
+				ch <- &qSettings
+			}
+		}
+
+
+		defer close(ch)
+	}(ch)
+
+	return ch
+}
+
 func (s *Services) RunNSQ()  {
 	fmt.Println("Running connections to NSQ ...")
 	nsqService := s.Collections.Nsq
-	for _, component := range s.Project.GetSelectedComponent() {
-		var qSettings interfaces.Queue
-		queueSettings := reflect.ValueOf(s.Config.TyComponents).
-			FieldByName(component).
-			FieldByName("Queues").Interface()
-		queueSettingsMap := structs.Map(queueSettings)
-		for groupName, settingsMap := range queueSettingsMap {
-			sourceData, _ := json.Marshal(settingsMap)
-			err := json.Unmarshal(sourceData, &qSettings)
-			if err != nil {
-				color.Red("%s", err.Error())
-				os.Exit(1)
-			}
-			qSettings.SetGroupName(groupName)
 
-			if groupName == interfaces.PRIORITY {
-				color.Yellow("Init Priority queues ...")
-				for _, i := range []int{1,2,3} {
-					prioritySetting := &interfaces.Queue{
-						Concurrent: qSettings.Concurrent,
-						MsgTimeout: qSettings.MsgTimeout,
-						Channel:    qSettings.Channel,
-						Topic:      s.Config.GetTopic(component, groupName, strconv.Itoa(i)),
-						Share:      qSettings.Share,
-						Writable:   qSettings.Writable,
-						Readable:   qSettings.Readable,
-					}
-					prioritySetting.SetGroupName(groupName)
-					nsqService.InitQueue(prioritySetting)
+	for qSettings := range s.getSettings() {
+		group := qSettings.GetGroupName()
+		if group == interfaces.PRIORITY ||
+			group == interfaces.PROCESSOR2PRIORITY ||
+			group == interfaces.TRANSPORTER2PRIORITY {
+			color.Yellow("Init Priority queues ...")
+			for _, i := range []int{1,2,3} {
+				prioritySetting := &interfaces.Queue{
+					Concurrent: qSettings.Concurrent,
+					MsgTimeout: qSettings.MsgTimeout,
+					Channel:    qSettings.Channel,
+					Topic:      s.Config.GetTopic(qSettings.GetComponentName(), group, strconv.Itoa(i)),
+					Share:      qSettings.Share,
+					Writable:   qSettings.Writable,
+					Readable:   qSettings.Readable,
 				}
-
-				continue
+				prioritySetting.SetPriority(i)
+				prioritySetting.SetGroupName(group)
+				nsqService.InitQueue(prioritySetting)
 			}
-			qSettings.Topic = s.Config.GetTopic(component, groupName, "")
-			nsqService.InitQueue(&qSettings)
+
+			continue
 		}
+		qSettings.Topic = s.Config.GetTopic(qSettings.GetComponentName(), group, "")
+		nsqService.InitQueue(qSettings)
 	}
 }
 

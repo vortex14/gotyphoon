@@ -18,6 +18,10 @@ const (
 	RETRIES					=	"Retries"
 	EXCEPTIONS				=	"Exceptions"
 
+	FIRST_PRIORITY			=   1
+	SECOND_PRIORITY  		=	2
+	THIRD_PRIORITY  		=	3
+
 	PROCESSOR2PRIORITY 		= 	"ProcessorPriority"
 	PROCESSOR2EXCEPTIONS	=	"ProcessorExceptions"
 

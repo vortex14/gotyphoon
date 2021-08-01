@@ -16,6 +16,9 @@ func (bar *Bar) NewOption(start, total int64) {
 	if bar.graph == "" {
 		bar.graph = "█"
 	}
+	if bar.total == -1 {
+		bar.graph = ""
+	}
 	bar.percent = bar.getPercent()
 	for i := 0; i < int(bar.percent); i += 2 {
 		bar.rate += bar.graph // initial progress position
@@ -32,18 +35,6 @@ func (bar *Bar) NewOptionWithGraph(start, total int64, graph string) {
 	bar.NewOption(start, total)
 }
 
-//func (bar *Bar) Play(cur int64) {
-//	bar.cur = cur
-//	last := bar.percent
-//	bar.percent = bar.getPercent()
-//	if bar.percent != last && bar.percent%2 == 0 {
-//		bar.rate += bar.graph
-//	}
-//	fmt.Printf("\r[%-50s]%3d%% %8d/%d", bar.rate, bar.percent, bar.cur, bar.total)
-//}
-
-
-
 func (bar *Bar) Play(cur int64, description string) {
 
 	bar.cur = cur
@@ -54,7 +45,12 @@ func (bar *Bar) Play(cur int64, description string) {
 		for ; i < bar.percent - last; i++ {
 			bar.rate += bar.graph
 		}
-		fmt.Printf("\r%s [%-50s]%3d%% %8d/%d ", description, bar.rate, bar.percent*2, bar.cur, bar.total)
+		if bar.total == -1 {
+			fmt.Printf("\r%s [%8d]", description, bar.cur)
+		} else {
+			fmt.Printf("\r%s [%-50s]%3d%% %8d/%d ", description, bar.rate, bar.percent*2, bar.cur, bar.total)
+		}
+
 	}
 }
 

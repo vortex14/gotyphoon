@@ -196,6 +196,8 @@ type ConfigProject struct {
 }
 
 type Queue struct {
+	priority   int
+	component  string
 	group 	   string
 	Concurrent int    `yaml:"concurrent"`
 	MsgTimeout int    `yaml:"msg_timeout"`

@@ -1,21 +1,23 @@
 package task
 
+
+
 type ProcessorTask struct {
-	ErrorResponse bool `json:"error_response" default:"false"`
-	MaxProcessorRetries int `json:"max_processor_retries" default:"5"`
+	ErrorResponse bool `json:"error_response" default:"false" fake:"{randomstring:[false]}"`
+	MaxProcessorRetries int `json:"max_processor_retries" default:"5"  fake:"{number:4,5}"`
 	Callback struct {
-		Name string `json:"name" default:"first_group"`
-		Type string `json:"type" default:"pipelines_group"`
+		Name string `json:"name" default:"first_group" fake:"{randomstring:[first_group]}"`
+		Type string `json:"type" default:"pipelines_group" fake:"{randomstring:[pipelines_group]}"`
 	} `json:"callback"`
-	Strategy string `json:"strategy" default:"text"`
+	Strategy string `json:"strategy" default:"text" fake:"{randomstring:[text]}"`
 	Save     struct {
 		Project struct {
 		} `json:"project"`
 		System struct {
-			ProcessorRetries int `json:"processor_retries"`
+			ProcessorRetries int `json:"processor_retries" fake:"skip"`
 		} `json:"system"`
 	} `json:"save"`
-	History []interface{} `json:"history"`
+	History []interface{} `json:"history" fake:"skip"`
 }
 
 

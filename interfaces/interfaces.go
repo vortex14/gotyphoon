@@ -43,6 +43,10 @@ type Cluster interface {
 type QueueSettings interface {
 	SetGroupName(name string)
 	GetGroupName() string
+	SetComponentName(name string)
+	GetComponentName() string
+	SetPriority(number int)
+	GetPriority() int
 }
 
 

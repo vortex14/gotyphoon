@@ -30,24 +30,38 @@ type Consumers map[string] [] *Consumer
 
 
 type Service struct {
-	Config *interfaces.ConfigProject
-	Project interfaces.Project
 	Producers Producers
 	Consumers Consumers
+	Project interfaces.Project
+	Config *interfaces.ConfigProject
+	priorityProducers map[string]map[int] *Producer
+	priorityConsumers map[string]map[int] *Consumer
+	Options interfaces.MessageBrokerOptions
 }
+
+func (s *Service) PriorityPub(priority int, name string, message string)  {
+	err := s.priorityProducers[name][priority].Worker.Publish([]byte(message))
+	if err != nil {
+		color.Red("%s", err.Error())
+	}
+}
+
 
 func (s *Service) initConfig()  {
 	if s.Config == nil {
+		color.Red("%+v", s.Options)
+		s.priorityConsumers = make(map[string]map[int]*Consumer)
+		s.priorityProducers = make(map[string]map[int]*Producer)
 		s.Config = s.Project.LoadConfig()
 	}
 }
 
 func (s *Service) InitQueue(settings *interfaces.Queue)  {
-	if settings.Readable {
+	if settings.Readable && s.Options.EnabledConsumer {
 		s.InitConsumer(settings)
 	}
 
-	if settings.Writable {
+	if settings.Writable && s.Options.EnabledProducer {
 		s.InitProducer(settings)
 	}
 }
@@ -67,33 +81,42 @@ func (s *Service) Ping() bool  {
 	return status
 }
 
-func (s *Service) initProjectConfig()  {
-	projectConfig := s.Project.LoadConfig()
-	s.Config = projectConfig
-
-}
-
 func (s *Service) InitProducer(settings *interfaces.Queue) {
 	name := settings.GetGroupName()
+	priority := settings.GetPriority()
 	color.Yellow(`init NSQ producer. 
 	Group:%s 
 	Topic: %s 
 	Channel: %s`,  name, settings.Topic, settings.Channel,
 	)
-	if s.Config == nil {
-		s.initProjectConfig()
-	}
+	s.initConfig()
 	producer, _ := nsq.StartProducer(nsq.ProducerConfig{
+		Topic: settings.Topic,
 		Address: s.Config.NsqdNodes[0].IP,
 	})
+
+	newProducer := &Producer{Worker: producer}
 
 
 	if s.Producers == nil {
 		s.Producers = Producers{
-			name: &Producer{Worker: producer},
+			name: newProducer,
 		}
 	} else {
-		s.Producers[name] = &Producer{Worker:producer}
+		s.Producers[name] = newProducer
+	}
+
+
+	if priority > 0 {
+
+		if s.priorityProducers[name] != nil {
+			s.priorityProducers[name][priority] = newProducer
+		} else {
+			s.priorityProducers[name] = map[int]*Producer{
+				priority: newProducer,
+			}
+		}
+
 	}
 
 }
@@ -103,15 +126,15 @@ func (s *Service) InitConsumer(
 	) *nsq.Consumer {
 
 	name := settings.GetGroupName()
+	priority := settings.GetPriority()
+
 	color.Blue(`init NSQ consumer. 
 	Group:%s 
 	Topic: %s 
 	Channel: %s`,  name, settings.Topic, settings.Channel,
 	)
 
-	if s.Config == nil {
-		s.initProjectConfig()
-	}
+	s.initConfig()
 	consumer, _ := nsq.StartConsumer(nsq.ConsumerConfig{
 		Topic:   settings.Topic,
 		Channel: settings.Channel,
@@ -119,25 +142,36 @@ func (s *Service) InitConsumer(
 		ReadTimeout: time.Duration(60) * time.Second,
 		MaxInFlight: settings.Concurrent,
 	})
+
+	newConsumer := &Consumer{
+		Topic:      settings.Topic,
+		Channel:    settings.Channel,
+		Concurrent: settings.Concurrent,
+		Worker:     consumer,
+	}
+
 	if s.Consumers == nil {
 		s.Consumers = Consumers{
 			name: {
-				&Consumer{
-					Topic:      settings.Topic,
-					Channel:    settings.Channel,
-					Concurrent: settings.Concurrent,
-					Worker:     consumer,
-				},
+				newConsumer,
 			},
 		}
 	} else {
-		s.Consumers[name] = append(s.Consumers[name], &Consumer{
-			Topic:      settings.Topic,
-			Channel:    settings.Channel,
-			Concurrent: settings.Concurrent,
-			Worker:     consumer,
-		})
+		s.Consumers[name] = append(s.Consumers[name], newConsumer)
 	}
+	color.Yellow("PRIORITY ------ >>> %d", priority)
+	if priority > 0 {
+
+		if s.priorityConsumers[name] != nil {
+			s.priorityConsumers[name][priority] = newConsumer
+		} else {
+			s.priorityConsumers[name] = map[int]*Consumer{
+				priority: newConsumer,
+			}
+		}
+
+	}
+
 
 
 
