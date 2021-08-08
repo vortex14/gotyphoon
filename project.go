@@ -431,7 +431,7 @@ func (p *Project) Watch()  {
 				componentChanged := ""
 
 				for _, component := range p.SelectedComponent {
-					if strings.Contains(event.Name, component) {
+					if strings.Contains(event.Name, strings.ToLower(component)) {
 						color.Yellow("reloading %s ... !", component)
 						componentChanged = component
 						break

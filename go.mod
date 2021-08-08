@@ -3,11 +3,12 @@ module github.com/vortex14/gotyphoon
 go 1.14
 
 require (
+	github.com/DataDog/go-python3 v0.0.0-20210805105248-03d93fb21b67
 	github.com/EDDYCJY/fake-useragent v0.2.0
 	github.com/Microsoft/hcsshim v0.8.20 // indirect
 	github.com/PuerkitoBio/goquery v1.7.1 // indirect
 	github.com/brianvoe/gofakeit/v6 v6.5.0
-	github.com/bxcodec/faker v2.0.1+incompatible
+	github.com/bxcodec/faker v2.0.1+incompatible // indirect
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/containerd/containerd v1.5.4 // indirect
 	github.com/deliveryhero/pipeline v0.3.1

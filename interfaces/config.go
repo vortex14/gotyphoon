@@ -18,9 +18,9 @@ const (
 	RETRIES					=	"Retries"
 	EXCEPTIONS				=	"Exceptions"
 
-	FIRST_PRIORITY			=   1
-	SECOND_PRIORITY  		=	2
-	THIRD_PRIORITY  		=	3
+	PRIORITY2FIRST			=   1
+	PRIORITY2SECOND  		=	2
+	PRIORITY2THIRD  		=	3
 
 	PROCESSOR2PRIORITY 		= 	"ProcessorPriority"
 	PROCESSOR2EXCEPTIONS	=	"ProcessorExceptions"
@@ -34,6 +34,8 @@ const (
 	TRANSPORTER2PRIORITY	=	"ResultTransporterPriority"
 
 )
+
+var PRIORITIES = [3]int{PRIORITY2FIRST, PRIORITY2SECOND, PRIORITY2THIRD}
 
 
 func (c *ConfigProject) SetConfigName(name string) {
@@ -56,19 +58,19 @@ func (c *ConfigProject) GetConfigPath() string {
 func (c *ConfigProject) GetComponentPort(name string) int {
 	var port int
 	switch name {
-	case "donor":
+	case DONOR:
 		component := c.TyComponents.Donor
 		port = component.Port
-	case "fetcher":
+	case FETCHER:
 		component := c.TyComponents.Fetcher
 		port = component.Port
-	case "processor":
+	case PROCESSOR:
 		component := c.TyComponents.Processor
 		port = component.Port
-	case "result_transporter":
+	case TRANSPORTER:
 		component := c.TyComponents.ResultTransporter
 		port = component.Port
-	case "scheduler":
+	case SCHEDULER:
 		component := c.TyComponents.Scheduler
 		port = component.Port
 	}
