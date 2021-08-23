@@ -6,6 +6,15 @@ import (
 	"strings"
 )
 
+type ConfigInterface interface {
+	GetComponentPort(name string) int
+	SetConfigName(name string)
+	GetConfigName() string
+	SetConfigPath(path string)
+	GetConfigPath() string
+}
+
+
 const (
 	FETCHER 				=	"Fetcher"
 	PROCESSOR 				= 	"Processor"
@@ -32,6 +41,7 @@ const (
 	SCHEDULER2EXCEPTIONS	=	"SchedulerExceptions"
 
 	TRANSPORTER2PRIORITY	=	"ResultTransporterPriority"
+	TRANSPORTER2EXCEPTIONS	=	"ResultTransporterExceptions"
 
 )
 

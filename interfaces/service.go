@@ -1,6 +1,18 @@
 package interfaces
 
 
+
+type Service interface {
+	GetHost() string
+	GetPort() int
+	Ping() bool
+}
+
+type AdapterService interface {
+	Ping() bool
+	Init()
+}
+
 func (s *ServiceRedis) GetHost() string  {
 	return s.Details.Host
 }

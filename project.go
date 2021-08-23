@@ -1,32 +1,41 @@
 package typhoon
 
 import (
+	"bufio"
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/fsnotify/fsnotify"
-	"github.com/go-git/go-git/v5"
-	"github.com/vortex14/gotyphoon/data"
-	"github.com/vortex14/gotyphoon/environment"
-	"github.com/vortex14/gotyphoon/integrations/mongo"
-	"github.com/vortex14/gotyphoon/integrations/redis"
-	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/migrates/v1.1"
-	"github.com/vortex14/gotyphoon/services"
-	"github.com/vortex14/gotyphoon/utils"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
+	"sync"
+	"time"
+
+	"crypto/md5"
+	"encoding/hex"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
-	"time"
+
+	"github.com/fatih/color"
+	"github.com/fsnotify/fsnotify"
+	"github.com/go-git/go-git/v5"
+	"go.mongodb.org/mongo-driver/bson"
+
+	"github.com/vortex14/gotyphoon/data"
+	"github.com/vortex14/gotyphoon/environment"
+	"github.com/vortex14/gotyphoon/extensions/logger"
+	tyLog "github.com/vortex14/gotyphoon/extensions/logger"
+	"github.com/vortex14/gotyphoon/integrations/mongo"
+	"github.com/vortex14/gotyphoon/integrations/redis"
+	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/interfaces/ghosts"
+	"github.com/vortex14/gotyphoon/migrates/v1.1"
+	"github.com/vortex14/gotyphoon/services"
+	"github.com/vortex14/gotyphoon/utils"
 )
 
 type components = struct {
@@ -47,9 +56,14 @@ type Services struct {
 	Redis map[string] redis.Service
 }
 
+
+type TestMongo struct {
+
+}
+
 type Project struct {
-	task              *Task
 	AutoReload        bool
+	task              *Task
 	Path              string
 	Name              string
 	Tag               string
@@ -58,12 +72,15 @@ type Project struct {
 	ConfigFile        string
 	Version           string
 	SelectedComponent []string
+	loggerOnce 		  sync.Once
 	components        components
 	repo              *git.Repository
-	Config            *interfaces.ConfigProject
-	Services		  *services.Services
 	Watcher           fsnotify.Watcher
-	EnvSettings       *environment.Settings
+	Services		  *services.Services
+	logger 			  *logger.TyphoonLogger
+	EnvSettings 	  *environment.Settings
+	Archon        	  ghosts.ArchonInterface
+	Config      	  *interfaces.ConfigProject
 	BuilderOptions    *interfaces.BuilderOptions
 	Labels            *interfaces.ClusterProjectLabels
 }
@@ -76,12 +93,26 @@ func (p *Project) GetLabels() *interfaces.ClusterProjectLabels {
 	return p.Labels
 }
 
+func (p *Project) IsDebug() bool {
+	return p.Config.Debug
+}
 func (p *Project) RunFetcherQueues()  {
 	p.LoadConfig()
 	if p.components.ActiveComponents == nil {
 		p.initComponents()
 	}
 	p.components.ActiveComponents["fetcher"].InitConsumers(p)
+}
+
+func (p *Project) GetService(name string) interfaces.Service {
+	switch name {
+	case interfaces.NSQ:
+		return p.Services.Collections.Nsq
+	//case interfaces.MONGO:
+	//	return p.Services.Collections.Mongo
+
+	}
+	return nil
 }
 
 func (p *Project) GetRepo() (error, *git.Repository) {
@@ -175,6 +206,65 @@ func (p *Project) RunTestServices() {
 	typhoonServices.RunTestServices()
 }
 
+func (p *Project) ImportExceptions(component string, sourceFileName string) error {
+	currentPath, _ := os.Getwd()
+	importPath := fmt.Sprintf("%s/%s", currentPath, sourceFileName)
+	f, err := os.OpenFile(importPath, os.O_RDONLY, os.ModePerm)
+	if err != nil {
+		color.Red("open file error: %v", err)
+		return err
+	}
+	defer f.Close()
+	rd := bufio.NewReader(f)
+	for {
+		line, err := rd.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			log.Fatalf("read file line error: %v", err)
+			return err
+		}
+
+		//BsonTools.m
+		//var doc BsonTools.BSON
+		//bson.UnmarshalExtJSON()
+
+		//doc = suurceBson
+		//
+		//bson.MarshalExtJSONAppend()
+
+		//json, err := doc.JSON()
+		//if err != nil {
+		//	color.Red("--- > %+v", err)
+		//	return err
+		//}
+		var doc bson.D
+
+		if err := bson.UnmarshalExtJSON([]byte(line), false, &doc); err != nil {
+			return err
+		}
+
+		//d, _ := bson.Ma(doc)
+
+		//u := utils.Utils{}
+		//j
+
+		//o := u.PrintPrettyJson(suurceBson)
+
+		//println(BsonTools)
+
+		//color.Green("%+v", d)  // GET the line string
+
+
+
+		return nil
+	}
+
+	return nil
+}
+
 func (p *Project) ImportResponseData(url string, sourceFile string)  {
 	p.LoadConfig()
 
@@ -187,17 +277,21 @@ func (p *Project) ImportResponseData(url string, sourceFile string)  {
 	}
 	color.Green("url: %s", url)
 	taskid := md5.Sum([]byte(url))
+	p.LoadServices(interfaces.TyphoonIntegrationsOptions{
+			Redis: interfaces.BaseServiceOptions{
+				Active: true,
+			},
+
+
+
+		},
+	)
 	redisPath := fmt.Sprintf("%s:%s", p.GetName(), hex.EncodeToString(taskid[:]))
-
-	redisService := redis.Service{Project: p}
-
-	status := redisService.Ping()
-	if !status {
-		color.Red("Redis Ping Error")
+	err = p.Services.Collections.Redis["main"].Set(redisPath, string(dat))
+	if err != nil {
+		color.Red("%s", err.Error())
 		os.Exit(1)
 	}
-	redisService.Set(redisPath, string(dat))
-
 	color.Green(redisPath)
 }
 
@@ -586,19 +680,7 @@ func (p *Project) initComponents()  {
 
 func (p *Project) StartComponents(promise bool)  {
 
-	fmt.Printf(`
-												╭━┳━╭━╭━╮╮
-												┃┈┈┈┣▅╋▅┫┃
-												┃┈┃┈╰━╰━━━━━━╮
-												╰┳╯┈┈┈┈┈┈┈┈┈◢▉◣
-												╲┃┈┈┈┈┈┈┈┈┈┈▉▉▉
-												╲┃┈┈┈┈┈┈┈┈┈┈◥▉◤
-												╲┃┈┈┈┈╭━┳━━━━╯
-												╲┣━━━━━━┫
-	
-	
-	
-`)
+	fmt.Printf(tyLog.DOG)
 
 	if p.components.ActiveComponents == nil {
 		p.initComponents()
@@ -670,15 +752,31 @@ func (p *Project) GetLogLevel() string {
 	return p.LogLevel
 }
 
-func (p *Project) LoadServices()  {
 
+func (p *Project) LoadServices(opts interfaces.TyphoonIntegrationsOptions)  {
+	status := false
 	projectServices := services.Services{
 		Project: p,
+		Options: opts,
 	}
 
-	projectServices.LoadProjectServices()
+	if opts.NSQ.Active {
+		projectServices.RunNSQ()
+		status = true
+	}
 
+	if opts.Mongo.Active {
+		projectServices.LoadMongoServices()
+		status = true
+	}
+
+	if opts.Redis.Active {
+		projectServices.LoadRedisServices()
+		status = true
+	}
 	p.Services = &projectServices
+
+	color.Yellow("LoadServices: %t", status)
 }
 
 func (p *Project) LoadConfig() (configProject *interfaces.ConfigProject) {
@@ -797,4 +895,22 @@ func handle() {
 		//fmt.Print("#")
 		time.Sleep(time.Millisecond * 200)
 	}
+}
+
+func (p *Project) RunArchon(promise bool) {
+	if p.Archon == nil {
+		color.Red("Archon doesn't exist in your project")
+		os.Exit(1)
+	}
+	p.LoadConfig()
+	p.Archon.RunDemons(p)
+	
+	p.Archon.RunProjectServers(p)
+
+	if promise {
+		p.Archon.AddPromise()
+	}
+
+
+
 }

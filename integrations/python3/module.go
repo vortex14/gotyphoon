@@ -1,10 +1,11 @@
 package python3
 
 import (
-	Python3 "github.com/DataDog/go-python3"
-	"github.com/fatih/color"
 	"log"
 	"os"
+
+	Python3 "github.com/DataDog/go-python3"
+	"github.com/fatih/color"
 )
 
 type PythonModule struct {
@@ -42,6 +43,9 @@ func (m *PythonModule) SetImport()  {
 
 }
 
+func (m *PythonModule) CreatePythonCallback()  {
+	//Python3.PyFu
+}
 
 
 

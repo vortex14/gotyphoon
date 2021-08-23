@@ -2,21 +2,23 @@ package fake
 
 import (
 	"encoding/base64"
+	"math/rand"
+
 	browser "github.com/EDDYCJY/fake-useragent"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/fatih/color"
+
 	"github.com/vortex14/gotyphoon/interfaces"
 	typhoonTask "github.com/vortex14/gotyphoon/task"
 	"github.com/vortex14/gotyphoon/utils"
-	"math/rand"
 )
 
 func init()  {
 	gofakeit.AddFuncLookup("response_product", gofakeit.Info{
 		Category:    "custom",
-		Description: "Random set products",
-		Output:      "list",
+		Description: "Random set response product",
+		Output:      "str",
 		Generate: func(r *rand.Rand, m *gofakeit.MapParams, info *gofakeit.Info) (interface{}, error) {
 			u := utils.Utils{}
 			var f Product

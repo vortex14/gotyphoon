@@ -1,10 +1,12 @@
 package fake
 
 import (
+	"math/rand"
+
 	"github.com/brianvoe/gofakeit/v6"
+
 	"github.com/vortex14/gotyphoon/data"
 	"github.com/vortex14/gotyphoon/utils"
-	"math/rand"
 )
 
 
@@ -57,7 +59,7 @@ type Product struct {
 func init()  {
 	gofakeit.AddFuncLookup("product_id", gofakeit.Info{
 		Category:    "custom",
-		Description: "Random set images",
+		Description: "Random set product_id",
 		Output:      "list",
 		Generate: func(r *rand.Rand, m *gofakeit.MapParams, info *gofakeit.Info) (interface{}, error) {
 			u := utils.Utils{}
@@ -68,7 +70,7 @@ func init()  {
 
 	gofakeit.AddFuncLookup("value_size", gofakeit.Info{
 		Category:    "custom",
-		Description: "Random set images",
+		Description: "Random set value_size",
 		Output:      "list",
 		Generate: func(r *rand.Rand, m *gofakeit.MapParams, info *gofakeit.Info) (interface{}, error) {
 
@@ -79,7 +81,7 @@ func init()  {
 	})
 	gofakeit.AddFuncLookup("unit", gofakeit.Info{
 		Category:    "custom",
-		Description: "Random set images",
+		Description: "Random set unit",
 		Output:      "list",
 		Generate: func(r *rand.Rand, m *gofakeit.MapParams, info *gofakeit.Info) (interface{}, error) {
 			u := utils.Utils{}
@@ -89,7 +91,7 @@ func init()  {
 
 	gofakeit.AddFuncLookup("unit_w", gofakeit.Info{
 		Category:    "custom",
-		Description: "Random set images",
+		Description: "Random set weight",
 		Output:      "list",
 		Generate: func(r *rand.Rand, m *gofakeit.MapParams, info *gofakeit.Info) (interface{}, error) {
 			u := utils.Utils{}
@@ -99,7 +101,7 @@ func init()  {
 
 	gofakeit.AddFuncLookup("brand", gofakeit.Info{
 		Category:    "custom",
-		Description: "Random set images",
+		Description: "Random set brand",
 		Output:      "list",
 		Generate: func(r *rand.Rand, m *gofakeit.MapParams, info *gofakeit.Info) (interface{}, error) {
 			u := utils.Utils{}

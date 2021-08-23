@@ -2,12 +2,13 @@ package fake
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/fatih/color"
-	"github.com/osamingo/checkdigit"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/fatih/color"
+	"github.com/osamingo/checkdigit"
 )
 
 var letters = []rune("0123456789")

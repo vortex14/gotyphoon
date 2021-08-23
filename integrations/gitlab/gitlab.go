@@ -2,16 +2,18 @@ package gitlab
 
 import (
 	"fmt"
+	"net/url"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/cheggaaa/pb/v3"
 	"github.com/fatih/color"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/olekukonko/tablewriter"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/xanzy/go-gitlab"
-	"net/url"
-	"os"
-	"strconv"
-	"strings"
+
 )
 
 type Server struct {

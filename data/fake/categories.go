@@ -2,10 +2,12 @@ package fake
 
 import (
 	"fmt"
+	"math/rand"
+
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/vortex14/gotyphoon/data"
 	"github.com/vortex14/gotyphoon/utils"
-	"math/rand"
+
 )
 
 func init()  {

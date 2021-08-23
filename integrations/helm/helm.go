@@ -1,10 +1,11 @@
 package helm
 
 import (
+	"os"
+
 	"github.com/fatih/color"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/utils"
-	"os"
 )
 
 type Resources struct {

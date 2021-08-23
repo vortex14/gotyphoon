@@ -8,6 +8,7 @@ type Bar struct {
 	total int64 // total value for progress
 	rate string // the actual progress bar to be printed
 	graph string // the fill value for progress bar
+	Description string
 }
 
 func (bar *Bar) NewOption(start, total int64) {
@@ -36,7 +37,9 @@ func (bar *Bar) NewOptionWithGraph(start, total int64, graph string) {
 }
 
 func (bar *Bar) Play(cur int64, description string) {
-
+	if len(description) > 0 {
+		bar.Description = description
+	}
 	bar.cur = cur
 	last := bar.percent
 	bar.percent = bar.getPercent()
@@ -46,15 +49,17 @@ func (bar *Bar) Play(cur int64, description string) {
 			bar.rate += bar.graph
 		}
 		if bar.total == -1 {
-			fmt.Printf("\r%s [%8d]", description, bar.cur)
+			fmt.Printf("\r%s [%8d]", bar.Description, bar.cur)
 		} else {
-			fmt.Printf("\r%s [%-50s]%3d%% %8d/%d ", description, bar.rate, bar.percent*2, bar.cur, bar.total)
+			fmt.Printf("\r%s [%-50s]%3d%% %8d/%d ", bar.Description, bar.rate, bar.percent*2, bar.cur, bar.total)
 		}
 
 	}
 }
 
 func (bar *Bar) Increment()  {
+	bar.cur += 1
+	bar.Play(bar.cur, bar.Description)
 
 }
 

@@ -4,10 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/go-cmd/cmd"
-	"github.com/go-logfmt/logfmt"
-	"github.com/vortex14/gotyphoon/interfaces"
 	"io"
 	"io/ioutil"
 	"log"
@@ -17,6 +13,13 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/fatih/color"
+	"github.com/go-cmd/cmd"
+	"github.com/go-logfmt/logfmt"
+
+	TyLog "github.com/vortex14/gotyphoon/extensions/logger"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 type Directory struct {
@@ -389,9 +392,7 @@ func (c *Component) Logging()  {
 			}
 
 			if strings.Contains(line, "@debug") {
-				fmt.Printf(`
--DEBUG-----------
-`)
+				fmt.Printf(TyLog.OWL)
 				c.isDebug = true
 				continue
 			}
@@ -410,9 +411,9 @@ func (c *Component) Logging()  {
 			}
 
 
-			if strings.Contains(line, ">>>!") {
+			if strings.Contains(line, ">>>!") || strings.Contains(line, "level=ERROR") && !c.isException {
 				c.isException = true
-				color.Red("Component %s has error.", c.Name)
+				fmt.Printf(TyLog.DINOSAUR, c.Name)
 				color.Red(line)
 				continue
 			}

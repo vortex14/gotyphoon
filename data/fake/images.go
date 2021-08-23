@@ -1,8 +1,9 @@
 package fake
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
 	"math/rand"
+
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 func init()  {

@@ -43,19 +43,7 @@ type ClusterMeta struct {
 	Docker  ClusterDocker  `yaml:"docker,omitempty"`
 }
 
-type GitlabLabel struct {
-	Id int `yaml:"id,omitempty"`
-}
 
-type GitlabClusterLabel struct {
-	Url int `yaml:"url,omitempty"`
-}
-
-type GitLabel struct {
-	Url string `yaml:"url,omitempty"`
-	Remote string `yaml:"remote,omitempty"`
-	Branch string `yaml:"branch,omitempty"`
-}
 
 type DockerLabel struct {
 
@@ -82,25 +70,9 @@ type GrafanaConfig struct {
 	DashboardUrl string `yaml:"dashboard_url,omitempty"`
 }
 
-type ClusterProjectLabels struct {
-	Git     GitLabel                 `yaml:"git,omitempty"`
-	Gitlab  GitlabLabel              `yaml:"gitlab,omitempty"`
-	Docker  DockerLabel              `yaml:"docker,omitempty"`
-	Grafana []*GrafanaConfig `yaml:"grafana,omitempty"`
-}
 
-type ClusterProject struct {
-	Name   string
-	path   string
-	Config string
-	Labels ClusterProjectLabels
-}
 
-type GitlabProject struct {
-	Name string `yaml:"name,omitempty"`
-	Git string `yaml:"git,omitempty"`
-	Id int	`yaml:"id,omitempty"`
-}
+
 
 
 type Producers map[string] *Producer

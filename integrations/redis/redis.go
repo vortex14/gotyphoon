@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
+
 	"github.com/fatih/color"
 	"github.com/go-redis/redis/v8"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -47,12 +48,11 @@ func (s *Service) connect() bool {
 	return status
 }
 
-func (s *Service) Set(key string, value interface{})  {
+func (s *Service) Set(key string, value interface{}) error {
 	var ctx = context.Background()
 	defer ctx.Done()
-	_ = s.client.Set(ctx, key, value, 0)
-
-	//color.Yellow("%s", output)
+	status := s.client.Set(ctx, key, value, 0)
+	return status.Err()
 }
 
 func (s *Service) Init()  {

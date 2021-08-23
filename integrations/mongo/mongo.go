@@ -4,20 +4,23 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/fatih/color"
-	"github.com/mongodb/mongo-tools/common/db"
-	//"github.com/mongodb/mongo-tools/common/log"
-	mongoTools "github.com/mongodb/mongo-tools/common/options"
-	exportOptions "github.com/mongodb/mongo-tools/mongoexport"
-	importOptions "github.com/mongodb/mongo-tools/mongoimport"
-	"github.com/vortex14/gotyphoon/interfaces"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
-	"os"
-	"strconv"
-	"time"
+
+	"github.com/mongodb/mongo-tools/common/db"
+	mongoTools "github.com/mongodb/mongo-tools/common/options"
+	exportOptions "github.com/mongodb/mongo-tools/mongoexport"
+	importOptions "github.com/mongodb/mongo-tools/mongoimport"
+
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 type Service struct {
@@ -30,6 +33,14 @@ type Service struct {
 type Collection struct {
 	Name string
 	Db string
+}
+
+func (s *Service) GetPort() int {
+	return s.Settings.GetPort()
+}
+
+func (s *Service) GetHost() string {
+	return s.Settings.GetHost()
 }
 
 func (s *Service) initClient()  {

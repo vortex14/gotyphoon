@@ -2,8 +2,9 @@ package interfaces
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/bson"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type MongoQuery struct {

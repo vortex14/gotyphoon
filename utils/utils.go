@@ -5,14 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/go-logfmt/logfmt"
-	"github.com/gobuffalo/packd"
-	"github.com/gobuffalo/packr"
-	"github.com/gocarina/gocsv"
-	"github.com/google/uuid"
-	"github.com/olekukonko/tablewriter"
-	"github.com/vortex14/gotyphoon/interfaces"
 	"io"
 	"io/ioutil"
 	"log"
@@ -24,6 +16,15 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/fatih/color"
+	"github.com/go-logfmt/logfmt"
+	"github.com/gobuffalo/packd"
+	"github.com/gobuffalo/packr"
+	"github.com/gocarina/gocsv"
+	"github.com/google/uuid"
+	"github.com/olekukonko/tablewriter"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 type Utils struct {}

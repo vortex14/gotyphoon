@@ -1,18 +1,15 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/fatih/structs"
+	"reflect"
+	"strconv"
+
 	"github.com/vortex14/gotyphoon/integrations/mongo"
 	"github.com/vortex14/gotyphoon/integrations/nsq"
 	"github.com/vortex14/gotyphoon/integrations/redis"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/utils"
-	"os"
-	"reflect"
-	"strconv"
 )
 
 type Collections struct {
@@ -22,77 +19,20 @@ type Collections struct {
 }
 
 type Services struct {
-	Project     interfaces.Project
 	Collections *Collections
+	Project     interfaces.Project
 	Config      *interfaces.ConfigProject
-}
-
-func (s *Services) getSettings() <-chan *interfaces.Queue {
-	ch := make(chan*interfaces.Queue)
-
-	go func(ch chan *interfaces.Queue) {
-		for _, component := range s.Project.GetSelectedComponent() {
-			queueSettings := reflect.ValueOf(s.Config.TyComponents).
-				FieldByName(component).
-				FieldByName("Queues").Interface()
-			queueSettingsMap := structs.Map(queueSettings)
-			for groupName, settingsMap := range queueSettingsMap {
-				sourceData, _ := json.Marshal(settingsMap)
-				var qSettings interfaces.Queue
-				err := json.Unmarshal(sourceData, &qSettings)
-				if err != nil {
-					color.Red("%s", err.Error())
-					os.Exit(1)
-				}
-				qSettings.SetGroupName(groupName)
-				qSettings.SetComponentName(component)
-				//color.Yellow("%+v", qSettings)
-				ch <- &qSettings
-			}
-		}
-
-
-		defer close(ch)
-	}(ch)
-
-	return ch
+	Options 	interfaces.TyphoonIntegrationsOptions
 }
 
 func (s *Services) RunNSQ()  {
-	fmt.Println("Running connections to NSQ ...")
-	nsqService := s.Collections.Nsq
-
-	for qSettings := range s.getSettings() {
-		group := qSettings.GetGroupName()
-		if group == interfaces.PRIORITY ||
-			group == interfaces.PROCESSOR2PRIORITY ||
-			group == interfaces.TRANSPORTER2PRIORITY {
-			color.Yellow("Init Priority queues ...")
-			for _, i := range []int{1,2,3} {
-				prioritySetting := &interfaces.Queue{
-					Concurrent: qSettings.Concurrent,
-					MsgTimeout: qSettings.MsgTimeout,
-					Channel:    qSettings.Channel,
-					Topic:      s.Config.GetTopic(qSettings.GetComponentName(), group, strconv.Itoa(i)),
-					Share:      qSettings.Share,
-					Writable:   qSettings.Writable,
-					Readable:   qSettings.Readable,
-				}
-				prioritySetting.SetPriority(i)
-				prioritySetting.SetGroupName(group)
-				nsqService.InitQueue(prioritySetting)
-			}
-
-			continue
-		}
-		qSettings.Topic = s.Config.GetTopic(qSettings.GetComponentName(), group, "")
-		nsqService.InitQueue(qSettings)
-	}
+	s.initCollection()
+	s.Collections.Nsq.RunNSQ()
 }
 
 func (s *Services) StopNSQ()  {
-	s.Collections.Nsq.StopProducers()
-	s.Collections.Nsq.StopConsumers()
+	println("Stop NSQ ...")
+	s.Collections.Nsq.StopNSQ()
 }
 
 func (s *Services) RunTestServices() {
@@ -163,7 +103,10 @@ func (s *Services) initCollection()  {
 		s.Collections = &Collections{
 			Mongo: map[string]*mongo.Service{},
 			Redis: map[string]*redis.Service{},
-			Nsq: &nsq.Service{Project: s.Project},
+			Nsq: &nsq.Service{
+				Project: s.Project,
+				Options: s.Options.NSQ,
+			},
 		}
 	}
 }

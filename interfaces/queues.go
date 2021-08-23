@@ -1,5 +1,25 @@
 package interfaces
 
+
+type Producer interface {
+	Pub()
+}
+
+type Consumer interface {
+	Read()
+}
+
+type QueueSettings interface {
+	SetGroupName(name string)
+	GetGroupName() string
+	SetComponentName(name string)
+	GetComponentName() string
+	SetPriority(number int)
+	GetPriority() int
+}
+
+
+
 type FetcherSettings struct {
 	Port   int `yaml:"port"`
 	Queues struct {

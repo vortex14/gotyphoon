@@ -24,7 +24,7 @@ func (f *PythonFunction) await(object *Python3.PyObject) *Python3.PyObject {
 	itemType := item.Type()
 	if itemType == nil && !Python3.PyErr_ExceptionMatches(Python3.PyExc_StopIteration) {
 		Python3.PyErr_Print()
-		color.Red("error getting item type")
+		color.Red("error getting item type. fn  __next__ for coroutine is not provided")
 		return nil
 	}
 
@@ -54,4 +54,8 @@ func (f *PythonFunction) CallObject(args *Python3.PyObject) *Python3.PyObject  {
 	}
 	return result
 
+}
+
+func (f *PythonFunction) Create() *Python3.PyObject {
+	return Python3.PyFunction_New(nil, nil)
 }

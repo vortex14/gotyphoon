@@ -20,6 +20,12 @@ func (p *Python) InitEnvironment()  {
 	}
 }
 
+func (f *PythonFunction) newFunction() *Python3.PyObject {
+	ref := Python3.PyFunction_New(nil, nil)
+	color.Red("%+v", ref)
+	return ref
+}
+
 
 func (p *Python) RunFile(path string)  bool {
 	s, error := Python3.PyRun_AnyFile(path)
@@ -71,5 +77,11 @@ func ToString(object *Python3.PyObject) string  {
 func (p *Python) GetNewList(length int) interfaces.PythonListInterface {
 	newList := Python3.PyList_New(length)
 	return &PythonList{List: newList, Length: length}
+
+	//Python3.
 }
 
+
+func PyMethodCheck(object *Python3.PyObject) int {
+	return 1
+}

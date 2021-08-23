@@ -5,16 +5,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/grafana-tools/sdk"
-	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/grafana-tools/sdk"
+	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/utils"
 )
 
 type DashBoard struct {
