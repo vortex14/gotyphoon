@@ -749,6 +749,15 @@ func (p *Project) GetProjectPath() string {
 	return pathProject
 }
 func (p *Project) GetLogLevel() string {
+	if len(p.LogLevel) == 0 {
+		config := p.LoadConfig()
+		if config.Debug {
+			p.LogLevel = interfaces.DEBUG
+		} else {
+			p.LogLevel = interfaces.INFO
+		}
+	}
+
 	return p.LogLevel
 }
 

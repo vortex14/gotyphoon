@@ -14,7 +14,7 @@ import (
 )
 
 type Options struct {
-	interfaces.BaseLoggerOptions
+	*interfaces.BaseLoggerOptions
 }
 
 func (o *Options) InitFormatter()  {

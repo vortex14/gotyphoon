@@ -27,7 +27,7 @@ require (
 	github.com/go-cmd/cmd v1.3.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logfmt/logfmt v0.5.0
-	github.com/go-python/gopy v0.3.4
+	github.com/go-python/gopy v0.3.4 // indirect
 	github.com/go-redis/redis/v8 v8.11.0
 	github.com/gobuffalo/packd v1.0.0
 	github.com/gobuffalo/packr v1.30.1
@@ -47,6 +47,8 @@ require (
 	github.com/segmentio/nsq-go v1.2.4
 	github.com/sirupsen/logrus v1.8.1
 	github.com/smartystreets/goconvey v1.6.4 // indirect
+	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2
+	github.com/swaggo/gin-swagger v1.3.1
 	github.com/uber/jaeger-client-go v2.23.1+incompatible
 	github.com/urfave/cli/v2 v2.3.0 // indirect
 	github.com/xanzy/go-gitlab v0.50.1

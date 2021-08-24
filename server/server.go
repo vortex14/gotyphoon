@@ -11,6 +11,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/extensions/logger"
@@ -19,7 +21,7 @@ import (
 
 
 type ServerBuilder struct {
-	Constructor func(project interfaces.Project) *TyphoonServer
+	Constructor func(project interfaces.Project) interfaces.ServerInterface
 	server interfaces.ServerInterface
 	once sync.Once
 }
@@ -37,28 +39,47 @@ type TyphoonServer struct {
 	Level 			string
 	server 			*gin.Engine
 	logger 			*logger.TyphoonLogger
-	TracingOptions  interfaces.TracingOptions
 	resources   	map[string]*interfaces.Resource
 	callbacks 		map [string]func(ctx *gin.Context)
 
-	interfaces.BaseServerLabel
+	TracingOptions  *interfaces.TracingOptions
+	LoggerOptions	*interfaces.BaseLoggerOptions
+	SwaggerOptions *interfaces.SwaggerOptions
+
+
+	*interfaces.BaseServerLabel
 
 }
 
-func (s *TyphoonServer) InitLogger(opts interfaces.BaseLoggerOptions)  {
-	s.logger = &logger.TyphoonLogger{
-		TracingOptions: &s.TracingOptions,
-		Name: "Fetcher-Log",
-		Options: logger.Options{
-			BaseLoggerOptions: opts,
-		},
+func (s *TyphoonServer) InitLogger() interfaces.ServerInterface {
+	if s.LoggerOptions != nil {
+		s.logger = &logger.TyphoonLogger{
+			TracingOptions: s.TracingOptions,
+			Name: s.LoggerOptions.Name,
+			Options: logger.Options{
+				BaseLoggerOptions: s.LoggerOptions,
+			},
+		}
+
+		s.logger.Init()
 	}
 
-	s.logger.Init()
+	return s
 }
 
-func (s *TyphoonServer) initTracer()  {
-	if s.logger != nil {
+func (s *TyphoonServer) InitDocs() interfaces.ServerInterface {
+	if s.SwaggerOptions != nil {
+		url := ginSwagger.URL(s.SwaggerOptions.DocEndpoint)
+		color.Red("InitDocs URL >>> %s", s.SwaggerOptions.DocEndpoint)
+		s.server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
+	}
+
+	return s
+
+}
+
+func (s *TyphoonServer) InitTracer() interfaces.ServerInterface  {
+	if s.logger != nil && s.TracingOptions != nil {
 		p := ginopentracing.OpenTracer([]byte(s.logger.GetTracerHeader()))
 
 		s.server.Use(p)
@@ -75,17 +96,20 @@ func (s *TyphoonServer) initTracer()  {
 			[]byte("RequestID"),     // where the trace ID might already be populated in the headers
 			ginlogrus.WithAggregateLogging(false)))
 	}
+
+	return s
 }
 
-func (s *TyphoonServer) init()  {
+func (s *TyphoonServer) Init() interfaces.ServerInterface {
 	if s.server == nil {
-		s.resources = map[string]*interfaces.Resource{}
-		s.callbacks = map[string]func(ctx *gin.Context){}
+		s.resources = make(map[string]*interfaces.Resource)
+		s.callbacks = make(map[string]func(ctx *gin.Context))
 
 		s.server = gin.New()
-		s.initTracer()
 		s.server.Use(gin.Recovery())
 	}
+
+	return s
 }
 
 func (s *TyphoonServer) Run() error {
@@ -237,7 +261,7 @@ func (s *TyphoonServer) resourcesServe(method string, path string, callback func
 }
 
 func (s *TyphoonServer) Serve(method string, path string, callback func(ctx *gin.Context))  {
-	s.init()
+	s.Init()
 	if len(s.resources) == 0 {
 		s.callbacks[path] = callback
 		s.resourcesServe(method, path, callback)
@@ -252,15 +276,15 @@ func (s *TyphoonServer) CreateResource(path string, opts interfaces.BaseServerLa
 		Path: path,
 		Name: opts.Name,
 		Description: opts.Description,
-		Middlewares:     []*interfaces.Middleware{},
-		Actions:         map[string]*interfaces.Action{},
+		Middlewares:     make([]*interfaces.Middleware, 0),
+		Actions:         make(map[string]*interfaces.Action, 0),
 	}
 	err := s.initResource(newResource)
 	return err, newResource
 }
 
 func (s *TyphoonServer) AddResource(resource *interfaces.Resource) error  {
-	s.init()
+	s.Init()
 	err := s.initResource(resource)
 	return err
 }

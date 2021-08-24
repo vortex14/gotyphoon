@@ -56,7 +56,9 @@ func (a *Archon) RunProjectServers(project interfaces.Project)  {
 		go func(server interfaces.ServerInterface) {
 			if err:= server.Run(); err != nil {
 				color.Red("%s", err.Error())
+				return
 			}
+			server.InitDocs()
 		}(it.Run(project))
 	}
 }

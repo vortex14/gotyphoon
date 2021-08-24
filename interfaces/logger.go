@@ -20,6 +20,7 @@ type LoggerInterface interface {
 
 
 type BaseLoggerOptions struct {
+	Name string
 	Level string
 	ShowLine bool
 	ShowFile bool
