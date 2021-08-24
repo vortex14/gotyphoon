@@ -1,13 +1,14 @@
 package v1_1
 
 import (
-	"github.com/fatih/color"
-	interfaces2 "github.com/vortex14/gotyphoon/interfaces"
-	utils2 "github.com/vortex14/gotyphoon/utils"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/fatih/color"
+	interfaces2 "github.com/vortex14/gotyphoon/interfaces"
+	utils2 "github.com/vortex14/gotyphoon/utils"
 )
 
 

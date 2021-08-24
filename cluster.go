@@ -1,19 +1,21 @@
 package typhoon
 
 import (
-	"github.com/fatih/color"
-	"github.com/gdamore/tcell/v2"
-	"github.com/olekukonko/tablewriter"
-	"github.com/rivo/tview"
-	"github.com/vortex14/gotyphoon/environment"
-	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/utils"
-	"github.com/xanzy/go-gitlab"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/gdamore/tcell/v2"
+	"github.com/olekukonko/tablewriter"
+	"github.com/rivo/tview"
+	"github.com/xanzy/go-gitlab"
+	"gopkg.in/yaml.v2"
+
+	"github.com/vortex14/gotyphoon/environment"
+	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/utils"
 )
 
 

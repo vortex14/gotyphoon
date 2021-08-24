@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/kelseyhightower/envconfig"
+
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/kelseyhightower/envconfig"
 )
 
 type DockerSettings struct {

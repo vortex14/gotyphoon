@@ -1,32 +1,41 @@
 package typhoon
 
 import (
+	"bufio"
 	"context"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/fsnotify/fsnotify"
-	"github.com/go-git/go-git/v5"
-	"github.com/vortex14/gotyphoon/config"
-	"github.com/vortex14/gotyphoon/data"
-	"github.com/vortex14/gotyphoon/environment"
-	"github.com/vortex14/gotyphoon/integrations/redis"
-	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/migrates/v1.1"
-	"github.com/vortex14/gotyphoon/services"
-	"github.com/vortex14/gotyphoon/utils"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
+	"sync"
+	"time"
+
+	"crypto/md5"
+	"encoding/hex"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
-	"time"
+
+	"github.com/fatih/color"
+	"github.com/fsnotify/fsnotify"
+	"github.com/go-git/go-git/v5"
+	"go.mongodb.org/mongo-driver/bson"
+
+	"github.com/vortex14/gotyphoon/data"
+	"github.com/vortex14/gotyphoon/environment"
+	"github.com/vortex14/gotyphoon/extensions/logger"
+	tyLog "github.com/vortex14/gotyphoon/extensions/logger"
+	"github.com/vortex14/gotyphoon/integrations/mongo"
+	"github.com/vortex14/gotyphoon/integrations/redis"
+	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/interfaces/ghosts"
+	"github.com/vortex14/gotyphoon/migrates/v1.1"
+	"github.com/vortex14/gotyphoon/services"
+	"github.com/vortex14/gotyphoon/utils"
 )
 
 type components = struct {
@@ -42,11 +51,19 @@ type Task struct {
 	wg     sync.WaitGroup
 }
 
+type Services struct {
+	Mongo map[string] mongo.Service
+	Redis map[string] redis.Service
+}
 
+
+type TestMongo struct {
+
+}
 
 type Project struct {
-	task              *Task
 	AutoReload        bool
+	task              *Task
 	Path              string
 	Name              string
 	Tag               string
@@ -55,11 +72,15 @@ type Project struct {
 	ConfigFile        string
 	Version           string
 	SelectedComponent []string
+	loggerOnce 		  sync.Once
 	components        components
 	repo              *git.Repository
-	Config            *config.Project
 	Watcher           fsnotify.Watcher
-	EnvSettings       *environment.Settings
+	Services		  *services.Services
+	logger 			  *logger.TyphoonLogger
+	EnvSettings 	  *environment.Settings
+	Archon        	  ghosts.ArchonInterface
+	Config      	  *interfaces.ConfigProject
 	BuilderOptions    *interfaces.BuilderOptions
 	Labels            *interfaces.ClusterProjectLabels
 }
@@ -70,6 +91,28 @@ func (p *Project) GetDockerImageName() string {
 
 func (p *Project) GetLabels() *interfaces.ClusterProjectLabels {
 	return p.Labels
+}
+
+func (p *Project) IsDebug() bool {
+	return p.Config.Debug
+}
+func (p *Project) RunFetcherQueues()  {
+	p.LoadConfig()
+	if p.components.ActiveComponents == nil {
+		p.initComponents()
+	}
+	p.components.ActiveComponents["fetcher"].InitConsumers(p)
+}
+
+func (p *Project) GetService(name string) interfaces.Service {
+	switch name {
+	case interfaces.NSQ:
+		return p.Services.Collections.Nsq
+	//case interfaces.MONGO:
+	//	return p.Services.Collections.Mongo
+
+	}
+	return nil
 }
 
 func (p *Project) GetRepo() (error, *git.Repository) {
@@ -146,7 +189,7 @@ func watchDirTeet(path string, fi os.FileInfo, err error) error {
 }
 
 func (p *Project) GetComponentPort(name string) int {
-	return p.Config.Config.GetComponentPort(name)
+	return p.Config.GetComponentPort(name)
 }
 
 func (p *Project) WatchDir(path string, fi os.FileInfo, err error) error {
@@ -163,6 +206,65 @@ func (p *Project) RunTestServices() {
 	typhoonServices.RunTestServices()
 }
 
+func (p *Project) ImportExceptions(component string, sourceFileName string) error {
+	currentPath, _ := os.Getwd()
+	importPath := fmt.Sprintf("%s/%s", currentPath, sourceFileName)
+	f, err := os.OpenFile(importPath, os.O_RDONLY, os.ModePerm)
+	if err != nil {
+		color.Red("open file error: %v", err)
+		return err
+	}
+	defer f.Close()
+	rd := bufio.NewReader(f)
+	for {
+		line, err := rd.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			log.Fatalf("read file line error: %v", err)
+			return err
+		}
+
+		//BsonTools.m
+		//var doc BsonTools.BSON
+		//bson.UnmarshalExtJSON()
+
+		//doc = suurceBson
+		//
+		//bson.MarshalExtJSONAppend()
+
+		//json, err := doc.JSON()
+		//if err != nil {
+		//	color.Red("--- > %+v", err)
+		//	return err
+		//}
+		var doc bson.D
+
+		if err := bson.UnmarshalExtJSON([]byte(line), false, &doc); err != nil {
+			return err
+		}
+
+		//d, _ := bson.Ma(doc)
+
+		//u := utils.Utils{}
+		//j
+
+		//o := u.PrintPrettyJson(suurceBson)
+
+		//println(BsonTools)
+
+		//color.Green("%+v", d)  // GET the line string
+
+
+
+		return nil
+	}
+
+	return nil
+}
+
 func (p *Project) ImportResponseData(url string, sourceFile string)  {
 	p.LoadConfig()
 
@@ -175,13 +277,21 @@ func (p *Project) ImportResponseData(url string, sourceFile string)  {
 	}
 	color.Green("url: %s", url)
 	taskid := md5.Sum([]byte(url))
+	p.LoadServices(interfaces.TyphoonIntegrationsOptions{
+			Redis: interfaces.BaseServiceOptions{
+				Active: true,
+			},
+
+
+
+		},
+	)
 	redisPath := fmt.Sprintf("%s:%s", p.GetName(), hex.EncodeToString(taskid[:]))
-
-	redisService := redis.Service{Config: &p.Config.Config}
-
-	_ = redisService.TestConnect()
-	redisService.Set(redisPath, string(dat))
-
+	err = p.Services.Collections.Redis["main"].Set(redisPath, string(dat))
+	if err != nil {
+		color.Red("%s", err.Error())
+		os.Exit(1)
+	}
 	color.Green(redisPath)
 }
 
@@ -359,7 +469,7 @@ func (p *Project) Run()  {
 
 	color.Magenta("start components")
 	p.AddPromise()
-	go p.initComponents()
+	go p.StartComponents(true)
 	//
 	p.AddPromise()
 	go p.task.Run()
@@ -415,7 +525,7 @@ func (p *Project) Watch()  {
 				componentChanged := ""
 
 				for _, component := range p.SelectedComponent {
-					if strings.Contains(event.Name, component) {
+					if strings.Contains(event.Name, strings.ToLower(component)) {
 						color.Yellow("reloading %s ... !", component)
 						componentChanged = component
 						break
@@ -524,38 +634,65 @@ func (p *Project) Build()  {
 	color.Yellow("builder run... options %+v", p.BuilderOptions)
 }
 
+func (p *Project) GetSelectedComponent() []string {
+	return p.SelectedComponent
+}
+
+func (p *Project) RunQueues()  {
+	if len(p.SelectedComponent) == 0 {
+		color.Red("No set components for project")
+		return
+	}
+	p.Services.RunNSQ()
+}
 
 func (p *Project) initComponents()  {
 	p.components.ActiveComponents = make(map[string]*Component)
-	p.Name = p.Config.Config.ProjectName
-	defer p.PromiseDone()
-
-	fmt.Printf(`
-												╭━┳━╭━╭━╮╮
-												┃┈┈┈┣▅╋▅┫┃
-												┃┈┃┈╰━╰━━━━━━╮
-												╰┳╯┈┈┈┈┈┈┈┈┈◢▉◣
-												╲┃┈┈┈┈┈┈┈┈┈┈▉▉▉
-												╲┃┈┈┈┈┈┈┈┈┈┈◥▉◤
-												╲┃┈┈┈┈╭━┳━━━━╯
-												╲┣━━━━━━┫
-	
-	
-	
-`)
-
+	p.Name = p.Config.ProjectName
 	for _, componentName := range p.SelectedComponent {
-		component := &Component{
-			Name: componentName,
+
+		var componentFileName string
+
+		switch componentName {
+		case interfaces.FETCHER:
+			componentFileName = interfaces.TYPHOON2PYTHON2FETCHER
+		case interfaces.PROCESSOR:
+			componentFileName = interfaces.TYPHOON2PYTHON2PROCESSOR
+		case interfaces.DONOR:
+			componentFileName = interfaces.TYPHOON2PYTHON2DONOR
+		case interfaces.TRANSPORTER:
+			componentFileName = interfaces.TYPHOON2PYTHON2TRANSPORTER
+		case interfaces.SCHEDULER:
+			componentFileName = interfaces.TYPHOON2PYTHON2SCHEDULER
+
 		}
 
+		component := &Component{
+			Name: componentName,
+			file: file{
+				Language: interfaces.PYTHON,
+				FileExt: fmt.Sprintf("%s.py", componentFileName),
+			},
+		}
 		p.components.ActiveComponents[componentName] = component
+	}
+}
 
+func (p *Project) StartComponents(promise bool)  {
 
-		component.Start(p)
+	fmt.Printf(tyLog.DOG)
 
+	if p.components.ActiveComponents == nil {
+		p.initComponents()
 	}
 
+	if promise {
+		defer p.PromiseDone()
+	}
+
+	for _, componentName := range p.SelectedComponent {
+		p.components.ActiveComponents[componentName].Start(p)
+	}
 }
 
 
@@ -582,7 +719,7 @@ func (p *Project) CreateSymbolicLink() error {
 func (p *Project) GetName() string {
 	projectName := p.Name
 	if len(projectName) == 0 {
-		projectName = p.Config.Config.ProjectName
+		projectName = p.Config.ProjectName
 	}
 	return projectName
 }
@@ -612,23 +749,63 @@ func (p *Project) GetProjectPath() string {
 	return pathProject
 }
 func (p *Project) GetLogLevel() string {
+	if len(p.LogLevel) == 0 {
+		config := p.LoadConfig()
+		if config.Debug {
+			p.LogLevel = interfaces.DEBUG
+		} else {
+			p.LogLevel = interfaces.INFO
+		}
+	}
+
 	return p.LogLevel
 }
 
-func (p *Project) LoadConfig() (configProject *config.Project) {
+
+func (p *Project) LoadServices(opts interfaces.TyphoonIntegrationsOptions)  {
+	status := false
+	projectServices := services.Services{
+		Project: p,
+		Options: opts,
+	}
+
+	if opts.NSQ.Active {
+		projectServices.RunNSQ()
+		status = true
+	}
+
+	if opts.Mongo.Active {
+		projectServices.LoadMongoServices()
+		status = true
+	}
+
+	if opts.Redis.Active {
+		projectServices.LoadRedisServices()
+		status = true
+	}
+	p.Services = &projectServices
+
+	color.Yellow("LoadServices: %t", status)
+}
+
+func (p *Project) LoadConfig() (configProject *interfaces.ConfigProject) {
+	if p.Config != nil {
+		return p.Config
+	}
 	configPath := fmt.Sprintf("%s/%s", p.GetProjectPath(), p.ConfigFile)
+	color.Yellow("Load config from file: %s", configPath)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		color.Red("Config %s does not exists in project :%s", p.ConfigFile, configPath )
 		os.Exit(1)
 	}
 
-	var config config.Project
+	var loadedConfig interfaces.ConfigProject
 	yamlFile, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		log.Printf("config.yaml err   #%v ", err)
 		os.Exit(1)
 	} else {
-		err = yaml.Unmarshal(yamlFile, &config.Config)
+		err = yaml.Unmarshal(yamlFile, &loadedConfig)
 		if err != nil {
 			//log.Fatalf("Unmarshal: %v", err)
 			color.Red("Config load error: %s", err )
@@ -636,15 +813,22 @@ func (p *Project) LoadConfig() (configProject *config.Project) {
 		}
 
 	}
-	config.ConfigFile = configPath
 
-	p.Config = &config
+	loadedConfig.SetConfigName(p.ConfigFile)
+
+	loadedConfig.SetConfigPath(configPath)
+
+	//color.Yellow("Set Config details ... %s, %s", configLoad.GetConfigName(), configLoad.GetConfigPath())
+
+	p.Config = &loadedConfig
 
 	env := &environment.Environment{}
 	_, settings := env.GetSettings()
 
 	p.EnvSettings = settings
-	return p.Config
+
+
+	return &loadedConfig
 }
 
 func (p *Project) CheckProject() {
@@ -720,4 +904,22 @@ func handle() {
 		//fmt.Print("#")
 		time.Sleep(time.Millisecond * 200)
 	}
+}
+
+func (p *Project) RunArchon(promise bool) {
+	if p.Archon == nil {
+		color.Red("Archon doesn't exist in your project")
+		os.Exit(1)
+	}
+	p.LoadConfig()
+	p.Archon.RunDemons(p)
+	
+	p.Archon.RunProjectServers(p)
+
+	if promise {
+		p.Archon.AddPromise()
+	}
+
+
+
 }

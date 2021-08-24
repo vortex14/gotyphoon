@@ -3,10 +3,11 @@ package ssh
 import (
 	"bytes"
 	"fmt"
-	"github.com/fatih/color"
-	"golang.org/x/crypto/ssh"
 	"net"
 	"os"
+
+	"github.com/fatih/color"
+	"golang.org/x/crypto/ssh"
 )
 
 type SSH struct {

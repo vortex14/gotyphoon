@@ -5,17 +5,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/grafana-tools/sdk"
-	"github.com/vortex14/gotyphoon/config"
-	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/grafana-tools/sdk"
+	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/utils"
 )
 
 type DashBoard struct {
@@ -92,7 +92,7 @@ type Config struct {
 	DashBoardUrl string
 }
 
-func (d *DashBoard) getClient(configProject *config.Project) (context.Context, *sdk.Client) {
+func (d *DashBoard) getClient(configProject *interfaces.ConfigProject) (context.Context, *sdk.Client) {
 	settings := d.Project.GetEnvSettings()
 	c, _ := sdk.NewClient(settings.GrafanaEndpoint, settings.GrafanaToken, sdk.DefaultHTTPClient)
 	ctx := context.Background()
@@ -107,7 +107,7 @@ func (d *DashBoard) GetGrafanaDashboard() *DashboardGrafana {
 	return &configData
 }
 
-func (d *DashBoard) ImportGrafanaConfigLowLevel(jsonConfig []byte, folderId string) *config.GrafanaConfig {
+func (d *DashBoard) ImportGrafanaConfigLowLevel(jsonConfig []byte, folderId string) *interfaces.GrafanaConfig {
 	configProject := d.Project.LoadConfig()
 	settings := d.Project.GetEnvSettings()
 	ctx, c := d.getClient(configProject)
@@ -143,26 +143,26 @@ func (d *DashBoard) ImportGrafanaConfigLowLevel(jsonConfig []byte, folderId stri
 		os.Exit(1)
 	}
 
-	configDashboard := config.GrafanaConfig{
+	configDashboard := interfaces.GrafanaConfig{
 		Id:           strings.Split(strings.Split(response.ImportedURL, "d/")[1], "/")[0],
 		Name:         dashboardName,
 		FolderId:     folderId,
 		DashboardUrl: settings.GrafanaEndpoint + response.ImportedURL,
 	}
 
-	configProject.Config.Grafana = append(configProject.Config.Grafana, configDashboard)
+	configProject.Grafana = append(configProject.Grafana, configDashboard)
 
 	//color.Yellow("%+v", response)
-	configDumpData, err := yaml.Marshal(&configProject.Config)
+	configDumpData, err := yaml.Marshal(&configProject)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 		return nil
 	}
 	u := &utils.Utils{}
 	err = u.DumpToFile(&interfaces.FileObject{
-		Name: configProject.ConfigFile,
+		Name: configProject.GetConfigName(),
 		Data: string(configDumpData),
-		Path: configProject.ConfigFile,
+		Path: configProject.GetConfigName(),
 	})
 	if err != nil {
 		log.Fatalf("error: %v", err)
@@ -196,7 +196,7 @@ func (d *DashBoard) getFolderId(ctx context.Context, c *sdk.Client,folderUID str
 
 
 }
-func (d *DashBoard) ImportGrafanaConfig(folderId string) *config.GrafanaConfig {
+func (d *DashBoard) ImportGrafanaConfig(folderId string) *interfaces.GrafanaConfig {
 	_ = d.Project.LoadConfig()
 	rawBoard, _ := ioutil.ReadFile(d.Project.GetProjectPath() + "/" +d.ConfigName)
 
@@ -206,18 +206,18 @@ func (d *DashBoard) ImportGrafanaConfig(folderId string) *config.GrafanaConfig {
 }
 
 
-func (d *DashBoard) RemoveGrafanaDashboard() (error, *config.GrafanaConfig) {
+func (d *DashBoard) RemoveGrafanaDashboard() (error, *interfaces.GrafanaConfig) {
 	configProject := d.Project.LoadConfig()
 	grafanaDashboard := d.GetGrafanaDashboard()
-	var removedDashboard config.GrafanaConfig
+	var removedDashboard interfaces.GrafanaConfig
 	ctx, c := d.getClient(configProject)
 	var dashboardId string
 	dashboardName := "Dashboard of " + grafanaDashboard.Dashboard.Title
-	for i, dashboard := range configProject.Config.Grafana {
+	for i, dashboard := range configProject.Grafana {
 		if dashboard.Name == dashboardName {
-			configProject.Config.Grafana = append(configProject.Config.Grafana[:i], configProject.Config.Grafana[i+1:]...)
+			configProject.Grafana = append(configProject.Grafana[:i], configProject.Grafana[i+1:]...)
 			dashboardId = dashboard.Id
-			removedDashboard = config.GrafanaConfig{
+			removedDashboard = interfaces.GrafanaConfig{
 				Name: dashboardName,
 				Id: dashboardId,
 			}
@@ -234,7 +234,7 @@ func (d *DashBoard) RemoveGrafanaDashboard() (error, *config.GrafanaConfig) {
 
 	color.Green("%s was be removed.", dashboardName)
 
-	configDumpData, err := yaml.Marshal(&configProject.Config)
+	configDumpData, err := yaml.Marshal(&configProject)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 		return err, nil
@@ -243,7 +243,7 @@ func (d *DashBoard) RemoveGrafanaDashboard() (error, *config.GrafanaConfig) {
 	err = u.DumpToFile(&interfaces.FileObject{
 		Name: d.ConfigName,
 		Data: string(configDumpData),
-		Path: configProject.ConfigFile,
+		Path: configProject.GetConfigName(),
 	})
 	if err != nil {
 		log.Fatalf("error: %v", err)
@@ -281,18 +281,18 @@ func (d *DashBoard) CreateGrafanaMonitoringTemplates()  {
 func (d *DashBoard) CreateBaseGrafanaConfig()  {
 	color.Yellow("Creating base grafana properties into typhoon project config.yaml")
 	configProject := d.Project.LoadConfig()
-	configProject.Config.Grafana = append(configProject.Config.Grafana, config.GrafanaConfig{
+	configProject.Grafana = append(configProject.Grafana, interfaces.GrafanaConfig{
 		Name: "Typhoon project dashboard",
 		Id: "0000000",
 	})
 
-	configDumpData, _ := yaml.Marshal(&configProject.Config)
+	configDumpData, _ := yaml.Marshal(&configProject)
 
 	u := &utils.Utils{}
 	err := u.DumpToFile(&interfaces.FileObject{
 		Name: d.Project.GetConfigFile(),
 		Data: string(configDumpData),
-		Path: configProject.ConfigFile,
+		Path: configProject.GetConfigName(),
 	})
 
 	if err != nil {

@@ -7,18 +7,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/archive"
-	"github.com/fatih/color"
-	"github.com/vortex14/gotyphoon/environment"
-	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/utils"
 	"io"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/fatih/color"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/archive"
+
+	"github.com/vortex14/gotyphoon/environment"
+	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/utils"
 )
 
 
@@ -315,7 +318,7 @@ func (d *Docker) ProjectBuild()  {
 	projectConfig := d.Project.LoadConfig()
 	opts := types.ImageBuildOptions{
 		Dockerfile: "Dockerfile",
-		Tags:       []string{"typhoon-lite-" + projectConfig.Config.ProjectName},
+		Tags:       []string{"typhoon-lite-" + projectConfig.ProjectName},
 		Remove:     true,
 
 	}

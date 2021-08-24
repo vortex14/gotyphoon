@@ -4,10 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/go-cmd/cmd"
-	"github.com/go-logfmt/logfmt"
-	"github.com/vortex14/gotyphoon/interfaces"
 	"io"
 	"io/ioutil"
 	"log"
@@ -17,6 +13,13 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/fatih/color"
+	"github.com/go-cmd/cmd"
+	"github.com/go-logfmt/logfmt"
+
+	TyLog "github.com/vortex14/gotyphoon/extensions/logger"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 type Directory struct {
@@ -30,17 +33,24 @@ type Worker struct {
 	Status 		  chan bool
 }
 
+type file struct {
+	FileExt string
+	Language string
+}
+
 type Component struct {
+	file
 	Path string
 	Name string
-	isException bool
-	isDebug bool
 	Active bool
-	Producers map[string] *interfaces.Producer
-	Consumers map[string] [] *interfaces.Consumer
-	Pipelines map[string] *interfaces.Pipeline
+	isDebug bool
 	Worker *Worker
+	isException bool
 	Promise sync.WaitGroup
+	Producers interfaces.Producers
+	Pipelines interfaces.Pipelines
+	Consumers interfaces.Consumers
+	QueuesSettings interfaces.Queue
 }
 
 func (c *Component) AddPromise()  {
@@ -56,13 +66,12 @@ func (c *Component) WaitPromises()  {
 }
 
 func (c *Component) Start(project interfaces.Project)  {
-	color.Yellow("initStart %s", c.Name)
+	color.Yellow("initStart %s", c.FileExt)
 
-	pathExecute := fmt.Sprintf("%s.py", c.Name)
 	configArg := fmt.Sprintf("--config=%s", project.GetConfigFile())
 	logLevelArg := fmt.Sprintf("--level=%s", project.GetLogLevel())
 	projectNameArg := fmt.Sprintf("--project_name=%s", project.GetName())
-	c.Worker = &Worker{Command: "python3.8", Args: []string{pathExecute, configArg, logLevelArg, projectNameArg }}
+	c.Worker = &Worker{Command: "python3.8", Args: []string{c.FileExt, configArg, logLevelArg, projectNameArg }}
 	//c.Path = fmt.Sprintf("%s/project/%s", project.GetProjectPath(), c.Name )
 	c.Worker.Run(project)
 
@@ -98,7 +107,7 @@ func exec_cmd(cmd *exec.Cmd) {
 
 func (c *Component) Stop(project interfaces.Project)  {
 	status := c.Worker.Cmd.Status()
-	color.Green("%s status.PID %s", status.PID, c.Name)
+	color.Green("%d status.PID %s", status.PID, c.Name)
 	//if !IsClosed(c.Worker.Status){
 	c.Worker.Status <- false
 	//}
@@ -253,83 +262,97 @@ func (d *Directory) IsExistDir(path string) bool  {
 }
 
 func (c *Component) CheckComponent() bool {
-	var status = false
 
-	pathComponent := fmt.Sprintf("project/%s",c.Name)
+	var (
+		logVal string
+		status = false
+		fileName string
+		required []string
+	)
 
+	switch c.Name {
+	case interfaces.FETCHER:
+		fileName = interfaces.TYPHOON2PYTHON2FETCHER
+		required = []string{"executions", "responses", "__init__.py"}
+		logVal = "Check Fetcher dir"
+	case interfaces.PROCESSOR:
+		fileName = interfaces.TYPHOON2PYTHON2PROCESSOR
+		required = []string{"executable", "__init__.py"}
+		logVal = "Check processor dir"
+	case interfaces.DONOR:
+		fileName = interfaces.TYPHOON2PYTHON2DONOR
+		required = []string{"__init__.py", "v1", "routes.py"}
+		logVal = "Check donor dir"
+	case interfaces.TRANSPORTER:
+		fileName = interfaces.TYPHOON2PYTHON2TRANSPORTER
+		required = []string{"__init__.py", "consumers"}
+		logVal = "Check transporter dir"
+	case interfaces.SCHEDULER:
+		fileName = interfaces.TYPHOON2PYTHON2SCHEDULER
+		required = []string{"__init__.py"}
+		logVal = "Check scheduler dir"
+	default:
+		color.Red("Component not found %s", c.Name)
+		os.Exit(1)
+	}
+	pathComponent := fmt.Sprintf("project/%s", fileName)
 
-
-	if _, err := os.Stat(pathComponent); !os.IsNotExist(err) {
-
-		if c.Name == "fetcher" {
-			required := []string{"executions", "responses", "__init__.py"}
-
-			status = c.CheckDirectory(required, pathComponent)
-			logVal := fmt.Sprintf("Fetcher dir is %t", status)
-			if status == true {
-				color.Green(logVal)
-			} else {
-				color.Red(logVal)
-			}
-
-		} else if c.Name == "processor" {
-
-			required := []string{"executable", "__init__.py"}
-			status = c.CheckDirectory(required, pathComponent)
-			logVal := fmt.Sprintf("Processor dir is %t", status)
-			if status == true {
-				color.Green(logVal)
-			} else {
-				color.Red(logVal)
-			}
-
-		} else if c.Name == "scheduler" {
-			required := []string{"__init__.py"}
-			status = c.CheckDirectory(required, pathComponent)
-			logVal := fmt.Sprintf("Scheduler dir is %t", status)
-			if status == true {
-				color.Green(logVal)
-			} else {
-				color.Red(logVal)
-			}
-
-		} else if c.Name == "donor" {
-			required := []string{"__init__.py", "v1", "routes.py"}
-			status = c.CheckDirectory(required, pathComponent)
-			logVal := fmt.Sprintf("Scheduler dir is %t", status)
-			if status == true {
-				color.Green(logVal)
-			} else {
-				color.Red(logVal)
-			}
-
-		} else if c.Name == "result_transporter" {
-			required := []string{"__init__.py", "consumers"}
-			status = c.CheckDirectory(required, pathComponent)
-			logVal := fmt.Sprintf("Scheduler dir is %t", status)
-			if status == true {
-				color.Green(logVal)
-			} else {
-				color.Red(logVal)
-			}
-		}
-	} else {
-		color.Red("path %s doesn't exist", c.Name)
+	if _, err := os.Stat(pathComponent); os.IsNotExist(err) {
+		color.Red("Component: %s Path %s doesn't exist", c.Name, pathComponent)
+		return false
 	}
 
-	fileName := fmt.Sprintf("%s.py", c.Name)
-	required := []string{fileName}
+
+	status = c.CheckDirectory(required, pathComponent)
+
+	color.Yellow("Path: %s Component: %s Status: %t", pathComponent, c.Name, status)
+
+
+	if status {
+		color.Green(logVal)
+	} else {
+		color.Red(logVal)
+	}
+
+	fileNameExt := fmt.Sprintf("%s.py", fileName)
+	color.Yellow("Check file %s", fileNameExt)
+	required = []string{fileNameExt}
 	status = c.CheckDirectory(required, ".")
-	logVal := fmt.Sprintf("%s.py is %t", c.Name, status)
+	logVal = fmt.Sprintf("%s.py is %t", fileName, status)
 
 	if status == true {
 		color.Green(logVal)
+		c.FileExt = fileNameExt
 	} else {
 		color.Red(logVal)
 	}
 
 
 	return status
+}
+
+func (c *Component) InitConsumers(project interfaces.Project)  {
+	config := project.LoadConfig()
+	queueSettings :=  config.TyComponents.Fetcher.Queues
+	color.Yellow("current fetcher settings %+v", queueSettings)
+	color.Yellow("InitConsumers for %s", c.Name)
+}
+
+func (c *Component) InitProducers()  {
+
+}
+
+
+func (c *Component) StopConsumers()  {
+
+}
+
+func (c *Component) StopProducers()  {
+
+}
+
+func (c *Component) RunQueues() {
+
 }
 
 func (w *Worker) Run(project interfaces.Project) {
@@ -369,9 +392,7 @@ func (c *Component) Logging()  {
 			}
 
 			if strings.Contains(line, "@debug") {
-				fmt.Printf(`
--DEBUG-----------
-`)
+				fmt.Printf(TyLog.OWL)
 				c.isDebug = true
 				continue
 			}
@@ -390,9 +411,9 @@ func (c *Component) Logging()  {
 			}
 
 
-			if strings.Contains(line, ">>>!") {
+			if strings.Contains(line, ">>>!") || strings.Contains(line, "level=ERROR") && !c.isException {
 				c.isException = true
-				color.Red("Component %s has error.", c.Name)
+				fmt.Printf(TyLog.DINOSAUR, c.Name)
 				color.Red(line)
 				continue
 			}
@@ -422,21 +443,18 @@ func (c *Component) Logging()  {
 			for logDataMap.ScanRecord() {
 				for logDataMap.ScanKeyval() {
 
-
-
-					if c.Name == "processor" {
-						color.Yellow("%s = %s", logDataMap.Key(), logDataMap.Value())
-					} else if c.Name == "result_transporter" {
-						color.Green("%s = %s", logDataMap.Key(), logDataMap.Value())
-					} else if c.Name == "fetcher" {
+					switch c.Name {
+					case interfaces.FETCHER:
 						color.Blue("%s = %s", logDataMap.Key(), logDataMap.Value())
-					} else if c.Name == "donor" {
-						color.HiBlackString("%s = %s", logDataMap.Key(), logDataMap.Value())
-					} else if c.Name == "scheduler" {
+					case interfaces.PROCESSOR:
+						color.Yellow("%s = %s", logDataMap.Key(), logDataMap.Value())
+					case interfaces.SCHEDULER:
 						color.Cyan("%s = %s", logDataMap.Key(), logDataMap.Value())
+					case interfaces.TRANSPORTER:
+						color.Green("%s = %s", logDataMap.Key(), logDataMap.Value())
+					case interfaces.DONOR:
+						color.Magenta("%s = %s", logDataMap.Key(), logDataMap.Value())
 					}
-
-
 
 				}
 

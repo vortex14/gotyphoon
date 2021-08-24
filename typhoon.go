@@ -2,12 +2,14 @@ package typhoon
 
 import (
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/fsnotify/fsnotify"
-	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/utils"
 	"os"
 	"path/filepath"
+
+	"github.com/fatih/color"
+	"github.com/fsnotify/fsnotify"
+
+	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/utils"
 )
 
 
@@ -82,3 +84,4 @@ func ParseLogData(fileObject *interfaces.FileObject) error {
 
 
 }
+

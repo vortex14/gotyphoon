@@ -1,50 +1,50 @@
 package task
 
-
 type FetcherTask struct {
 	Proxy string `json:"proxy"`
-	Method  string `json:"method" default:"GET"`
-	Timeout int    `json:"timeout" default:"30"`
-	MaxRetries int `json:"max_retries" default:"15"`
-	MaxFailed int `json:"max_failed" default:"5"`
-	Headers map[string]string `json:"headers"`
+	Method  string `json:"method" default:"GET" fake:"{randomstring:[GET]}"`
+	Timeout int    `json:"timeout" default:"30" fake:"{number:30,60}"`
+	MaxRetries int `json:"max_retries" default:"15" fake:"{number:5,30}"`
+	MaxFailed int `json:"max_failed" default:"5" fake:"{number:2,60}"`
+	Headers  map[string]string `json:"headers"`
 	Cookies interface{} `json:"cookies"`
 	Auth    map[string]string `json:"auth"`
 	IsProxyRequired bool   `json:"is_proxy_required"`
 	IsResponseCache bool   `json:"is_response_cache"`
-	Strategy        string `json:"strategy"`
+	Strategy        string `json:"strategy" fake:"{randomstring:[http]}"`
 	Save            struct {
 		Project map[string]string `json:"project"`
 		System struct {
-			Failed int `json:"failed"`
-			Retries      int `json:"retries"`
-			StatusCode   int `json:"status_code"`
-			AddedAt      int `json:"added_at"`
-			RetriesDelay int `json:"retries_delay"`
-			ExecuteAt    int `json:"execute_at"`
+			Failed int `json:"failed" fake:"{number:0,0}"`
+			Retries      int `json:"retries" fake:"{number:0,0}"`
+			StatusCode   int `json:"status_code" fake:"{number:200,200}"`
+			AddedAt      int `json:"added_at" fake:"{number:0,0}"`
+			RetriesDelay int `json:"retries_delay" fake:"{number:7,10}"`
+			ExecuteAt    int `json:"execute_at" fake:"{number:0,0}"`
 			Exception    struct {
-				Type            interface{} `json:"type"`
-				Message         string      `json:"message"`
+				Type            interface{} `json:"type" `
+				Message         string      `json:"message"  fake:"skip"`
 				ErrorDefinition interface{} `json:"error_definition"`
 			} `json:"exception"`
 		} `json:"system"`
 	} `json:"save"`
-	Data              interface{} `json:"data"`
-	JSON              interface{} `json:"json"`
+	Data              interface{} `json:"data" fake:"skip"`
+	JSON              interface{} `json:"json" fake:"skip"`
 	Stream            bool        `json:"stream"`
 	UserAgentRequired bool        `json:"user_agent_required"`
 	ForceUpdate       bool        `json:"force_update" default:"true"`
-	LinesLimit        interface{} `json:"lines_limit"`
+	LinesLimit        map[string]string `json:"lines_limit" fake:"skip"`
 	Response          struct {
-		Content string `json:"content"`
-		Code    int    `json:"code"`
-		Headers map[string]string `json:"headers"`
-		Cookies string `json:"cookies"`
-		URL     string `json:"url"`
-		OrigURL string `json:"orig_url"`
+		Content string `json:"content" fake:"{response_product}"`
+		Code    int    `json:"code" fake:"skip"`
+		Headers map[string]string `json:"headers" fake:"skip"`
+		Cookies string `json:"cookies" fake:"skip"`
+		URL     string `json:"url" fake:"skip"`
+		OrigURL string `json:"orig_url" fake:"skip"`
 	} `json:"response"`
 
 }
+
 
 type Statuses map[int]bool
 type Codes map[string]int

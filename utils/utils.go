@@ -5,19 +5,26 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"log"
+	"math"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"text/template"
+	"time"
+
 	"github.com/fatih/color"
 	"github.com/go-logfmt/logfmt"
 	"github.com/gobuffalo/packd"
 	"github.com/gobuffalo/packr"
+	"github.com/gocarina/gocsv"
+	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"io"
-	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
-	"text/template"
 )
 
 type Utils struct {}
@@ -275,3 +282,69 @@ func (u *Utils) print(rd io.Reader) error {
 	return nil
 }
 
+func (u *Utils) PrintPrettyJson(f interface{}) string {
+	dump, err := json.MarshalIndent(f, "  ", "  ")
+	if err != nil {
+		color.Red("%s", err.Error())
+	}
+	return string(dump)
+}
+
+func (u *Utils) ReadCSV(object *interfaces.FileObject, bindings interface{})  {
+	csvData, err := os.OpenFile(object.Path, os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+	defer func(csvData *os.File) {
+		err := csvData.Close()
+		if err != nil {
+
+		}
+	}(csvData)
+
+	if err := gocsv.UnmarshalFile(csvData, bindings); err != nil { // Load clients from file
+		panic(err)
+	}
+}
+
+func (u *Utils) GetRandomFromSlice(slice []string) string {
+	rand.Seed(time.Now().Unix())
+	return slice[rand.Intn(len(slice))]
+}
+
+func (u *Utils) GetRandomString(length int, sequence string)  string {
+
+	var letters = []rune(sequence)
+	b := make([]rune, length)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+
+	return string(b)
+}
+
+func (u *Utils) GetUUID() string {
+	return uuid.NewString()
+}
+
+func (u *Utils) GetRandomFloat() float64 {
+
+	rand.Seed(time.Now().UnixNano())
+
+	roundValue := math.Floor(rand.Float64() * 10000) / 100
+	return roundValue
+}
+
+func (u *Utils) ConvertStringListToIntList(input []string) []int {
+	var output []int
+
+	for _, i := range input {
+		j, err := strconv.Atoi(i)
+		if err != nil {
+			color.Red("%s",err.Error())
+			continue
+		}
+		output = append(output, j)
+	}
+	return output
+}
