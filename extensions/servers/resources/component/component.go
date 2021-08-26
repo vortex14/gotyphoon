@@ -2,11 +2,11 @@ package component
 
 import (
 	"github.com/vortex14/gotyphoon/extensions/servers/resources/home"
-	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/interfaces/server"
 )
 
 type TyphoonComponentResource struct {
-	*interfaces.Resource
+	*server.Resource
 }
 
 func Constructor(name string, description string) *TyphoonComponentResource {

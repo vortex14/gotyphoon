@@ -2,6 +2,7 @@ package project
 
 import (
 	Errors "github.com/vortex14/gotyphoon/errors"
+	"github.com/vortex14/gotyphoon/interfaces/server"
 	"sync"
 
 	"github.com/fatih/color"
@@ -53,7 +54,7 @@ func (a *Archon) RunDemons(project interfaces.Project)  {
 
 func (a *Archon) RunProjectServers(project interfaces.Project)  {
 	for _, it := range a.Servers {
-		go func(server interfaces.ServerInterface) {
+		go func(server server.Interface) {
 			if err:= server.Run(); err != nil {
 				color.Red("%s", err.Error())
 				return

@@ -2,31 +2,34 @@ package home
 
 import (
 	"github.com/vortex14/gotyphoon/extensions/servers/controllers/ping"
-	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/interfaces/server"
 )
 
 type TyphoonMainResource struct {
-	*interfaces.Resource
+	*server.Resource
 }
 
 const (
+	NAMEDefault = "Main resource of /"
+	DESCRIPTIONDefault = `Main Resource of Typhoon Server. Access pass to / . 
+                  This resource handle all action going after / . As example /ping, /stats, /metrics. 
+                  Every action execute some controller which got ctx *gin.Context and logger as arguments.  
+				  The Resource grouping all actions and all sub resources contain all other paths. `
+
 	PING    = "ping"
 	STATS   = "stats"
 	METRICS = "metrics"
 )
 
-func Constructor() interfaces.ResourceInterface {
+func Constructor(path string) server.ResourceInterface {
 	return &TyphoonMainResource{
-		Resource: &interfaces.Resource{
-			Path: "/",
-			Name: "Main resource of /",
-			Description: `Main Resource of Typhoon Server. Access pass to / . 
-                  This resource handle all action going after / . As example /ping, /stats, /metrics. 
-                  Every action execute some controller which got ctx *gin.Context and logger as arguments.  
-				  The Resource grouping all actions and all sub resources contain all other paths. `,
-			Resource:    make(map[string]*interfaces.Resource),
-			Middlewares: make([]*interfaces.Middleware, 0),
-			Actions: map[string]*interfaces.Action{
+		Resource: &server.Resource{
+			Path: path,
+			Name: NAMEDefault,
+			Description: DESCRIPTIONDefault,
+			Resource:    make(map[string]*server.Resource),
+			Middlewares: make([]*server.Middleware, 0),
+			Actions: map[string]*server.Action{
 				PING: ping.Controller,
 			},
 		},

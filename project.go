@@ -72,15 +72,15 @@ type Project struct {
 	ConfigFile        string
 	Version           string
 	SelectedComponent []string
-	loggerOnce 		  sync.Once
+	loggerOnce        sync.Once
 	components        components
 	repo              *git.Repository
 	Watcher           fsnotify.Watcher
-	Services		  *services.Services
-	logger 			  *logger.TyphoonLogger
-	EnvSettings 	  *environment.Settings
-	Archon        	  ghosts.ArchonInterface
-	Config      	  *interfaces.ConfigProject
+	Services          *services.Services
+	logger            *logger.TyphoonLogger
+	EnvSettings       *environment.Settings
+	Archon            ghosts.ArchonInterface
+	Config            *interfaces.ConfigProject
 	BuilderOptions    *interfaces.BuilderOptions
 	Labels            *interfaces.ClusterProjectLabels
 }

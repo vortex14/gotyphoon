@@ -1,15 +1,41 @@
 package discovery
 
-type Discovery struct {
-	Port int
-	Name string
-	Description string
-}
+import (
+	v1 "github.com/vortex14/gotyphoon/extensions/servers/domains/discovery/resources/v1"
+	"github.com/vortex14/gotyphoon/interfaces"
+	serverInterface "github.com/vortex14/gotyphoon/interfaces/server"
+	"github.com/vortex14/gotyphoon/server"
+)
 
-func (d *Discovery) Run()  {
+const (
+	NAME = "Discovery"
+	DESCRIPTION = "Project discovery service"
+)
 
-}
+func Constructor(
+	port int,
 
-func (d *Discovery) Stop()  {
+	tracingOptions *interfaces.TracingOptions,
+	loggerOptions *interfaces.BaseLoggerOptions,
+	swaggerOptions *interfaces.SwaggerOptions,
 
+) serverInterface.Interface {
+
+	discoveryServer := (
+		&server.TyphoonServer{
+			Port: port,
+			Level: interfaces.INFO,
+			BaseServerLabel: &serverInterface.BaseServerLabel{
+				Name: NAME,
+				Description: DESCRIPTION,
+			},
+			TracingOptions: tracingOptions,
+			LoggerOptions: loggerOptions,
+			SwaggerOptions: swaggerOptions,
+		}).
+		Init().
+		InitLogger().
+		AddResource(v1.Constructor().Get())
+
+	return discoveryServer
 }

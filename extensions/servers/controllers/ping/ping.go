@@ -3,12 +3,11 @@ package ping
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-
-	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/interfaces/server"
 )
 
 const (
-	NAME 		= "Ping Controller"
+	NAME 		= "ping"
 	DESCRIPTION = "Ping-Pong controller extension for Typhoon server"
 
 	PING 		= "Ping"
@@ -44,9 +43,9 @@ func handler (logger *logrus.Entry, ctx *gin.Context ) {
 	})
 }
 
-var Controller = &interfaces.Action{
+var Controller = &server.Action{
 	Name: NAME,
 	Description: DESCRIPTION,
 	Controller: handler,
-	Methods : []string{interfaces.GET, interfaces.PATCH, interfaces.POST, interfaces.PUT, interfaces.DELETE},
+	Methods : []string{server.GET, server.PATCH, server.POST, server.PUT, server.DELETE},
 }

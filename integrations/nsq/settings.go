@@ -17,7 +17,9 @@ func (s *Service) initConfig()  {
 		//color.Red("%+v", s.Options)
 		s.priorityConsumers = make(map[string]map[int]*Consumer)
 		s.priorityProducers = make(map[string]map[int]*Producer)
-		s.Config = s.Project.LoadConfig()
+		if s.Project != nil {
+			s.Config = s.Project.LoadConfig()
+		}
 	}
 }
 
