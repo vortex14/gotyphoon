@@ -10,7 +10,7 @@ type TyphoonComponentResource struct {
 }
 
 func Constructor(name string, description string) *TyphoonComponentResource {
-	mainResource := home.Constructor().Get()
+	mainResource := home.Constructor("/").Get()
 	mainResource.Name = name
 	mainResource.Description = description
 	return &TyphoonComponentResource{

@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/Bose/go-gin-logrus v1.0.3
 	github.com/Bose/go-gin-opentracing v1.0.5
-	github.com/DataDog/go-python3 v0.0.0-00010101000000-000000000000
+	github.com/DataDog/go-python3 v0.0.0-20210805105248-03d93fb21b67
 	//github.com/DataDog/go-python3 v0.0.0-20210805105248-03d93fb21b67
 	github.com/EDDYCJY/fake-useragent v0.2.0
 	github.com/Microsoft/hcsshim v0.8.20 // indirect
@@ -15,6 +15,7 @@ require (
 	github.com/bxcodec/faker v2.0.1+incompatible // indirect
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/containerd/containerd v1.5.4 // indirect
+	github.com/datadog/go-python3 v0.0.0-20210805105248-03d93fb21b67 // indirect
 	github.com/deliveryhero/pipeline v0.3.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v20.10.7+incompatible

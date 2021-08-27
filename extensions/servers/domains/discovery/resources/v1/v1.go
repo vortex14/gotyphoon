@@ -9,10 +9,6 @@ import (
 	"github.com/vortex14/gotyphoon/extensions/servers/domains/discovery/resources/v1/projects"
 )
 
-type Resource struct {
-	*server.Resource
-}
-
 func Constructor() server.ResourceInterface {
 	return home.Constructor("/api/v1").
 		AddAction(controllers.MeController).

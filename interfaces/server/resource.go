@@ -35,16 +35,13 @@ func (r *Resource) GetDescription() string {
 
 
 func (r *Resource) AddAction(action *Action) ResourceInterface {
-	if found := r.Actions[action.Name]; found != nil { color.Red("%s", Errors.ActionAlreadyExists) }
+	if found := r.Actions[action.Name]; found != nil { color.Red("%s", Errors.ActionAlreadyExists.Error()) }
 	r.Actions[action.Name] = action
 	return r
 }
 
 func (r *Resource) AddResource(resource *Resource) ResourceInterface  {
-	if found := r.Resource[resource.Path]; found != nil {
-		color.Red("%s", Errors.ResourceAlreadyExist)
-	}
-	color.Yellow("AddResource: %s; Path: %s", resource.Name, resource.Path)
+	if found := r.Resource[resource.Path]; found != nil { color.Red("%s", Errors.ResourceAlreadyExist.Error()) }
 	r.Resource[resource.Path] = resource
 	return r
 }

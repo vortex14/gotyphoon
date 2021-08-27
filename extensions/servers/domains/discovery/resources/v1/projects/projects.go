@@ -10,12 +10,12 @@ const (
 	DESCRIPTION = "resource of projects for discovery service"
 )
 
-type TyphoonServiceResource struct {
+type TyphoonProjectsResource struct {
 	*server.Resource
 }
 
 func Constructor(path string) server.ResourceInterface {
-	return &TyphoonServiceResource{
+	return &TyphoonProjectsResource{
 		Resource: &server.Resource{
 			Path: path,
 			Name: NAME,
