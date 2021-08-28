@@ -1,13 +1,10 @@
 package home
 
 import (
+	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/extensions/servers/controllers/ping"
-	"github.com/vortex14/gotyphoon/interfaces/server"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
-
-type TyphoonMainResource struct {
-	*server.Resource
-}
 
 const (
 	NAMEDefault = "Main resource of /"
@@ -21,17 +18,15 @@ const (
 	METRICS = "metrics"
 )
 
-func Constructor(path string) server.ResourceInterface {
-	return &TyphoonMainResource{
-		Resource: &server.Resource{
-			Path: path,
-			Name: NAMEDefault,
-			Description: DESCRIPTIONDefault,
-			Resource:    make(map[string]*server.Resource),
-			Middlewares: make([]*server.Middleware, 0),
-			Actions: map[string]*server.Action{
-				PING: ping.Controller,
-			},
+func Constructor(path string) interfaces.ResourceInterface {
+	return &forms.Resource{
+		Path: path,
+		Name: NAMEDefault,
+		Description: DESCRIPTIONDefault,
+		Resources:    make(map[string]interfaces.ResourceInterface),
+		Middlewares: make([]interfaces.MiddlewareInterface, 0),
+		Actions: map[string]interfaces.ActionInterface{
+			PING: ping.Controller,
 		},
 	}
 }

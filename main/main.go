@@ -5,7 +5,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/vortex14/gotyphoon/data/fake"
 	"github.com/vortex14/gotyphoon/extensions/logger"
-	httpPipeline "github.com/vortex14/gotyphoon/extensions/pipelines/http/default"
+	httpPipeline "github.com/vortex14/gotyphoon/extensions/pipelines/http/strategies/default"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/utils"
 	"strconv"
@@ -49,14 +49,11 @@ var productIds = []int{3454581, 3454582, 3470493, 3931128, 3628008, 3628009, 368
 	4039025, 3694521, 2112500,
 }
 
-func Get(productId int)  {
-
-}
-
 func main()  {
 	var tableData [][]string
 	var notFoundtableData [][]string
 	u := utils.Utils{}
+
 
 	header := []string{"№","Url", "PLU_ID", "Status"}
 
@@ -81,7 +78,7 @@ func main()  {
 		}
 
 
-		//fakeTask.URL = "https://httpstat.us/200"
+		fakeTask.URL = "https://httpstat.us/200"
 		fakeTask.URL = fmt.Sprintf("http://media.x5.ru/rest/x5/esom?plu=%d", productId)
 		//fakeTask.URL = fmt.Sprintf("http://192.168.41.242:8000/api/v1/data/get_photo?id=%d", productId)
 

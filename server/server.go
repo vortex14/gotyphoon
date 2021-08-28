@@ -2,7 +2,8 @@ package server
 
 import (
 	"fmt"
-	"github.com/vortex14/gotyphoon/interfaces/server"
+	"github.com/vortex14/gotyphoon/elements/forms"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -22,12 +23,12 @@ import (
 
 
 type ServerBuilder struct {
-	Constructor func(project interfaces.Project) server.Interface
-	server      server.Interface
+	Constructor func(project interfaces.Project) interfaces.ServerInterface
+	server      interfaces.ServerInterface
 	once        sync.Once
 }
 
-func (s *ServerBuilder) Run(project interfaces.Project) server.Interface {
+func (s *ServerBuilder) Run(project interfaces.Project) interfaces.ServerInterface {
 	s.once.Do(func() {
 		s.server = s.Constructor(project)
 	})
@@ -36,23 +37,24 @@ func (s *ServerBuilder) Run(project interfaces.Project) server.Interface {
 
 type TyphoonServer struct {
 	Port 			int
-	IsRunning   	bool
+	isRunning   	bool
+	IsDebug         bool
 	Level 			string
 	server 			*gin.Engine
 	logger 			*logger.TyphoonLogger
-	resources   	map[string]*server.Resource
+	resources   	map [string]interfaces.ResourceInterface
 	callbacks 		map [string]func(ctx *gin.Context)
 
 	TracingOptions  *interfaces.TracingOptions
 	LoggerOptions	*interfaces.BaseLoggerOptions
-	SwaggerOptions *interfaces.SwaggerOptions
+	SwaggerOptions  *interfaces.SwaggerOptions
 
 
-	*server.BaseServerLabel
+	*interfaces.BaseServerLabel
 
 }
 
-func (s *TyphoonServer) InitLogger() server.Interface {
+func (s *TyphoonServer) InitLogger() interfaces.ServerInterface {
 	if s.LoggerOptions != nil {
 		s.logger = &logger.TyphoonLogger{
 			TracingOptions: s.TracingOptions,
@@ -68,7 +70,7 @@ func (s *TyphoonServer) InitLogger() server.Interface {
 	return s
 }
 
-func (s *TyphoonServer) InitDocs() server.Interface {
+func (s *TyphoonServer) InitDocs() interfaces.ServerInterface {
 	if s.SwaggerOptions != nil {
 		url := ginSwagger.URL(s.SwaggerOptions.DocEndpoint)
 		color.Red("InitDocs URL >>> %s", s.SwaggerOptions.DocEndpoint)
@@ -79,7 +81,7 @@ func (s *TyphoonServer) InitDocs() server.Interface {
 
 }
 
-func (s *TyphoonServer) InitTracer() server.Interface {
+func (s *TyphoonServer) InitTracer() interfaces.ServerInterface {
 	if s.logger != nil && s.TracingOptions != nil {
 		p := ginopentracing.OpenTracer([]byte(s.logger.GetTracerHeader()))
 
@@ -101,9 +103,9 @@ func (s *TyphoonServer) InitTracer() server.Interface {
 	return s
 }
 
-func (s *TyphoonServer) Init() server.Interface {
+func (s *TyphoonServer) Init() interfaces.ServerInterface {
 	if s.server == nil {
-		s.resources = make(map[string]*server.Resource)
+		s.resources = make(map[string]interfaces.ResourceInterface)
 		s.callbacks = make(map[string]func(ctx *gin.Context))
 
 		s.server = gin.New()
@@ -114,7 +116,7 @@ func (s *TyphoonServer) Init() server.Interface {
 }
 
 func (s *TyphoonServer) Run() error {
-	if !s.IsRunning {
+	if !s.isRunning && len(s.resources) > 0 {
 		port := fmt.Sprintf(":%d", s.Port)
 		err := s.server.Run(port)
 		if err != nil {
@@ -124,6 +126,8 @@ func (s *TyphoonServer) Run() error {
 
 		color.Yellow("Running Server %s ", port)
 
+	} else if len(s.resources) == 0 {
+		logrus.Error(Errors.NoResourcesAvailable.Error())
 	}
 
 
@@ -152,12 +156,14 @@ func (s *TyphoonServer) isMainAction(ctx *gin.Context) bool {
 	return status
 }
 
-func (s *TyphoonServer) getAction(ctx *gin.Context) (*server.Action) {
+// getAction find the correct action for the client request
+func (s *TyphoonServer) getAction(logger interfaces.LoggerInterface, ctx *gin.Context) (interfaces.ActionInterface) {
 	actionPath := ctx.Request.URL.Path
+	//logger.Debug(actionPath, s.resources)
 	paths := strings.Split(actionPath, "/")
 
-	var currentResource *server.Resource
-	var currentAction *server.Action
+	var currentResource interfaces.ResourceInterface
+	var currentAction interfaces.ActionInterface
 
 	var joinedPath string
 	var found bool
@@ -171,13 +177,13 @@ func (s *TyphoonServer) getAction(ctx *gin.Context) (*server.Action) {
 		}
 
 		if currentResource != nil {
-			if subResource, ok := currentResource.Resource[path]; ok {
-				currentResource = subResource
+			if ok, resource := currentResource.HasResource(path); ok {
+				currentResource = resource
 				found = true
 				continue
 			}
-			if currentHandler, ok := currentResource.Actions[path]; ok {
-				currentAction = currentHandler
+			if ok, action := currentResource.HasAction(path); ok {
+				currentAction = action
 				found = true
 			}
 		}
@@ -208,9 +214,10 @@ func (s *TyphoonServer) getAction(ctx *gin.Context) (*server.Action) {
 	return currentAction
 }
 
+// requestHandler handle all HTTP request in here
 func (s *TyphoonServer) requestHandler(ctx *gin.Context)  {
 	logger := ginlogrus.GetCtxLogger(ctx)
-	action := s.getAction(ctx)
+	action := s.getAction(logger, ctx)
 	if action == nil {
 		logger.Error("Not found")
 		ctx.JSON(404, gin.H{
@@ -221,26 +228,60 @@ func (s *TyphoonServer) requestHandler(ctx *gin.Context)  {
 	}
 
 	logger = logger.WithFields(logrus.Fields{
-		"controller": action.Name,
+		"controller": action.GetName(),
 	})
 
-	controller := action.Controller
 
-	controller(logger, ctx)
+	// Pass request to controller middleware stack.
+	// Middleware may reject request by custom condition or just enrich context client request.
+	// Middleware may raise exception, but it be pass if flag required = false.
+	// Flag = true will be immediately reject client request
+	statusMiddlewareStack := true
+	var LastErrorMiddleware error
+	{
+		for _, middleware := range action.GetMiddlewareStack() {
+			middlewareLogger := logger.WithFields(logrus.Fields{
+				"middleware": middleware.GetName(),
+			})
+
+			// Refect client request
+			middleware.Pass(ctx, middlewareLogger, func(err error) {
+				LastErrorMiddleware = err
+				if middleware.IsRequired() {
+					middlewareLogger.Error(err.Error())
+
+					ctx.JSON(http.StatusBadRequest, gin.H{
+						"message": err.Error(),
+						"status": false,
+					})
+					statusMiddlewareStack = false
+					return
+				} else {
+					middlewareLogger.Warning(err.Error())
+				}
+			})
+
+		}
+
+	}
+	if statusMiddlewareStack {
+		controller := action.GetController()
+
+		controller(ctx, logger)
+	}
+
 
 }
 
-func (s *TyphoonServer) initActions(resource *server.Resource)  {
-	for name, action := range resource.Actions {
-		for _, method := range action.Methods {
+func (s *TyphoonServer) initActions(resource interfaces.ResourceInterface)  {
+	for _, action := range resource.GetActions() {
+		for _, method := range action.GetMethods() {
 			var handlerPath string
-			if resource.Path != "/" {
-				handlerPath = fmt.Sprintf("%s/%s",resource.Path, name)
+			if resource.GetPath() != "/" {
+				handlerPath = fmt.Sprintf("%s/%s",resource.GetPath(), action.GetPath())
 			} else {
-				handlerPath = fmt.Sprintf("/%s", name)
+				handlerPath = fmt.Sprintf("/%s", action.GetPath())
 			}
-
-			//color.Yellow("init action %s ==> %s", name, handlerPath)
 
 			s.Serve(method, handlerPath, s.requestHandler)
 
@@ -248,46 +289,46 @@ func (s *TyphoonServer) initActions(resource *server.Resource)  {
 	}
 }
 
-func (s *TyphoonServer) buildSubResources(parentPath string, newResource *server.Resource)  {
+func (s *TyphoonServer) buildSubResources(parentPath string, newResource interfaces.ResourceInterface)  {
 
-	for resourceName, subResource := range newResource.Resource {
+	for resourceName, subResource := range newResource.GetResources() {
 		resourcePath := fmt.Sprintf("%s/%s", parentPath, resourceName)
 
-		if len(subResource.Actions) > 0 {
+		if subResource.GetCountActions() > 0 {
 			s.buildSubActions(resourcePath, subResource)
 		}
 
-		if len(subResource.Resource) > 0 {
+		if subResource.GetCountSubResources() > 0 {
 			s.buildSubResources(resourcePath, subResource)
 		}
 	}
 }
 
-func (s *TyphoonServer) buildSubActions(parentPath string, newResource *server.Resource)  {
-	for name, action := range newResource.Actions {
-		for _, method := range action.Methods {
+func (s *TyphoonServer) buildSubActions(parentPath string, newResource interfaces.ResourceInterface)  {
+	for name, action := range newResource.GetActions() {
+		for _, method := range action.GetMethods() {
 			handlerPath := fmt.Sprintf("%s/%s", parentPath, name)
 			s.Serve(method, handlerPath, s.requestHandler)
 		}
 	}
 }
 
-func (s *TyphoonServer) initResource(newResource *server.Resource) error {
-	if _, ok := s.resources[newResource.Path]; ok {
+func (s *TyphoonServer) initResource(newResource interfaces.ResourceInterface) error {
+	if _, ok := s.resources[newResource.GetPath()]; ok {
 		return Errors.ResourceAlreadyExist
 	} else {
-		s.resources[newResource.Path] = newResource
+		s.resources[newResource.GetPath()] = newResource
 		s.initActions(newResource)
 
 		// build resource fractal
-		if len(newResource.Resource) > 0 {
-			s.buildSubResources(newResource.Path, newResource)
+		if newResource.GetCountSubResources() > 0 {
+			s.buildSubResources(newResource.GetPath(), newResource)
 		}
 	}
 	return nil
 }
 
-func (s *TyphoonServer) resourcesServe(method string, path string, callback func(ctx *gin.Context))  {
+func (s *TyphoonServer) initHandler(method string, path string, callback func(ctx *gin.Context))  {
 
 	var handler func(ctx *gin.Context)
 
@@ -298,15 +339,15 @@ func (s *TyphoonServer) resourcesServe(method string, path string, callback func
 	}
 
 	switch method {
-	case server.GET:
+	case interfaces.GET:
 		s.server.GET(path, handler)
-	case server.POST:
+	case interfaces.POST:
 		s.server.POST(path, handler)
-	case server.PUT:
+	case interfaces.PUT:
 		s.server.PUT(path, handler)
-	case server.PATCH:
+	case interfaces.PATCH:
 		s.server.PATCH(path, handler)
-	case server.DELETE:
+	case interfaces.DELETE:
 		s.server.DELETE(path, handler)
 	}
 }
@@ -315,26 +356,26 @@ func (s *TyphoonServer) Serve(method string, path string, callback func(ctx *gin
 	s.Init()
 	if len(s.resources) == 0 {
 		s.callbacks[path] = callback
-		s.resourcesServe(method, path, callback)
+		s.initHandler(method, path, callback)
 	} else {
-		s.resourcesServe(method, path, nil)
+		s.initHandler(method, path, nil)
 	}
 
 }
 
-func (s *TyphoonServer) CreateResource(path string, opts server.BaseServerLabel) (error, *server.Resource) {
-	newResource := &server.Resource{
+func (s *TyphoonServer) CreateResource(path string, opts interfaces.BaseServerLabel) (error, interfaces.ResourceInterface) {
+	newResource := &forms.Resource{
 		Path: path,
 		Name: opts.Name,
 		Description: opts.Description,
-		Middlewares:     make([]*server.Middleware, 0),
-		Actions:         make(map[string]*server.Action, 0),
+		Middlewares:     make([]interfaces.MiddlewareInterface, 0),
+		Actions:         make(map[string]interfaces.ActionInterface, 0),
 	}
 	err := s.initResource(newResource)
 	return err, newResource
 }
 
-func (s *TyphoonServer) AddResource(resource *server.Resource) server.Interface  {
+func (s *TyphoonServer) AddResource(resource interfaces.ResourceInterface) interfaces.ServerInterface {
 	s.Init()
 	err := s.initResource(resource)
 	if err != nil {

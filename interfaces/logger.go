@@ -7,17 +7,14 @@ const (
 	WARNING  = "WARNING"
 	INFO   	 = "INFO"
 	ERROR    = "ERROR"
-
-
 )
 
 type LoggerInterface interface {
-	Debug(message string)
-	Info(message string)
-	Warning(message string)
-	Error(message string)
+	Debug    (args ...interface{})
+	Info     (args ...interface{})
+	Warning  (args ...interface{})
+	Error    (args ...interface{})
 }
-
 
 type BaseLoggerOptions struct {
 	Name string

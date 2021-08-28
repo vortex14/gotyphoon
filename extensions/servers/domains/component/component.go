@@ -2,21 +2,20 @@ package component
 
 import (
 	"github.com/vortex14/gotyphoon/interfaces"
-	serverInterface "github.com/vortex14/gotyphoon/interfaces/server"
 	"github.com/vortex14/gotyphoon/server"
 )
 
 
 func Constructor(
 	name string,
-	labels *serverInterface.BaseServerLabel,
+	labels *interfaces.BaseServerLabel,
 	project interfaces.Project,
 
 	tracingOptions *interfaces.TracingOptions,
 	loggerOptions *interfaces.BaseLoggerOptions,
 	swaggerOptions *interfaces.SwaggerOptions,
 
-) serverInterface.Interface {
+) interfaces.ServerInterface {
 
 	componentServer := (
 		&server.TyphoonServer{

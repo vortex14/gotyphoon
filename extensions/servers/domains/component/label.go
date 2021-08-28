@@ -2,7 +2,6 @@ package component
 
 import (
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/interfaces/server"
 )
 
 func getDescription(componentName string) string {
@@ -25,8 +24,8 @@ func getDescription(componentName string) string {
 	return description
 }
 
-func ConstructorLabelOptions(componentName string) *server.BaseServerLabel {
-	return &server.BaseServerLabel{
+func ConstructorLabelOptions(componentName string) *interfaces.BaseServerLabel {
+	return &interfaces.BaseServerLabel{
 		Name: componentName,
 		Description: getDescription(componentName),
 	}

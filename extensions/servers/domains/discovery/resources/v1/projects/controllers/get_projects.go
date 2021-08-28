@@ -3,7 +3,7 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/vortex14/gotyphoon/interfaces/server"
+	"github.com/vortex14/gotyphoon/interfaces"
 	"time"
 )
 
@@ -42,9 +42,9 @@ func projectsHandler (logger *logrus.Entry, ctx *gin.Context ) {
 	ctx.JSON(200, Projects)
 }
 
-var ProjectsController = &server.Action{
+var ProjectsController = &interfaces.Action{
 	Name: ProjectsControllerName,
 	Description: ProjectsControllerDescription,
 	Controller: projectsHandler,
-	Methods : []string{server.GET},
+	Methods : []string{interfaces.GET},
 }

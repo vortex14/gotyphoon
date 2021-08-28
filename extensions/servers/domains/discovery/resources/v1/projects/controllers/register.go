@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	Errors "github.com/vortex14/gotyphoon/errors"
-	"github.com/vortex14/gotyphoon/interfaces/server"
+	"github.com/vortex14/gotyphoon/interfaces"
 	"net/http"
 	"time"
 )
@@ -63,9 +63,9 @@ func registerHandler (logger *logrus.Entry, ctx *gin.Context ) {
 	ctx.JSON(200, &Status{Status: true})
 }
 
-var RegisterController = &server.Action{
+var RegisterController = &interfaces.Action{
 	Name: RegisterControllerName,
 	Description: RegisterControllerDescription,
 	Controller: registerHandler,
-	Methods : []string{server.POST},
+	Methods : []string{interfaces.POST},
 }

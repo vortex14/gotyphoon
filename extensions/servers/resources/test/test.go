@@ -2,6 +2,7 @@ package test
 
 import (
 	"github.com/vortex14/gotyphoon/extensions/servers/controllers/ping"
+	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/interfaces/server"
 )
 
@@ -14,7 +15,7 @@ type TyphoonTestResource struct {
 	*server.Resource
 }
 
-func Constructor() server.ResourceInterface {
+func Constructor() interfaces.ResourceInterface {
 	return &TyphoonTestResource{
 		Resource: &server.Resource{
 			Path: NAME,
@@ -22,7 +23,7 @@ func Constructor() server.ResourceInterface {
 			Description: DESCRIPTION,
 			Resource:    make(map[string]*server.Resource),
 			Middlewares: make([]*server.Middleware, 0),
-			Actions: map[string]*server.Action{
+			Actions: map[string]*interfaces.Action{
 				NAME: ping.Controller,
 			},
 		},

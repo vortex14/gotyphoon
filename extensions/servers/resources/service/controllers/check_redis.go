@@ -3,10 +3,8 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/interfaces/server"
-
 	"github.com/vortex14/gotyphoon/integrations/redis"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 const (
@@ -46,10 +44,10 @@ func RedisHandler (logger *logrus.Entry, ctx *gin.Context ) {
 	})
 }
 
-var RedisController = &server.Action{
+var RedisController = &interfaces.Action{
 	Name: CheckRedisPath,
 	Description: CheckRedisDescription,
 	Controller: RedisHandler,
-	Methods : []string{server.GET},
+	Methods : []string{interfaces.GET},
 }
 

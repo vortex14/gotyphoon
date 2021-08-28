@@ -21,9 +21,9 @@ func (p *Python) InitEnvironment()  {
 }
 
 func (f *PythonFunction) newFunction() *Python3.PyObject {
-	ref := Python3.PyFunction_New(nil, nil)
-	color.Red("%+v", ref)
-	return ref
+	//ref := Python3.PyFunction_New(nil, nil)
+	//color.Red("%+v", ref)
+	return nil
 }
 
 

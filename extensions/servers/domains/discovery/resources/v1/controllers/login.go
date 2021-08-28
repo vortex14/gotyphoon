@@ -3,7 +3,7 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/vortex14/gotyphoon/interfaces/server"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 
@@ -29,10 +29,10 @@ func handler (logger *logrus.Entry, ctx *gin.Context ) {
 	ctx.String(200, JWTAUTHDefault)
 }
 
-var LoginController = &server.Action{
+var LoginController = &interfaces.Action{
 	Name: NAME,
 	Description: DESCRIPTION,
 	Controller: handler,
-	Methods : []string{server.POST},
+	Methods : []string{interfaces.POST},
 }
 

@@ -3,7 +3,7 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/vortex14/gotyphoon/interfaces/server"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 const (
@@ -38,10 +38,10 @@ func meHandler (logger *logrus.Entry, ctx *gin.Context ) {
 	})
 }
 
-var MeController = &server.Action{
+var MeController = &interfaces.Action{
 	Name: NAMEMeController,
 	Description: DESCRIPTIONMeController,
 	Controller: meHandler,
-	Methods : []string{server.GET},
+	Methods : []string{interfaces.GET},
 }
 

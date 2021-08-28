@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	Errors "github.com/vortex14/gotyphoon/errors"
-	"github.com/vortex14/gotyphoon/interfaces/server"
+	"github.com/vortex14/gotyphoon/interfaces"
 	"net/http"
 )
 
@@ -47,10 +47,10 @@ func unmoorHandler (logger *logrus.Entry, ctx *gin.Context ) {
 	ctx.JSON(200, &Status{Status: true})
 }
 
-var UnmoorController = &server.Action{
+var UnmoorController = &interfaces.Action{
 	Name: UnmoorControllerName,
 	Description: unmoorControllerDescription,
 	Controller: unmoorHandler,
-	Methods : []string{server.POST},
+	Methods : []string{interfaces.POST},
 }
 

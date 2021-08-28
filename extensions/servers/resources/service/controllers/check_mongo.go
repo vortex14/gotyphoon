@@ -5,7 +5,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/integrations/mongo"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/interfaces/server"
 )
 
 const (
@@ -46,10 +45,10 @@ func MongoHandler (logger *logrus.Entry, ctx *gin.Context ) {
 	})
 }
 
-var MongoController = &server.Action{
+var MongoController = &interfaces.Action{
 	Name: CheckMongoPath,
 	Description: CheckMongoDescription,
 	Controller: MongoHandler,
-	Methods : []string{server.GET},
+	Methods : []string{interfaces.GET},
 }
 

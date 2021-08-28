@@ -2,20 +2,15 @@ package component
 
 import (
 	"github.com/vortex14/gotyphoon/extensions/servers/resources/home"
-	"github.com/vortex14/gotyphoon/interfaces/server"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
-type TyphoonComponentResource struct {
-	*server.Resource
-}
 
-func Constructor(name string, description string) *TyphoonComponentResource {
+func Constructor(name string, description string) interfaces.ResourceInterface {
 	mainResource := home.Constructor("/").Get()
-	mainResource.Name = name
-	mainResource.Description = description
-	return &TyphoonComponentResource{
-		Resource: mainResource,
-	}
+	mainResource.SetName(name)
+	mainResource.SetDescription(description)
+	return mainResource
 }
 
 

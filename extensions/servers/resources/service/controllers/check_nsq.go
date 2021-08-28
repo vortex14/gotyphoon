@@ -7,7 +7,6 @@ import (
 
 	"github.com/vortex14/gotyphoon/integrations/nsq"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/interfaces/server"
 )
 
 const (
@@ -39,10 +38,10 @@ func NSQHandler (logger *logrus.Entry, ctx *gin.Context ) {
 	})
 }
 
-var NSQController = &server.Action{
+var NSQController = &interfaces.Action{
 	Name: CheckNSQPath,
 	Description: CheckNSQDescription,
 	Controller: NSQHandler,
-	Methods : []string{server.GET},
+	Methods : []string{interfaces.GET},
 }
 

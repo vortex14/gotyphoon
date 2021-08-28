@@ -3,7 +3,6 @@ package discovery
 import (
 	v1 "github.com/vortex14/gotyphoon/extensions/servers/domains/discovery/resources/v1"
 	"github.com/vortex14/gotyphoon/interfaces"
-	serverInterface "github.com/vortex14/gotyphoon/interfaces/server"
 	"github.com/vortex14/gotyphoon/server"
 )
 
@@ -19,13 +18,13 @@ func Constructor(
 	loggerOptions *interfaces.BaseLoggerOptions,
 	swaggerOptions *interfaces.SwaggerOptions,
 
-) serverInterface.Interface {
+) interfaces.ServerInterface {
 
 	discoveryServer := (
 		&server.TyphoonServer{
 			Port: port,
 			Level: interfaces.INFO,
-			BaseServerLabel: &serverInterface.BaseServerLabel{
+			BaseServerLabel: &interfaces.BaseServerLabel{
 				Name: NAME,
 				Description: DESCRIPTION,
 			},

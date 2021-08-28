@@ -59,6 +59,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-replace github.com/DataDog/go-python3 => ../go-python3
+//replace github.com/DataDog/go-python3 => ../go-python3
 
-replace github.com/sbunce/bson => ../bson
+//replace github.com/sbunce/bson => ../bson

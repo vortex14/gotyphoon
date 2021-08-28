@@ -2,7 +2,9 @@ package projects
 
 import (
 	"github.com/vortex14/gotyphoon/extensions/servers/domains/discovery/resources/v1/projects/controllers"
-	"github.com/vortex14/gotyphoon/interfaces/server"
+	"github.com/vortex14/gotyphoon/interfaces"
+
+	"github.com/vortex14/gotyphoon/elements/forms"
 )
 
 const (
@@ -11,18 +13,18 @@ const (
 )
 
 type TyphoonProjectsResource struct {
-	*server.Resource
+	*forms.Resource
 }
 
-func Constructor(path string) server.ResourceInterface {
+func Constructor(path string) interfaces.ResourceInterface {
 	return &TyphoonProjectsResource{
-		Resource: &server.Resource{
+		Resource: &forms.Resource{
 			Path: path,
 			Name: NAME,
 			Description: DESCRIPTION,
-			Resource:    make(map[string]*server.Resource),
-			Middlewares: make([]*server.Middleware, 0),
-			Actions: map[string]*server.Action{
+			Resources:    make(map[string]interfaces.ResourceInterface),
+			Middlewares: make([]interfaces.MiddlewareInterface, 0),
+			Actions: map[string]interfaces.ActionInterface{
 				controllers.ProjectsControllerName: controllers.ProjectsController,
 				controllers.RegisterControllerName: controllers.RegisterController,
 				controllers.UnmoorControllerName: controllers.UnmoorController,
