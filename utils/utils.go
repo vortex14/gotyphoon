@@ -1,11 +1,8 @@
 package utils
 
 import (
-	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"math"
@@ -89,28 +86,29 @@ func (u *Utils) CopyDir(name string, object *interfaces.FileObject) error {
 	if errC != nil{
 		color.Red("CopyDir Error : %s",errC)
 	}
-	box.Walk(func(s string, file packd.File) error {
+	err := box.Walk(func(s string, file packd.File) error {
 		//color.Yellow("s: %s, file: %+f \n", s, file)
 		pathDir := filepath.Dir(s)
 		//color.Yellow("data : %s, info: %s",s, pathDir)
 		if pathDir != "." {
-			errD := os.Mkdir(name+"/"+pathDir, 0755)
-			if errD != nil{
-				//color.Red("%s",errD)
-			}
+			_ = os.Mkdir(name+"/"+pathDir, 0755)
 
 		}
 
-		f, err := os.Create(name+"/"+s)
+		f, err := os.Create(name + "/" + s)
 		if err != nil {
 			log.Println("create err", err)
 		}
-		f.WriteString(file.String())
+		_, err = f.WriteString(file.String())
+		if err != nil {
+			color.Red("%s", err.Error())
+			return err
+		}
 		_ = f.Close()
 
 		return nil
 	})
-	return nil
+	return err
 }
 
 func (u *Utils) CopyFile(ExportPath string, object *interfaces.FileObject) error {
@@ -171,15 +169,28 @@ func (u *Utils) CopyFileAndReplaceLabel(name string, label *interfaces.ReplaceLa
 		log.Println("create err", err)
 	}
 	data := strings.ReplaceAll(templateFile, label.Label, label.Value)
-	f.WriteString(data)
+	_, err = f.WriteString(data)
+	if err != nil {
+		color.Red("%s", err.Error())
+		return err
+	}
 	_ = f.Close()
 	return nil
 }
 
 func (u *Utils) CopyFileAndReplaceLabelsFromHost(name string, labels []interfaces.ReplaceLabel, object *interfaces.FileObject) error {
 	dat, err := ioutil.ReadFile(object.Name)
+	if err != nil {
+		return err
+	}
 	templateFile := string(dat)
 	f, err := os.Create(name)
+	defer func(f *os.File) {
+		errG := f.Close()
+		if errG != nil {
+			color.Red("%s", errG.Error())
+		}
+	}(f)
 	if err != nil {
 		log.Println("create err", err)
 	}
@@ -187,7 +198,11 @@ func (u *Utils) CopyFileAndReplaceLabelsFromHost(name string, labels []interface
 	for _, label := range labels {
 		data = strings.ReplaceAll(data, label.Label, label.Value)
 	}
-	f.WriteString(data)
+	_, err = f.WriteString(data)
+	if err != nil {
+		color.Red("%s", err.Error())
+
+	}
 	_ = f.Close()
 
 	return nil
@@ -199,30 +214,35 @@ func (u *Utils) CopyDirAndReplaceLabel(name string, label *interfaces.ReplaceLab
 	if errC != nil{
 		color.Red("%s",errC)
 	}
-	box.Walk(func(s string, file packd.File) error {
+	err := box.Walk(func(s string, file packd.File) error {
 		//color.Yellow("s: %s, file: %+f \n", s, file)
 		pathDir := filepath.Dir(s)
 		//color.Yellow("data : %s, info: %s",s, pathDir)
 		if pathDir != "." {
-			errD := os.Mkdir(name+"/"+pathDir, 0755)
-			if errD != nil{
-				//color.Red("%s",errD)
-			}
+			_ = os.Mkdir(name+"/"+pathDir, 0755)
 
 		}
 
-		f, err := os.Create(name+"/"+s)
+		f, err := os.Create(name + "/" + s)
+		defer func(f *os.File) {
+			errD := f.Close()
+			if errD != nil {
+				color.Red("%s", errD.Error())
+			}
+		}(f)
 		if err != nil {
 			log.Println("create err", err)
 		}
 		data := file.String()
 		data = strings.ReplaceAll(data, label.Label, label.Value)
-		f.WriteString(data)
-		_ = f.Close()
+		_, err = f.WriteString(data)
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})
-	return nil
+	return err
 }
 
 func (u *Utils) GetGoTemplate(object *interfaces.FileObject) (error error, data string)  {
@@ -260,27 +280,30 @@ func (u *Utils) RenderTableOutput(header []string, data [][]string) {
 }
 
 
-func (u *Utils) print(rd io.Reader) error {
-	var lastLine string
-
-	scanner := bufio.NewScanner(rd)
-	for scanner.Scan() {
-		lastLine = scanner.Text()
-		color.Yellow("%s", lastLine)
-	}
-
-	errLine := &ErrorLine{}
-	json.Unmarshal([]byte(lastLine), errLine)
-	if errLine.Error != "" {
-		return errors.New(errLine.Error)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-
-	return nil
-}
+//func (u *Utils) print(rd io.Reader) error {
+//	var lastLine string
+//
+//	scanner := bufio.NewScanner(rd)
+//	for scanner.Scan() {
+//		lastLine = scanner.Text()
+//		color.Yellow("%s", lastLine)
+//	}
+//
+//	errLine := &ErrorLine{}
+//	err := json.Unmarshal([]byte(lastLine), errLine)
+//	if err != nil {
+//		return err
+//	}
+//	if errLine.Error != "" {
+//		return errors.New(errLine.Error)
+//	}
+//
+//	if err := scanner.Err(); err != nil {
+//		return err
+//	}
+//
+//	return nil
+//}
 
 func (u *Utils) PrintPrettyJson(f interface{}) string {
 	dump, err := json.MarshalIndent(f, "  ", "  ")
@@ -296,10 +319,7 @@ func (u *Utils) ReadCSV(object *interfaces.FileObject, bindings interface{})  {
 		panic(err)
 	}
 	defer func(csvData *os.File) {
-		err := csvData.Close()
-		if err != nil {
-
-		}
+		_ = csvData.Close()
 	}(csvData)
 
 	if err := gocsv.UnmarshalFile(csvData, bindings); err != nil { // Load clients from file

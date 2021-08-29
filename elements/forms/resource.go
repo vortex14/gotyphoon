@@ -85,12 +85,13 @@ func (r *Resource) HasAction(path string) (bool, interfaces.ActionInterface) {
 }
 
 
-func (r *Resource) RunMiddlewareStack(context context.Context, reject func(err error)) {
+func (r *Resource) RunMiddlewareStack(ctx context.Context, reject func(err error)) {
 	var failed bool
+
 	for _, middleware := range r.Middlewares {
 		if failed {break}
 
-		middleware.Pass(context, logrus.WithFields(logrus.Fields{
+		middleware.Pass(ctx, logrus.WithFields(logrus.Fields{
 			"middleware": middleware.GetName(),
 		}), func(err error) {
 
@@ -100,12 +101,14 @@ func (r *Resource) RunMiddlewareStack(context context.Context, reject func(err e
 			} else {
 				logrus.Warning(err.Error())
 			}
+		}, func(context context.Context) {
+
 		})
 	}
 }
 
 func (r *Resource) AddAction(action interfaces.ActionInterface) interfaces.ResourceInterface {
-	if found := r.Actions[action.GetName()]; found != nil { color.Red("%s", Errors.ActionAlreadyExists.Error()) }
+	if found := r.Actions[action.GetPath()]; found != nil { color.Red("%s", Errors.ActionAlreadyExists.Error()) }
 	r.Actions[action.GetPath()] = action
 	return r
 }

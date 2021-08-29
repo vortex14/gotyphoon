@@ -20,7 +20,7 @@ func (m *HTTPDefaultSetProxyMiddleware) Run(
 	transport *http.Transport,
 	) error {
 
-	if task.Fetcher.IsProxyRequired == true {
+	if task.Fetcher.IsProxyRequired {
 		logrus.Debug("init proxy address ")
 		proxyURL, err := url.Parse(task.Fetcher.Proxy)
 		if err != nil {

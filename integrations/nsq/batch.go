@@ -2,7 +2,6 @@ package nsq
 
 import (
 	"context"
-	"github.com/segmentio/nsq-go"
 	"time"
 
 	"github.com/deliveryhero/pipeline"
@@ -14,7 +13,7 @@ func (s *Service) BatchRead()  {
 		maxSize     int
 		maxDuration time.Duration
 		in          []interface{}
-		inDelay     time.Duration
+		//inDelay     time.Duration
 		ctxTimeout  time.Duration
 	}
 
@@ -48,41 +47,39 @@ func (s *Service) BatchRead()  {
 					break loop
 				}
 				isOpen = true
-				outs = append(outs, out)
+				_ = append(outs, out)
 			case <-timeout:
 				break loop
 			}
 		}
-		if isOpen {
-
-		}
-
-
+	 if isOpen {
+	 	println(isOpen)
+	 }
 }
 
-func (s *Service) batchRead(
-	ctx context.Context,
-	maxSize int,
-	maxDuration time.Duration,
-	in <-chan *nsq.Message,
-) <-chan []*nsq.Message {
-	out := make(chan []*nsq.Message)
-	is, _ := s.collect(ctx, maxSize, maxDuration, in)
-
-	if is != nil {
-		select {
-		// Cancel all inputs during shutdown
-		case <-ctx.Done():
-			//processor.Cancel(is, ctx.Err())
-		// Otherwise Process the inputs
-		default:
-			out <- is
-		}
-	}
-
-	return out
-
-}
+//func (s *Service) batchRead(
+//	ctx context.Context,
+//	maxSize int,
+//	maxDuration time.Duration,
+//	in <-chan *nsq.Message,
+//) <-chan []*nsq.Message {
+//	out := make(chan []*nsq.Message)
+//	is, _ := s.collect(ctx, maxSize, maxDuration, in)
+//
+//	if is != nil {
+//		select {
+//		// Cancel all inputs during shutdown
+//		case <-ctx.Done():
+//			//processor.Cancel(is, ctx.Err())
+//		// Otherwise Process the inputs
+//		default:
+//			out <- is
+//		}
+//	}
+//
+//	return out
+//
+//}
 
 
 func (s *Service) mergeConsumerChannels()[]<-chan interface{} {

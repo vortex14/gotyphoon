@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"time"
 )
@@ -38,7 +37,7 @@ var Projects = make(map[string]map[string]*Component)
 // @Description Typhoon Discovery projects controller
 // @Success 200 {object} Projects
 // @Router /api/v1/projects/get_projects [get]
-func projectsHandler (logger *logrus.Entry, ctx *gin.Context ) {
+func projectsHandler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 	ctx.JSON(200, Projects)
 }
 

@@ -6,7 +6,14 @@ import (
 
 
 type BasePipelineInterface interface {
-	Run() (error, interface{})
+	Run(ctx context.Context) (error, context.Context)
+	RunMiddlewareStack(
+		context context.Context,
+		reject func(middleware MiddlewareInterface,err error),
+		next func(ctx context.Context),
+	)
+	GetName() string
+	GetDescription()string
 }
 
 type ProcessorPipelineInterface interface {

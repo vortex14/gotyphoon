@@ -150,7 +150,6 @@ func (m *ProjectMigrate) MigrateV11()  {
 
 	_ = filepath.Walk("project/scheduler", m.VisitAndReplace)
 	color.Yellow("Migrated.")
-	return
 }
 
 func (m *ProjectMigrate) CreateDockerComposeConfigs()  {
@@ -174,7 +173,7 @@ func (m *ProjectMigrate) CreateDockerComposeConfigs()  {
 
 func (m *ProjectMigrate) migrateComponents()  {
 	if _, err := os.Stat("project"); os.IsNotExist(err) {
-		_ = os.Mkdir("project", 755)
+		_ = os.Mkdir("project", 0755)
 	}
 
 	if _, err := os.Stat("fetcher"); !os.IsNotExist(err) {
@@ -281,7 +280,7 @@ func (m *ProjectMigrate) VisitAndReplace(path string, fi os.FileInfo, err error)
 		return err
 	}
 
-	if !!fi.IsDir() {
+	if fi.IsDir() {
 		return nil //
 	}
 

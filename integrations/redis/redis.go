@@ -28,7 +28,7 @@ func (s *Service) initClient()  {
 		s.client = rdb
 		conn := s.connect()
 		if conn {
-			//color.Green("Redis client success %s", redisString)
+			color.Green("Redis client success %s", redisString)
 		}
 	}
 

@@ -12,23 +12,17 @@ const (
 	DESCRIPTION = "resource of projects for discovery service"
 )
 
-type TyphoonProjectsResource struct {
-	*forms.Resource
-}
-
 func Constructor(path string) interfaces.ResourceInterface {
-	return &TyphoonProjectsResource{
-		Resource: &forms.Resource{
-			Path: path,
-			Name: NAME,
-			Description: DESCRIPTION,
-			Resources:    make(map[string]interfaces.ResourceInterface),
-			Middlewares: make([]interfaces.MiddlewareInterface, 0),
-			Actions: map[string]interfaces.ActionInterface{
-				controllers.ProjectsControllerName: controllers.ProjectsController,
-				controllers.RegisterControllerName: controllers.RegisterController,
-				controllers.UnmoorControllerName: controllers.UnmoorController,
-			},
+	return &forms.Resource{
+		Path: path,
+		Name: NAME,
+		Description: DESCRIPTION,
+		Resources:    make(map[string]interfaces.ResourceInterface),
+		Middlewares: make([]interfaces.MiddlewareInterface, 0),
+		Actions: map[string]interfaces.ActionInterface{
+			controllers.ProjectsControllerName: controllers.ProjectsController,
+			controllers.RegisterControllerName: controllers.RegisterController,
+			controllers.UnmoorControllerName: controllers.UnmoorController,
 		},
 	}
 }

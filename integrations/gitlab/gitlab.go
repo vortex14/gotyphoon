@@ -2,18 +2,14 @@ package gitlab
 
 import (
 	"fmt"
-	"net/url"
-	"os"
-	"strconv"
-	"strings"
-
 	"github.com/cheggaaa/pb/v3"
 	"github.com/fatih/color"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/olekukonko/tablewriter"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/xanzy/go-gitlab"
-
+	"os"
+	"strconv"
 )
 
 type Server struct {
@@ -107,9 +103,9 @@ func (s *Server) GetClient() (*gitlab.Client, error) {
 	return gitlabClient, err
 }
 
-func pathEscape(s string) string {
-	return strings.Replace(url.PathEscape(s), ".", "%2E", -1)
-}
+//func pathEscape(s string) string {
+//	return strings.Replace(url.PathEscape(s), ".", "%2E", -1)
+//}
 
 func (s *Server) GetVariables() []*gitlab.PipelineVariable {
 	meta := s.Cluster.GetMeta()

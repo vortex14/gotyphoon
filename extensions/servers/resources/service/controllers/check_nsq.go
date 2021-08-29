@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 
 	"github.com/vortex14/gotyphoon/integrations/nsq"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -32,7 +31,7 @@ var nsqService = &nsq.Service{
 // @Description Health check controller of NSQ
 // @Success 200 {object} ServiceResponse
 // @Router /api/v1/services/check_nsq [get]
-func NSQHandler (logger *logrus.Entry, ctx *gin.Context ) {
+func NSQHandler (ctx *gin.Context, logger interfaces.LoggerInterface) {
 	ctx.JSON(200, &ServiceResponse{
 		Status: nsqService.Ping(),
 	})

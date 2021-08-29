@@ -16,6 +16,10 @@ type ConfigInterface interface {
 
 
 const (
+	TASK                    =   "task"
+	LOGGER                  =   "logger"
+	REQUIRED                =   "required"
+
 	FETCHER 				=	"Fetcher"
 	PROCESSOR 				= 	"Processor"
 	TRANSPORTER 			= 	"ResultTransporter"

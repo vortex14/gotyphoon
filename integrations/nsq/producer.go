@@ -20,6 +20,9 @@ func (s *Service) PriorityPub(priority int, name string, message string)  {
 	}
 }
 
+func (p *Producer) GetTotal() int {
+	return p.total
+}
 
 func (s *Service) Pub(
 	name string,

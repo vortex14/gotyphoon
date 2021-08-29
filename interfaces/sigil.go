@@ -14,7 +14,7 @@ type SigilOptions struct {
 
 type Sigil struct {
 	Run 	 bool
-	status 	 bool
+	//status 	 bool
 	Critical bool
 	Options  *SigilOptions
 	Conjure  func() error

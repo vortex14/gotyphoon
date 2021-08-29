@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
@@ -25,11 +24,12 @@ const (
 // @Description Typhoon Discovery login controller
 // @Success 200 {string}
 // @Router /api/v1/login [post]
-func handler (logger *logrus.Entry, ctx *gin.Context ) {
+func handler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 	ctx.String(200, JWTAUTHDefault)
 }
 
 var LoginController = &interfaces.Action{
+	Path: NAME,
 	Name: NAME,
 	Description: DESCRIPTION,
 	Controller: handler,

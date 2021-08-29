@@ -1,14 +1,14 @@
 package _default
 
 import (
-	"compress/gzip"
+	//"compress/gzip"
 	"context"
-	"io"
-	"io/ioutil"
+	//"io"
+	//"io/ioutil"
 	"net/http"
-	"time"
+	//"time"
 
-	"github.com/sirupsen/logrus"
+	//"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	netHttp "github.com/vortex14/gotyphoon/extensions/pipelines/http/middlewares/net-http"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -18,13 +18,20 @@ import (
 const (
 	NAME        = "Default http Pipeline"
 	DESCRIPTION = "Default logic for http pipeline"
-
 )
 
 // TODO: keep-alive connections. Pass to Demon work
 
 type HttpPipelineDefault struct {
-	*forms.BasePipeline
+	forms.BasePipeline
+}
+
+func (h *HttpPipelineDefault) GetDescription() string {
+	return h.BasePipeline.Description
+}
+
+func (h *HttpPipelineDefault) GetName() string {
+	return h.BasePipeline.Name
 }
 
 func (h *HttpPipelineDefault) getResponse(
@@ -32,79 +39,79 @@ func (h *HttpPipelineDefault) getResponse(
 	request *http.Request) (
 	error, []byte, *http.Response) {
 
-	response, err := client.Do(request)
-	if err != nil {
-		h.LOG.Error("response Error ======= ! ", err)
-		h.Task.Fetcher.Response.Code = 599
-		return err, nil, nil
-	}
+	//response, err := client.Do(request)
+	//if err != nil {
+	//	h.LOG.Error("response Error ======= ! ", err)
+	//	h.Task.Fetcher.Response.Code = 599
+	//	return err, nil, nil
+	//}
+	//
+	//defer response.Body.Close()
+	//var reader io.ReadCloser
+	//switch response.Header.Get("Content-Encoding") {
+	//case "gzip":
+	//	reader, err = gzip.NewReader(response.Body)
+	//	if err != nil {
+	//		h.LOG.Error(err.Error())
+	//		return err, nil, nil
+	//	}
+	//	defer reader.Close()
+	//default:
+	//	reader = response.Body
+	//}
+	//
+	//data, err := ioutil.ReadAll(reader)
+	//
+	//if err != nil {
+	//	logrus.Error(err.Error())
+	//	return err, nil, nil
+	//}
 
-	defer response.Body.Close()
-	var reader io.ReadCloser
-	switch response.Header.Get("Content-Encoding") {
-	case "gzip":
-		reader, err = gzip.NewReader(response.Body)
-		if err != nil {
-			h.LOG.Error(err.Error())
-			return err, nil, nil
-		}
-		defer reader.Close()
-	default:
-		reader = response.Body
-	}
-
-	data, err := ioutil.ReadAll(reader)
-
-	if err != nil {
-		logrus.Error(err.Error())
-		return err, nil, nil
-	}
 
 
-
-	return nil, data, response
+	return nil, nil, nil
 }
 
-func (h *HttpPipelineDefault) Run() (error, interface{}) {
+func (h *HttpPipelineDefault) Run(ctx context.Context, data interface{}) (error, interface{}) {
 
-	transport := &http.Transport{
-		ResponseHeaderTimeout: time.Duration(h.Task.Fetcher.Timeout) * time.Second,
-		IdleConnTimeout: time.Duration(h.Task.Fetcher.Timeout) * time.Second,
-	}
-
-	client := &http.Client{
-		Transport: transport,
-		Timeout: time.Duration(h.Task.Fetcher.Timeout) * time.Second,
-	}
-
-	request, err := http.NewRequest(h.Task.Fetcher.Method, h.Task.URL, nil)
-
-	if err != nil {
-		return err, nil
-	}
-
-
-	// Before http request. First step for prefetching
-	ctx := context.WithValue(h.Context, netHttp.TASK, h.Task)
-	ctx = context.WithValue(ctx, netHttp.CLIENT, client)
-	ctx = context.WithValue(ctx, netHttp.REQUEST, request)
-	ctx = context.WithValue(ctx, netHttp.TRANSPORT, transport)
-
-	var middlewareException error
-	h.RunMiddlewareStack(ctx, func(middleware interfaces.MiddlewareInterface, err error) {
-		h.LOG.Error(err.Error())
-		middlewareException = err
-	})
-
-
-	err, data, response := h.getResponse(client, request)
-	println(err, string(data), response.StatusCode)
-	//After http request. Define response
-	//u := utils.Utils{}
-	//println(111,u.PrintPrettyJson(h.Task.Fetcher.Headers))
-
-
-	return middlewareException, nil
+	//transport := &http.Transport{
+	//	ResponseHeaderTimeout: time.Duration(h.Task.Fetcher.Timeout) * time.Second,
+	//	IdleConnTimeout: time.Duration(h.Task.Fetcher.Timeout) * time.Second,
+	//}
+	//
+	//client := &http.Client{
+	//	Transport: transport,
+	//	Timeout: time.Duration(h.Task.Fetcher.Timeout) * time.Second,
+	//}
+	//
+	//request, err := http.NewRequest(h.Task.Fetcher.Method, h.Task.URL, nil)
+	//
+	//if err != nil {
+	//	return err, nil
+	//}
+	//
+	//
+	//// Before http request. First step for prefetching
+	//ctx := context.WithValue(h.Context, interfaces.ContextKey(netHttp.TASK), h.Task)
+	//ctx = context.WithValue(ctx, interfaces.ContextKey(netHttp.CLIENT), client)
+	//ctx = context.WithValue(ctx, interfaces.ContextKey(netHttp.REQUEST), request)
+	//ctx = context.WithValue(ctx, interfaces.ContextKey(netHttp.TRANSPORT), transport)
+	//
+	//var middlewareException error
+	//h.RunMiddlewareStack(ctx, func(middleware interfaces.MiddlewareInterface, err error) {
+	//	h.LOG.Error(err.Error())
+	//	middlewareException = err
+	//})
+	//
+	//
+	//err, data, response := h.getResponse(client, request)
+	//println(err, string(data), response.StatusCode)
+	////After http request. Define response
+	////u := utils.Utils{}
+	////println(111,u.PrintPrettyJson(h.Task.Fetcher.Headers))
+	//
+	//
+	return nil, nil
 }
 
 func Constructor(
@@ -113,22 +120,19 @@ func Constructor(
 
 	) interfaces.BasePipelineInterface {
 
-	return &HttpPipelineDefault{BasePipeline: &forms.BasePipeline{
-		BaseLabel: &interfaces.BaseLabel{
-			Name:        NAME,
-			Description: DESCRIPTION,
-		},
-		Task: task,
-		Project: project,
-		LOG: logrus.WithFields(logrus.Fields{
-			"Pipeline": NAME,
-		}),
-		Context: context.Background(),
-		Middlewares: []interfaces.MiddlewareInterface{
+	return &HttpPipelineDefault{
+		BasePipeline: forms.BasePipeline{
+			BaseLabel: interfaces.BaseLabel{
+				Name:        NAME,
+				Description: DESCRIPTION,
+			},
+			Context: context.Background(),
+			Middlewares: []interfaces.MiddlewareInterface{
 
-			//netHttp.ConstructorProxyMiddleware(false),
-			//netHttp.ConstructorBasicAuthMiddleware(false),
-			netHttp.ConstructorRequestHeaderMiddleware(true),
+				//netHttp.ConstructorProxyMiddleware(false),
+				netHttp.ConstructorBasicAuthMiddleware(false),
+				netHttp.ConstructorRequestHeaderMiddleware(true),
+			},
 		},
-	}}
+	}
 }

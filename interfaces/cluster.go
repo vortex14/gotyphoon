@@ -13,7 +13,7 @@ type ClusterProjectLabels struct {
 
 type ClusterProject struct {
 	Name   string
-	path   string
+	//path   string
 	Config string
 	Labels ClusterProjectLabels
 }

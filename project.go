@@ -27,7 +27,6 @@ import (
 
 	"github.com/vortex14/gotyphoon/data"
 	"github.com/vortex14/gotyphoon/environment"
-	"github.com/vortex14/gotyphoon/extensions/logger"
 	tyLog "github.com/vortex14/gotyphoon/extensions/logger"
 	"github.com/vortex14/gotyphoon/integrations/mongo"
 	"github.com/vortex14/gotyphoon/integrations/redis"
@@ -72,12 +71,12 @@ type Project struct {
 	ConfigFile        string
 	Version           string
 	SelectedComponent []string
-	loggerOnce        sync.Once
+	//loggerOnce        sync.Once
 	components        components
 	repo              *git.Repository
 	Watcher           fsnotify.Watcher
 	Services          *services.Services
-	logger            *logger.TyphoonLogger
+	//logger            *logger.TyphoonLogger
 	EnvSettings       *environment.Settings
 	Archon            ghosts.ArchonInterface
 	Config            *interfaces.ConfigProject
@@ -258,8 +257,6 @@ func (p *Project) ImportExceptions(component string, sourceFileName string) erro
 		//color.Green("%+v", d)  // GET the line string
 
 
-
-		return nil
 	}
 
 	return nil
@@ -474,17 +471,14 @@ func (p *Project) Run()  {
 	p.AddPromise()
 	go p.task.Run()
 
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go p.Watch()
 	//go Watch(&task.wg, typhoonComponent, project.GetConfigFile())
-	select {
-	case sig := <-c:
-		fmt.Printf("Got %s signal. Aborting...\n", sig)
-		p.AddPromise()
-		go p.Close()
-
-	}
+	sig := <-c
+	fmt.Printf("Got %s signal. Aborting...\n", sig)
+	p.AddPromise()
+	go p.Close()
 	p.task.Stop()
 
 }
@@ -602,7 +596,7 @@ func (p *Project) Down() {
 	defer cancelT()
 
 	if err := exec.CommandContext(ctxT, "bash", "-c", commandDropTyphoon).Run(); err != nil {
-
+		color.Red("%s", err.Error())
 	}
 }
 
@@ -860,7 +854,7 @@ func (p *Project) CheckProject() {
 
 
 
-	if status == false {
+	if !status {
 		color.Red("Project does not exists in the current directory :%s", p.Path )
 		os.Exit(1)
 	}

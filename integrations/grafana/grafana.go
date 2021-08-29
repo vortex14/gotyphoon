@@ -88,7 +88,7 @@ type DashboardGrafana struct {
 type Config struct {
 	Name string
 	Endpoint string
-	token string
+	//token string
 	DashBoardUrl string
 }
 
@@ -125,6 +125,10 @@ func (d *DashBoard) ImportGrafanaConfigLowLevel(jsonConfig []byte, folderId stri
 
 	requestBody, _ := json.Marshal(configData)
 	req, err := http.NewRequest("POST", importUrl, bytes.NewBuffer(requestBody))
+	if err != nil {
+		color.Red("%s", err.Error())
+		return nil
+	}
 	req.Header.Set("Authorization", bearer)
 
 	req.Header.Set("Content-Type", "application/json")
@@ -132,7 +136,8 @@ func (d *DashBoard) ImportGrafanaConfigLowLevel(jsonConfig []byte, folderId stri
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		color.Red("%s", err.Error())
+		return nil
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)

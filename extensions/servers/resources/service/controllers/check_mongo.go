@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/integrations/mongo"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
@@ -39,7 +38,7 @@ var mongoService = &mongo.Service{
 // @Description Health check controller of Mongo
 // @Success 200 {object} ServiceResponse
 // @Router /api/v1/services/check_mongo [get]
-func MongoHandler (logger *logrus.Entry, ctx *gin.Context ) {
+func MongoHandler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 	ctx.JSON(200, &ServiceResponse{
 		Status: mongoService.Ping(),
 	})

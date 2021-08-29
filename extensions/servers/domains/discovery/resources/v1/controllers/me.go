@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 const (
 
 	NAMEMeController 		= "me"
+	PATH = "me"
 	DESCRIPTIONMeController = "Me discovery JWT controller extension for Typhoon server"
 
 	JWTAUTHLOGINDefault = "typhoon"
@@ -30,7 +30,7 @@ type MeResponse struct {
 // @Description Typhoon Discovery me controller
 // @Success 200 {object} MeResponse
 // @Router /api/v1/me [get]
-func meHandler (logger *logrus.Entry, ctx *gin.Context ) {
+func meHandler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 	ctx.JSON(200, &MeResponse{
 		Login: JWTAUTHLOGINDefault,
 		Email: JWTAUTHEmailDefault,
@@ -39,6 +39,7 @@ func meHandler (logger *logrus.Entry, ctx *gin.Context ) {
 }
 
 var MeController = &interfaces.Action{
+	Path: NAMEMeController,
 	Name: NAMEMeController,
 	Description: DESCRIPTIONMeController,
 	Controller: meHandler,

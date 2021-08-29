@@ -26,7 +26,7 @@ type unmoorRequest struct {
 // @Description Typhoon unmoor projects controller
 // @Success 200 {object} Status
 // @Router /api/v1/projects/unmoor [post]
-func unmoorHandler (logger *logrus.Entry, ctx *gin.Context ) {
+func unmoorHandler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 	var project *unmoorRequest
 	if err := ctx.ShouldBindJSON(&project); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{

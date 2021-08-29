@@ -1,0 +1,150 @@
+server/server.go:240:6: LastErrorMiddleware declared but not used (typecheck)
+	var LastErrorMiddleware error
+	    ^
+extensions/archons/project/project.go:42:11: a.Demons undefined (type *Archon has no field or method Demons, but does have demons) (typecheck)
+	if len(a.Demons) > 0 {
+	         ^
+extensions/archons/project/project.go:43:34: a.Demons undefined (type *Archon has no field or method Demons, but does have demons) (typecheck)
+		for _, demonBuilder := range a.Demons {
+		                               ^
+extensions/archons/project/project.go:58:23: a.Servers undefined (type *Archon has no field or method Servers) (typecheck)
+	for _, it := range a.Servers {
+	                     ^
+extensions/demons/service/service.go:38:11: d.Options undefined (type *Demon has no field or method Options) (typecheck)
+	return d.Options.Name
+	         ^
+extensions/demons/service/service.go:42:11: d.Options undefined (type *Demon has no field or method Options) (typecheck)
+	if len(d.Options.Sigil) > 0 {
+	         ^
+extensions/demons/service/service.go:44:34: d.Options undefined (type *Demon has no field or method Options) (typecheck)
+		for _, sigilBuilder := range d.Options.Sigil {
+		                               ^
+extensions/demons/service/service.go:45:62: d.Project undefined (type *Demon has no field or method Project) (typecheck)
+			sigil := sigilBuilder.Constructor(sigilBuilder.Options, d.Project)
+			                                                          ^
+extensions/demons/service/service.go:46:6: d.Sigils undefined (type *Demon has no field or method Sigils) (typecheck)
+			d.Sigils[sigil.GetName()] = sigil
+			  ^
+extensions/demons/service/service.go:91:14: d.Sigils undefined (type *Demon has no field or method Sigils) (typecheck)
+	if sig := d.Sigils[detail.Sigil]; sig != nil {
+	            ^
+extensions/demons/service/service.go:92:23: d.Project undefined (type *Demon has no field or method Project) (typecheck)
+		err = sig.Conjure(d.Project, detail.Cantrip)
+		                    ^
+main/http.go:28:6: `main` redeclared in this block (typecheck)
+func main()  {
+     ^
+main/discovery.go:7:6: other declaration of main (typecheck)
+func main()  {
+     ^
+main/main.go:52:6: `main` redeclared in this block (typecheck)
+func main()  {
+     ^
+main/server-test.go:33:6: `main` redeclared in this block (typecheck)
+func main()  {
+     ^
+errors/server.go:10:5: `httpParamsNotValid` is unused (deadcode)
+var httpParamsNotValid	 = Errors.New("http params isn't valid")
+    ^
+errors/server.go:11:5: `toketExpired` is unused (deadcode)
+var toketExpired		 = Errors.New("token expired")
+    ^
+errors/server.go:12:5: `sessionExpired` is unused (deadcode)
+var sessionExpired		 = Errors.New("session expired")
+    ^
+task/fetcher.go:71:5: `errorCodes` is unused (deadcode)
+var errorCodes = Codes{
+    ^
+integrations/gitlab/gitlab.go:110:6: `pathEscape` is unused (deadcode)
+func pathEscape(s string) string {
+     ^
+utils/utils.go:92:10: Error return value of `box.Walk` is not checked (errcheck)
+	box.Walk(func(s string, file packd.File) error {
+	        ^
+utils/utils.go:105:16: Error return value of `f.WriteString` is not checked (errcheck)
+		f.WriteString(file.String())
+		             ^
+utils/utils.go:171:15: Error return value of `f.WriteString` is not checked (errcheck)
+	f.WriteString(data)
+	             ^
+utils/utils.go:190:15: Error return value of `f.WriteString` is not checked (errcheck)
+	f.WriteString(data)
+	             ^
+utils/utils.go:202:10: Error return value of `box.Walk` is not checked (errcheck)
+	box.Walk(func(s string, file packd.File) error {
+	        ^
+integrations/git/git.go:216:16: Error return value of `g.SwitchBranch` is not checked (errcheck)
+	g.SwitchBranch(branch)
+	              ^
+integrations/docker/docker.go:70:16: Error return value of `json.Unmarshal` is not checked (errcheck)
+	json.Unmarshal([]byte(lastLine), errLine)
+	              ^
+integrations/ssh/ssh.go:17:2: `client` is unused (structcheck)
+	client *ssh.Client
+	^
+task/task.go:18:2: `msg` is unused (structcheck)
+	msg *nsq.Message
+	^
+interfaces/cluster.go:16:2: `path` is unused (structcheck)
+	path   string
+	^
+interfaces/logger.go:28:2: `level` is unused (structcheck)
+	level logrus.Level
+	^
+interfaces/sigil.go:17:2: `status` is unused (structcheck)
+	status 	 bool
+	^
+interfaces/middleware.go:23:2: `ctx` is unused (structcheck)
+	ctx         *gin.Context
+	^
+elements/forms/pipeline.go:24:2: `inputByte` is unused (structcheck)
+	inputByte     int64
+	^
+elements/forms/pipeline.go:20:2: `stageIndex` is unused (structcheck)
+	stageIndex    int32
+	^
+elements/forms/pipeline.go:27:2: `outputCount` is unused (structcheck)
+	outputCount   int64
+	^
+elements/forms/pipeline.go:32:2: `errorCount` is unused (structcheck)
+	errorCount    int64
+	^
+elements/forms/pipeline.go:23:2: `inputCount` is unused (structcheck)
+	inputCount    int64
+	^
+elements/forms/pipeline.go:33:2: `duration` is unused (structcheck)
+	duration      time.Time
+	^
+elements/forms/pipeline.go:28:2: `outputByte` is unused (structcheck)
+	outputByte    int64
+	^
+elements/forms/pipeline_group.go:11:2: `errorCount` is unused (structcheck)
+	errorCount    int64
+	^
+elements/forms/pipeline_group.go:12:2: `duration` is unused (structcheck)
+	duration      time.Time
+	^
+elements/forms/pipeline_group.go:13:2: `timeLife` is unused (structcheck)
+	timeLife      time.Time
+	^
+integrations/nsq/producer.go:11:2: `total` is unused (structcheck)
+	total int
+	^
+integrations/nsq/consumer.go:14:2: `total` is unused (structcheck)
+	total int
+	^
+integrations/nsq/batch.go:17:3: `inDelay` is unused (structcheck)
+		inDelay     time.Duration
+		^
+integrations/docker/docker.go:31:2: `isLatestTag` is unused (structcheck)
+	isLatestTag bool
+	^
+integrations/grafana/grafana.go:91:2: `token` is unused (structcheck)
+	token string
+	^
+utils/utils.go:260:17: func `(*Utils).print` is unused (unused)
+func (u *Utils) print(rd io.Reader) error {
+                ^
+integrations/nsq/batch.go:61:19: func `(*Service).batchRead` is unused (unused)
+func (s *Service) batchRead(
+                  ^

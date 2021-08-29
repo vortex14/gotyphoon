@@ -2,6 +2,7 @@ package interfaces
 
 import "github.com/vortex14/gotyphoon/environment"
 
+
 type Environment interface {
 	Load()
 	Set()

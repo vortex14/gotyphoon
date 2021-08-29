@@ -197,7 +197,7 @@ func (s *TyphoonServer) getAction(logger interfaces.LoggerInterface, ctx *gin.Co
 		// For Main resource without home path on /
 		if !found {
 			if len(joinedPath) == 0 {
-				joinedPath = fmt.Sprintf("%s", path)
+				joinedPath = path
 			} else {
 				joinedPath = fmt.Sprintf("%s/%s", joinedPath, path)
 			}
@@ -240,6 +240,7 @@ func (s *TyphoonServer) requestHandler(ctx *gin.Context)  {
 	var LastErrorMiddleware error
 	{
 		for _, middleware := range action.GetMiddlewareStack() {
+			if !statusMiddlewareStack { break }
 			middlewareLogger := logger.WithFields(logrus.Fields{
 				"middleware": middleware.GetName(),
 			})
@@ -268,6 +269,8 @@ func (s *TyphoonServer) requestHandler(ctx *gin.Context)  {
 		controller := action.GetController()
 
 		controller(ctx, logger)
+	} else {
+		color.Red("%s", LastErrorMiddleware.Error())
 	}
 
 
@@ -369,7 +372,7 @@ func (s *TyphoonServer) CreateResource(path string, opts interfaces.BaseServerLa
 		Name: opts.Name,
 		Description: opts.Description,
 		Middlewares:     make([]interfaces.MiddlewareInterface, 0),
-		Actions:         make(map[string]interfaces.ActionInterface, 0),
+		Actions:         make(map[string]interfaces.ActionInterface),
 	}
 	err := s.initResource(newResource)
 	return err, newResource

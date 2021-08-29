@@ -27,7 +27,7 @@ type Status struct {
 // @Description Typhoon registering projects controller
 // @Success 200 {object} Status
 // @Router /api/v1/projects/register [post]
-func registerHandler (logger *logrus.Entry, ctx *gin.Context ) {
+func registerHandler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 	var project *Project
 	if err := ctx.ShouldBindJSON(&project); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
