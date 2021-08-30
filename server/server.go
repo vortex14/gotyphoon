@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/extensions/logger"
 	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 
@@ -241,9 +243,7 @@ func (s *TyphoonServer) requestHandler(ctx *gin.Context)  {
 	{
 		for _, middleware := range action.GetMiddlewareStack() {
 			if !statusMiddlewareStack { break }
-			middlewareLogger := logger.WithFields(logrus.Fields{
-				"middleware": middleware.GetName(),
-			})
+			middlewareLogger := log.GetContext(log.D{ "middleware": middleware.GetName()})
 
 			// Refect client request
 			middleware.Pass(ctx, middlewareLogger, func(err error) {
@@ -260,6 +260,8 @@ func (s *TyphoonServer) requestHandler(ctx *gin.Context)  {
 				} else {
 					middlewareLogger.Warning(err.Error())
 				}
+			}, func(context context.Context) {
+
 			})
 
 		}
@@ -368,9 +370,9 @@ func (s *TyphoonServer) Serve(method string, path string, callback func(ctx *gin
 
 func (s *TyphoonServer) CreateResource(path string, opts interfaces.BaseServerLabel) (error, interfaces.ResourceInterface) {
 	newResource := &forms.Resource{
-		Path: path,
-		Name: opts.Name,
-		Description: opts.Description,
+		Path:            path,
+		Name:            opts.Name,
+		Description:     opts.Description,
 		Middlewares:     make([]interfaces.MiddlewareInterface, 0),
 		Actions:         make(map[string]interfaces.ActionInterface),
 	}

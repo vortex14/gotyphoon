@@ -2,11 +2,11 @@ package forms
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"sync"
 
 	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 type BasePipeline struct {
@@ -16,7 +16,6 @@ type BasePipeline struct {
 	//Task          *task.TyphoonTask
 	//Project       interfaces.Project
 
-	Context       context.Context
 	//stageIndex    int32
 	promise       sync.WaitGroup
 
@@ -44,7 +43,7 @@ type BasePipeline struct {
 	Callbacks   []interfaces.CallbackPipelineInterface
 	//Consumers   map[string]interfaces.ConsumerInterface
 
-	LambdaHandler func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context)
+	Fn func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context)
 	CancelHandler func(ctx context.Context, err error)
 
 	interfaces.BaseLabel
@@ -70,18 +69,21 @@ func (p *BasePipeline) Await()  {
 	p.promise.Wait()
 }
 
-func (p *BasePipeline) Run(ctx context.Context) (error, context.Context) {
-	if p.LambdaHandler == nil {
-		return Errors.LambdaRequired, nil
-	}
-	middlewareLogger := logrus.WithFields(logrus.Fields{
-		"pipeline": p.GetName(),
-	})
-	return p.LambdaHandler(ctx, middlewareLogger)
+func (p *BasePipeline) Run(
+	context context.Context,
+	reject func(pipeline interfaces.BasePipelineInterface, err error),
+	next func(ctx context.Context),
+	) {
+	if p.Fn == nil { reject(p,Errors.LambdaRequired); return}
+
+	err, newContext := p.Fn(context, log.GetCtxLog(context))
+	if err != nil { reject(p, err); return }
+
+	next(newContext)
 }
 
 func (p *BasePipeline) Cancel(err error) {
-	p.CancelHandler(p.Context, err)
+	//p.CancelHandler(p.Context, err)
 }
 
 func (p *BasePipeline) RunMiddlewareStack(
@@ -97,25 +99,22 @@ func (p *BasePipeline) RunMiddlewareStack(
 
 	middlewareContext = ctx
 	for _, middleware := range p.Middlewares {
-		if failed {break}
-		if forceSkip {continue}
+		if failed || forceSkip { break }
 
-		middlewareLogger := logrus.WithFields(logrus.Fields{
-			"middleware": middleware.GetName(), "pipeline": p.GetName(),
-		})
+		logger := log.GetContext(log.D{"middleware": middleware.GetName(), "pipeline": p.GetName()})
 
-		middleware.Pass(middlewareContext, middlewareLogger, func(err error) {
+		middleware.Pass(middlewareContext, logger, func(err error) {
 			if middleware.IsRequired() {baseException = err; err = Errors.MiddlewareRequired}
 
 			switch err {
 			case Errors.ForceSkipMiddlewares:
 				forceSkip = true
-				middlewareLogger.Warning(Errors.ForceSkipMiddlewares.Error())
+				logger.Warning(Errors.ForceSkipMiddlewares.Error())
 			case Errors.MiddlewareRequired:
 				reject(middleware, baseException)
 				failed = true
 			default:
-				middlewareLogger.Warning(err.Error())
+				logger.Warning(err.Error())
 			}
 
 		}, func(returnedMiddlewareContext context.Context) {

@@ -35,6 +35,7 @@ func (m *HTTPResponseDefaultMiddleware) Pass(
 	context context.Context,
 	loggerInterface interfaces.LoggerInterface,
 	catch func(err error),
+	next func(ctx context.Context),
 
 	) {
 	taskInstance, _ := context.Value(TASK).(*task.TyphoonTask)

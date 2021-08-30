@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/data/fake"
 	"github.com/vortex14/gotyphoon/extensions/logger"
@@ -47,7 +48,7 @@ func main()  {
 
 	pipeline := httpPipeline.Constructor(fakeTask, nil)
 
-	err, _ := pipeline.Run()
+	err, _ := pipeline.Run(context.TODO())
 	if err != nil {
 		logrus.Error(err.Error())
 	}

@@ -72,7 +72,7 @@ func (h *HttpPipelineDefault) getResponse(
 	return nil, nil, nil
 }
 
-func (h *HttpPipelineDefault) Run(ctx context.Context, data interface{}) (error, interface{}) {
+func (h *HttpPipelineDefault) Run(ctx context.Context) (error, context.Context) {
 
 	//transport := &http.Transport{
 	//	ResponseHeaderTimeout: time.Duration(h.Task.Fetcher.Timeout) * time.Second,
@@ -126,7 +126,6 @@ func Constructor(
 				Name:        NAME,
 				Description: DESCRIPTION,
 			},
-			Context: context.Background(),
 			Middlewares: []interfaces.MiddlewareInterface{
 
 				//netHttp.ConstructorProxyMiddleware(false),

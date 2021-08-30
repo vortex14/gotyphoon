@@ -6,13 +6,18 @@ import (
 
 
 type BasePipelineInterface interface {
-	Run(ctx context.Context) (error, context.Context)
+	Run(
+		context context.Context,
+		reject func(pipeline BasePipelineInterface, err error),
+		next func(ctx context.Context),
+	)
 	RunMiddlewareStack(
 		context context.Context,
-		reject func(middleware MiddlewareInterface,err error),
+		reject func(middleware MiddlewareInterface, err error),
 		next func(ctx context.Context),
 	)
 	GetName() string
+	IsRequired() bool
 	GetDescription()string
 }
 

@@ -3,6 +3,7 @@ package forms
 import (
 	"context"
 	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 
 	"github.com/fatih/color"
 	"github.com/sirupsen/logrus"
@@ -65,40 +66,30 @@ func (r *Resource) GetCountActions() int {
 func (r *Resource) HasResource(path string) (bool, interfaces.ResourceInterface) {
 	var found bool
 	var resource interfaces.ResourceInterface
-	if r, ok := r.Resources[path]; ok {
-		found = true
-		resource = r
-	}
-
+	if foundResource, ok := r.Resources[path]; ok { found = true; resource = foundResource }
 	return found, resource
 }
 
 func (r *Resource) HasAction(path string) (bool, interfaces.ActionInterface) {
 	var found bool
 	var action interfaces.ActionInterface
-	if a, ok := r.Actions[path]; ok {
-		found = true
-		action = a
-	}
-
+	if a, ok := r.Actions[path]; ok { found = true; action = a }
 	return found, action
 }
 
 
-func (r *Resource) RunMiddlewareStack(ctx context.Context, reject func(err error)) {
+func (r *Resource) RunMiddlewareStack(
+	ctx context.Context,
+	reject func(err error),
+
+	) {
 	var failed bool
 
 	for _, middleware := range r.Middlewares {
-		if failed {break}
-
-		middleware.Pass(ctx, logrus.WithFields(logrus.Fields{
-			"middleware": middleware.GetName(),
-		}), func(err error) {
-
-			if middleware.IsRequired() {
-				failed = true
-				reject(err)
-			} else {
+		if failed { break }
+		logger :=  log.GetContext(log.D{"middleware": middleware.GetName(), "resource": r.GetName()})
+		middleware.Pass(ctx, logger, func(err error) {
+			if middleware.IsRequired() { failed = true; reject(err) } else {
 				logrus.Warning(err.Error())
 			}
 		}, func(context context.Context) {

@@ -1,9 +1,12 @@
 package forms
 
 import (
-	"context"
-	"github.com/sirupsen/logrus"
+	Context "context"
 	"github.com/vortex14/gotyphoon/interfaces"
+	"golang.org/x/net/context"
+
+	"github.com/vortex14/gotyphoon/ctx"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 type PipelineGroup struct {
@@ -24,50 +27,47 @@ type PipelineGroup struct {
 
 }
 
-func (p *PipelineGroup) GetLogger(name string) interfaces.LoggerInterface {
-	return logrus.WithFields(logrus.Fields{
-		"pipeline-group": p.GetName(),
-		"pipeline": name,
-	})
-}
 
-func (p *PipelineGroup) Run(ctx context.Context) {
+func (g *PipelineGroup) Run(context context.Context) {
 	println("run pipeline group !")
-	var pipelineContext context.Context
-	var middlewareContext context.Context
 
-	middlewareContext, pipelineContext = ctx, ctx
+	var failedFlow bool
+	var mainContext Context.Context
+	var middlewareContext Context.Context
 
-	for _, pipeline := range p.Stages {
+	middlewareContext, mainContext = context, context
 
-		logger := p.GetLogger(pipeline.GetName())
-		middlewareContext = interfaces.UpdateContext(ctx, interfaces.LOGGER, logger)
+	mainContext = ctx.UpdateContext(mainContext, interfaces.LOGGER, log.GetContext(log.D{"group": g.GetName()}))
+
+	for _, pipeline := range g.Stages {
+		if failedFlow { break }
+		logger := log.GetContext(log.D{"pipeline": pipeline.GetName(), "group": g.GetName() })
+
+		middlewareContext = ctx.UpdateContext(mainContext, interfaces.LOGGER, logger)
 
 		{
 			var failed bool
 			pipeline.RunMiddlewareStack(middlewareContext, func(middleware interfaces.MiddlewareInterface, err error) {
 				failed = true
 				logger.Error("exit from middleware stack . Error: ", err.Error())
-			}, func(returnedContext context.Context) {
-				pipelineContext,middlewareContext = returnedContext, returnedContext
-
+			}, func(returnedContext Context.Context) {
+				middlewareContext = returnedContext
 			})
 			if failed { break }
 		}
 
-
-
-
+		mainContext = ctx.UpdateContext(middlewareContext, interfaces.LOGGER, logger)
 
 		{
-			err, resultContext := pipeline.Run(pipelineContext)
-
-			if err != nil {
+			pipeline.Run(mainContext, func(pipeline interfaces.BasePipelineInterface, err error) {
+				failedFlow = true
 				logger.Error("Exit from group. Error: ",err.Error(), pipeline.GetName())
-				break
-			} else if resultContext != nil {
-				pipelineContext = resultContext
-			}
+
+			}, func(returnedResultPipelineContext Context.Context) {
+				mainContext = returnedResultPipelineContext
+			})
+
+
 		}
 
 	}

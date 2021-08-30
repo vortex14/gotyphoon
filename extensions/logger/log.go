@@ -36,7 +36,7 @@ type TyphoonLogger struct {
 	Options
 	closer io.Closer
 	reporter jaeger.Reporter
-	tracer *opentracing.Tracer
+	tracer opentracing.Tracer
 	TracingOptions *interfaces.TracingOptions
 }
 
@@ -59,7 +59,7 @@ func (l *TyphoonLogger) InitTracer()  {
 		panic("unable to init tracing")
 	}
 
-	l.tracer = &tracer
+	l.tracer = tracer
 	l.reporter = reporter
 	l.closer = closer
 
