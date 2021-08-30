@@ -1,19 +1,14 @@
-package _default
+package main
 
 import (
-	//"compress/gzip"
 	"context"
-	//"io"
-	//"io/ioutil"
-	"net/http"
-	//"time"
-
-	//"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	netHttp "github.com/vortex14/gotyphoon/extensions/pipelines/http/middlewares/net-http"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/task"
+	"net/http"
 )
+
 
 const (
 	NAME        = "Default http Pipeline"
@@ -69,7 +64,7 @@ func (h *HttpPipelineDefault) Run(
 	context context.Context,
 	reject func(pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx context.Context),
-	) {
+) {
 
 	//transport := &http.Transport{
 	//	ResponseHeaderTimeout: time.Duration(h.Task.Fetcher.Timeout) * time.Second,
@@ -114,7 +109,7 @@ func Constructor(
 	task *task.TyphoonTask,
 	project interfaces.Project,
 
-	) interfaces.BasePipelineInterface {
+) interfaces.BasePipelineInterface {
 
 	return &HttpPipelineDefault{
 		BasePipeline: forms.BasePipeline{

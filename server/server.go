@@ -243,7 +243,7 @@ func (s *TyphoonServer) requestHandler(ctx *gin.Context)  {
 	{
 		for _, middleware := range action.GetMiddlewareStack() {
 			if !statusMiddlewareStack { break }
-			middlewareLogger := log.GetContext(log.D{ "middleware": middleware.GetName()})
+			middlewareLogger := log.New(log.D{ "middleware": middleware.GetName()})
 
 			// Refect client request
 			middleware.Pass(ctx, middlewareLogger, func(err error) {

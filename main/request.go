@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"net/http"
+	"time"
 
 	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/data/fake"
@@ -34,6 +36,20 @@ func main() {
 
 					newCtx := ctx.Update(context, "key", "CONTEXT DATA VALUE")
 
+
+
+					transport := &http.Transport{
+						ResponseHeaderTimeout: time.Duration(task.Fetcher.Timeout) * time.Second,
+						IdleConnTimeout: time.Duration(task.Fetcher.Timeout) * time.Second,
+					}
+
+					client := &http.Client{
+						Transport: transport,
+						Timeout: time.Duration(task.Fetcher.Timeout) * time.Second,
+					}
+
+
+					request, err := http.NewRequest(task.Fetcher.Method, h.Task.URL, nil)
 
 					return nil, newCtx
 				},

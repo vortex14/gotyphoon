@@ -2,17 +2,16 @@ package task
 
 import (
 	"context"
+
 	"github.com/fatih/color"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
-
 
 type ContextKey string
 
 func (c ContextKey) String() string {
 	return string(c)
 }
-
 
 func GetContextValue(ctx context.Context, key string) interface{} {
 	return ctx.Value(ContextKey(key))
@@ -29,7 +28,6 @@ type TyphoonTask struct {
 	ProjectName string `json:"project_name" fake:"skip"`
 	//msg *nsq.Message
 }
-
 
 func Get(c context.Context) (bool, *TyphoonTask) {
 	taskInstance, ok := GetContextValue(c, interfaces.TASK).(*TyphoonTask)
