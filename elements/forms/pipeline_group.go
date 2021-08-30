@@ -42,7 +42,7 @@ func (g *PipelineGroup) Run(context context.Context) {
 		if failedFlow { break }
 		logger := log.New(log.D{"pipeline": pipeline.GetName(), "group": g.GetName() })
 
-		middlewareContext = log.PatchCtx(mainContext, logger)
+		middlewareContext = log.NewCtx(mainContext, logger)
 
 		{
 			var failed bool
@@ -55,7 +55,7 @@ func (g *PipelineGroup) Run(context context.Context) {
 			if failed { break }
 		}
 
-		mainContext = log.PatchCtx(middlewareContext, logger)
+		mainContext = log.NewCtx(middlewareContext, logger)
 
 		{
 			pipeline.Run(mainContext, func(pipeline interfaces.BasePipelineInterface, err error) {

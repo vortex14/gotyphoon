@@ -16,7 +16,7 @@ func New(values map[string]interface{}) *logrus.Entry {
 	return logrus.WithFields(values)
 }
 
-func PatchCtx(context context.Context, logger *logrus.Entry) context.Context {
+func NewCtx(context context.Context, logger *logrus.Entry) context.Context {
 	return ctx.Update(context, interfaces.LOGGER, logger)
 }
 
