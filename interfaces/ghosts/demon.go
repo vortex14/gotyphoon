@@ -23,7 +23,7 @@ type DemonDecree struct {
 }
 
 type Demon struct {
-	Options DemonOptions
+	Options *DemonOptions
 	Project interfaces.Project
 	Furies 	map[string]	FuryInterface
 	Sigils 	map[string]	interfaces.SigilInterface

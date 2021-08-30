@@ -2,13 +2,12 @@ package ping
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
-
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 const (
-	NAME 		= "Ping Controller"
+	NAME 		= "ping"
+	PATH        = "ping"
 	DESCRIPTION = "Ping-Pong controller extension for Typhoon server"
 
 	PING 		= "Ping"
@@ -16,8 +15,8 @@ const (
 )
 
 type PongResponse struct {
-	Method string `json:"method"`
 	Message string `json:"message"`
+	Method string `json:"method"`
 	Status bool	`json:"status"`
 	Path string `json:"path"`
 }
@@ -34,7 +33,7 @@ type PongResponse struct {
 // @Router /ping [post]
 // @Router /ping [patch]
 // @Router /ping [delete]
-func handler (logger *logrus.Entry, ctx *gin.Context ) {
+func handler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 	logger.Debug(PING)
 	ctx.JSON(200, gin.H{
 		"method": ctx.Request.Method,
@@ -46,6 +45,7 @@ func handler (logger *logrus.Entry, ctx *gin.Context ) {
 
 var Controller = &interfaces.Action{
 	Name: NAME,
+	Path: PATH,
 	Description: DESCRIPTION,
 	Controller: handler,
 	Methods : []string{interfaces.GET, interfaces.PATCH, interfaces.POST, interfaces.PUT, interfaces.DELETE},

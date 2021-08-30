@@ -68,12 +68,12 @@ var errorStatuses = Statuses{
 	599: true,
 }
 
-var errorCodes = Codes{
-	"timeout": 100,
-	"refused": 200,
-	"undefined": 300,
-	"prefetch": 400,
-}
+//var errorCodes = Codes{
+//	"timeout": 100,
+//	"refused": 200,
+//	"undefined": 300,
+//	"prefetch": 400,
+//}
 
 
 func (t *FetcherTask) IsBadStatus() bool{

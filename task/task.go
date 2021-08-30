@@ -2,7 +2,6 @@ package task
 
 import (
 	"github.com/fatih/color"
-	"github.com/segmentio/nsq-go"
 )
 
 
@@ -15,7 +14,7 @@ type TyphoonTask struct {
 	URL               string        `json:"url" default:"https://httpstat.us/200" fake:"{url}"`
 	Taskid            string        `json:"taskid" default:"task-id" fake:"{uuid}"`
 	ProjectName string `json:"project_name" fake:"skip"`
-	msg *nsq.Message
+	//msg *nsq.Message
 }
 
 
@@ -29,7 +28,7 @@ func (t *TyphoonTask) IsMaxRetry() bool {
 		status = true
 	} else if t.Fetcher.IsBadStatus() && t.Fetcher.IsResponseRetry() {
 		status = true
-	} else if t.Fetcher.IsBadStatus() == false && t.Processor.IsMaxProcessorRetry(){
+	} else if !t.Fetcher.IsBadStatus() && t.Processor.IsMaxProcessorRetry(){
 		status = true
 	} else if t.Fetcher.IsMaxResponseRetry() {
 		status = true

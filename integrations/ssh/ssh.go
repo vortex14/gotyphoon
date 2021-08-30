@@ -14,7 +14,7 @@ type SSH struct {
 	Ip string
 	Login string
 	Password string
-	client *ssh.Client
+	//client *ssh.Client
 
 }
 

@@ -87,22 +87,22 @@ func (c *Component) Close(project interfaces.Project)  {
 	defer project.PromiseDone()
 	c.Stop(project)
 }
-
-func exec_cmd(cmd *exec.Cmd) {
-	var waitStatus syscall.WaitStatus
-	err := cmd.Run()
-
-	if err != nil {
-			os.Stderr.WriteString(fmt.Sprintf("Error: %s\n", err.Error()))
-	}
-	if exitError, ok := err.(*exec.ExitError); ok {
-		waitStatus = exitError.Sys().(syscall.WaitStatus)
-		fmt.Printf("Error during killing (exit code: %s)\n", []byte(fmt.Sprintf("%d", waitStatus.ExitStatus())))
-	} else {
-		waitStatus = cmd.ProcessState.Sys().(syscall.WaitStatus)
-		fmt.Printf("Port successfully killed (exit code: %s)\n", []byte(fmt.Sprintf("%d", waitStatus.ExitStatus())))
-	}
-}
+//
+//func exec_cmd(cmd *exec.Cmd) {
+//	var waitStatus syscall.WaitStatus
+//	err := cmd.Run()
+//
+//	if err != nil {
+//			os.Stderr.WriteString(fmt.Sprintf("Error: %s\n", err.Error()))
+//	}
+//	if exitError, ok := err.(*exec.ExitError); ok {
+//		waitStatus = exitError.Sys().(syscall.WaitStatus)
+//		fmt.Printf("Error during killing (exit code: %s)\n", []byte(fmt.Sprintf("%d", waitStatus.ExitStatus())))
+//	} else {
+//		waitStatus = cmd.ProcessState.Sys().(syscall.WaitStatus)
+//		fmt.Printf("Port successfully killed (exit code: %s)\n", []byte(fmt.Sprintf("%d", waitStatus.ExitStatus())))
+//	}
+//}
 
 
 func (c *Component) Stop(project interfaces.Project)  {
@@ -123,7 +123,7 @@ func (c *Component) Stop(project interfaces.Project)  {
 	//	exec_cmd(exec.Command("bash", "-c", command))
 	//}
 
-	command := fmt.Sprintf("lsof -i :%s", port)
+	command := fmt.Sprintf("lsof -i :%d", port)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
@@ -187,22 +187,20 @@ func (c *Component) Stop(project interfaces.Project)  {
 
 }
 
-func (c Component) Restart(project *Project)  {
+func (c *Component) Restart(project *Project)  {
 	color.Red("Restart component %s ...", c.Name)
 	c.Stop(project)
 	c.Start(project)
 
-	project.components.ActiveComponents[c.Name] = &c
+	project.components.ActiveComponents[c.Name] = c
 }
 
 func (c *Component) GetName() string {
 	return c.Name
 }
 
-
-
 func (d *Directory) GetDataFromDirectory(path string) interfaces.MapFileObjects {
-	currentData := make(interfaces.MapFileObjects, 0)
+	currentData := make(interfaces.MapFileObjects)
 
 
 	files, err := ioutil.ReadDir(path)
@@ -262,10 +260,9 @@ func (d *Directory) IsExistDir(path string) bool  {
 }
 
 func (c *Component) CheckComponent() bool {
-
+	status := false
 	var (
 		logVal string
-		status = false
 		fileName string
 		required []string
 	)
@@ -320,7 +317,7 @@ func (c *Component) CheckComponent() bool {
 	status = c.CheckDirectory(required, ".")
 	logVal = fmt.Sprintf("%s.py is %t", fileName, status)
 
-	if status == true {
+	if status {
 		color.Green(logVal)
 		c.FileExt = fileNameExt
 	} else {
@@ -473,7 +470,11 @@ func (c *Component) Logging()  {
 				continue
 			}
 			errLog := ""
-			io.Copy(os.Stderr, bytes.NewBufferString(errLog))
+			_, err := io.Copy(os.Stderr, bytes.NewBufferString(errLog))
+			if err != nil {
+				color.Red("%s", err.Error())
+				return
+			}
 			//errLog = fmt.Sprintf("Component: %s; %s , %s", w.Name, errLog, line)
 			//color.Red(errLog)
 			color.Red(" %s error: %s",c.Name, line)
@@ -494,7 +495,7 @@ func (c *Component) Logging()  {
 			continue
 		case status, ok := <-c.Worker.Status:
 
-			if ok != true || status == false {
+			if !ok || !status {
 
 				err := c.Worker.Cmd.Stop()
 

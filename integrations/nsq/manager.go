@@ -13,7 +13,7 @@ func (s *Service) StopNSQ()  {
 	s.StopConsumers()
 }
 
-func (s *Service) Ping() bool  {
+func (s *Service) Ping() bool {
 	status := false
 	s.initConfig()
 	NsqlookupdIP := strings.ReplaceAll(s.Config.NsqlookupdIP, "http://","")

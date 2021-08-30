@@ -283,7 +283,7 @@ func (c *Cluster) Deploy() {
 	}
 
 	for i, project := range projects {
-		tableData = append(tableData, []string{string(i), project.Name, project.WebURL})
+		tableData = append(tableData, []string{strconv.Itoa(i), project.Name, project.WebURL})
 	}
 
 	c.renderTable(tableData)

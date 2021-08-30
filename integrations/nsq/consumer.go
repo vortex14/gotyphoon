@@ -19,6 +19,10 @@ type Consumer struct {
 	Worker *nsq.Consumer
 }
 
+func (c *Consumer) GetTotal() int {
+	return c.total
+}
+
 func (s *Service) InitConsumer(
 	settings *interfaces.Queue,
 ) *nsq.Consumer {

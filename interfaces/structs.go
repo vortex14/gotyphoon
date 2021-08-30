@@ -77,7 +77,7 @@ type GrafanaConfig struct {
 
 type Producers map[string] *Producer
 type Consumers map[string] [] *Consumer
-type Pipelines map[string] *Pipeline
+type Pipelines map[string] BasePipelineInterface
 
 type ReplaceLabel struct {
 	Label string

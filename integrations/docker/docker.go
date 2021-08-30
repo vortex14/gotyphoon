@@ -28,7 +28,7 @@ import (
 //echo -n 'LOGIN:PASSWORD' | base64
 
 type Docker struct {
-	isLatestTag bool
+	//isLatestTag bool
 	LatestTag   string
 	env         *environment.Settings
 	Project     interfaces.Project
@@ -67,7 +67,10 @@ func (d *Docker) print(rd io.Reader) error {
 	}
 
 	errLine := &ErrorLine{}
-	json.Unmarshal([]byte(lastLine), errLine)
+	err := json.Unmarshal([]byte(lastLine), errLine)
+	if err != nil {
+		return err
+	}
 	if errLine.Error != "" {
 		return errors.New(errLine.Error)
 	}

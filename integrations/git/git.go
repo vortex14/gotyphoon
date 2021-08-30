@@ -46,6 +46,9 @@ func (g *Git) Commit(message string, opt *git.CommitOptions) error {
 	g.LoadRepo()
 
 	commit, err := g.workTree.Commit(message, opt)
+	if err != nil {
+		return err
+	}
 	obj, err := g.repo.CommitObject(commit)
 	if err != nil {
 		color.Red("%s", err.Error())
@@ -210,7 +213,11 @@ func (g *Git) CreateBranchAndCommit(message string, branch string)  {
 
 func (g *Git) LocalResetLikeRemote(remote string, branch string, backup bool)  {
 	g.LoadRepo()
-	g.SwitchBranch(branch)
+	err := g.SwitchBranch(branch)
+	if err != nil {
+		color.Red("%s", err.Error())
+		return
+	}
 
 	if backup {
 		g.SaveLocalChanging()
@@ -269,21 +276,21 @@ func (g *Git) RepoStatus() () {
 		color.Red("%s", err.Error())
 		os.Exit(1)
 	}
-	if s != nil {
-		for filename := range s {
-			var untracked bool
 
-			if s.IsUntracked(filename) {
-				untracked = true
-			}
-			fileStatus := s.File(filename)
-			if !untracked && fileStatus.Staging == git.Untracked && fileStatus.Worktree == git.Untracked {
-				fileStatus.Staging = git.Unmodified
-				fileStatus.Worktree = git.Unmodified
-			}
+	for filename := range s {
+		var untracked bool
 
-			color.Yellow("%s -> %s", fileStatusMapping[fileStatus.Worktree], filename)
-
+		if s.IsUntracked(filename) {
+			untracked = true
 		}
+		fileStatus := s.File(filename)
+		if !untracked && fileStatus.Staging == git.Untracked && fileStatus.Worktree == git.Untracked {
+			fileStatus.Staging = git.Unmodified
+			fileStatus.Worktree = git.Unmodified
+		}
+
+		color.Yellow("%s -> %s", fileStatusMapping[fileStatus.Worktree], filename)
+
 	}
+
 }

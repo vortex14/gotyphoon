@@ -5,17 +5,12 @@ import (
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
-type TyphoonComponentResource struct {
-	*interfaces.Resource
-}
 
-func Constructor(name string, description string) *TyphoonComponentResource {
-	mainResource := home.Constructor().Get()
-	mainResource.Name = name
-	mainResource.Description = description
-	return &TyphoonComponentResource{
-		Resource: mainResource,
-	}
+func Constructor(name string, description string) interfaces.ResourceInterface {
+	mainResource := home.Constructor("/").Get()
+	mainResource.SetName(name)
+	mainResource.SetDescription(description)
+	return mainResource
 }
 
 

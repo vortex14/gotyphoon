@@ -39,7 +39,7 @@ func (d *Demon) GetName() string {
 }
 
 func (d *Demon) init() {
-	if len(d.Options.Sigil) > 0 {
+	if d.Options != nil && len(d.Options.Sigil) > 0 {
 		d.Demon.Sigils = map[string]interfaces.SigilInterface{}
 		for _, sigilBuilder := range d.Options.Sigil {
 			sigil := sigilBuilder.Constructor(sigilBuilder.Options, d.Project)
@@ -74,7 +74,7 @@ func Constructor(opt *ghosts.DemonOptions, project interfaces.Project) ghosts.De
 	once.Do(func() {
 		demon = &Demon{
 			Demon: &ghosts.Demon{
-				Options: *opt,
+				Options: opt,
 				Project: project,
 			},
 		}
@@ -86,10 +86,21 @@ func Constructor(opt *ghosts.DemonOptions, project interfaces.Project) ghosts.De
 
 func (d *Demon) Execute(detail *ghosts.DemonDecree) error {
 	var err error
+	if d.Project == nil {
+		return Errors.DemonHasNotProject
+	}
+
+	if d.Sigils == nil || len(d.Sigils) == 0 {
+		return Errors.DemonExecutingWithoutSettings
+	}
+
 	//color.Yellow("Execute >>> %+v", detail.Sigil)
 	//color.Yellow("%+v", d.Sigils)
-	if sig := d.Sigils[detail.Sigil]; sig != nil {
+	if sig := d.Sigils[detail.Sigil]; sig != nil && d.Project != nil {
 		err = sig.Conjure(d.Project, detail.Cantrip)
+		if err != nil{
+			return err
+		}
 	} else {
 		err = Errors.NotFoundSigil
 	}

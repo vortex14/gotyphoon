@@ -7,17 +7,16 @@ const (
 	WARNING  = "WARNING"
 	INFO   	 = "INFO"
 	ERROR    = "ERROR"
-
-
 )
 
 type LoggerInterface interface {
-	Debug(message string)
-	Info(message string)
-	Warning(message string)
-	Error(message string)
-}
+	Debug    (args ...interface{})
+	Info     (args ...interface{})
+	Warning  (args ...interface{})
+	Error    (args ...interface{})
+	WithFields (fields logrus.Fields) *logrus.Entry
 
+}
 
 type BaseLoggerOptions struct {
 	Name string
@@ -26,7 +25,6 @@ type BaseLoggerOptions struct {
 	ShowFile bool
 	ShortFileName bool
 	FullTimestamp bool
-	level logrus.Level
 }
 
 func (o *BaseLoggerOptions) GetLevel(name string) logrus.Level {

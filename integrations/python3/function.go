@@ -55,7 +55,3 @@ func (f *PythonFunction) CallObject(args *Python3.PyObject) *Python3.PyObject  {
 	return result
 
 }
-
-func (f *PythonFunction) Create() *Python3.PyObject {
-	return Python3.PyFunction_New(nil, nil)
-}

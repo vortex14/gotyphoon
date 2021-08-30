@@ -1,6 +1,8 @@
 package component
 
-import "github.com/vortex14/gotyphoon/interfaces"
+import (
+	"github.com/vortex14/gotyphoon/interfaces"
+)
 
 func getDescription(componentName string) string {
 

@@ -20,13 +20,6 @@ func (p *Python) InitEnvironment()  {
 	}
 }
 
-func (f *PythonFunction) newFunction() *Python3.PyObject {
-	ref := Python3.PyFunction_New(nil, nil)
-	color.Red("%+v", ref)
-	return ref
-}
-
-
 func (p *Python) RunFile(path string)  bool {
 	s, error := Python3.PyRun_AnyFile(path)
 	if error != nil {

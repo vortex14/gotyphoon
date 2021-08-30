@@ -1,6 +1,6 @@
 package task
 
-
+type ProjectSave map[string]string
 
 type ProcessorTask struct {
 	ErrorResponse bool `json:"error_response" default:"false" fake:"{randomstring:[false]}"`
@@ -11,8 +11,7 @@ type ProcessorTask struct {
 	} `json:"callback"`
 	Strategy string `json:"strategy" default:"text" fake:"{randomstring:[text]}"`
 	Save     struct {
-		Project struct {
-		} `json:"project"`
+		Project ProjectSave`json:"project"`
 		System struct {
 			ProcessorRetries int `json:"processor_retries" fake:"skip"`
 		} `json:"system"`

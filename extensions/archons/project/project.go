@@ -39,16 +39,19 @@ func (a *Archon) AwaitDecision()  {
 
 func (a *Archon) RunDemons(project interfaces.Project)  {
 	a.demons = map[string]ghosts.DemonInterface{}
-	for _, demonBuilder := range a.Demons {
-		demon := demonBuilder.Constructor(demonBuilder.Options, project)
-		if err := demon.Run(); err != nil {
-			color.Red("%s", err.Error())
-			continue
-		}
+	if len(a.Demons) > 0 {
+		for _, demonBuilder := range a.Demons {
+			demon := demonBuilder.Constructor(demonBuilder.Options, project)
+			if err := demon.Run(); err != nil {
+				color.Red("%s", err.Error())
+				continue
+			}
 
-		a.demons[demon.GetName()] = demon
-		color.Yellow("%s awake", demon.GetName())
+			a.demons[demon.GetName()] = demon
+			color.Yellow("%s awake", demon.GetName())
+		}
 	}
+
 }
 
 func (a *Archon) RunProjectServers(project interfaces.Project)  {
