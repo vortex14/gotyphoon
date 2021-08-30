@@ -12,16 +12,21 @@ import (
 type D map[string]interface{}
 
 
-func GetContext(values map[string]interface{}) *logrus.Entry {
+func New(values map[string]interface{}) *logrus.Entry {
 	return logrus.WithFields(values)
 }
 
-func UpdateCtx(context context.Context, logger *logrus.Entry) context.Context {
-	return ctx.UpdateContext(context, interfaces.LOGGER, logger)
+func PatchCtx(context context.Context, logger *logrus.Entry) context.Context {
+	return ctx.Update(context, interfaces.LOGGER, logger)
 }
 
-func GetCtxLog(context context.Context) interfaces.LoggerInterface {
-	return context.Value(ctx.ContextKey(interfaces.LOGGER)).(*logrus.Entry)
+func NewCtxValues(context context.Context, values D) context.Context {
+	return ctx.Update(context, interfaces.LOGGER, New(values))
+}
+
+func Get(context context.Context) (bool, interfaces.LoggerInterface) {
+	log, ok := context.Value(ctx.ContextKey(interfaces.LOGGER)).(*logrus.Entry)
+	return ok, log
 }
 
 // InitD is debug logger configuration

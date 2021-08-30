@@ -1,9 +1,22 @@
 package task
 
 import (
+	"context"
 	"github.com/fatih/color"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
+
+type ContextKey string
+
+func (c ContextKey) String() string {
+	return string(c)
+}
+
+
+func GetContextValue(ctx context.Context, key string) interface{} {
+	return ctx.Value(ContextKey(key))
+}
 
 type TyphoonTask struct {
 	Fetcher           FetcherTask   `json:"fetcher"`
@@ -17,6 +30,19 @@ type TyphoonTask struct {
 	//msg *nsq.Message
 }
 
+
+func Get(c context.Context) (bool, *TyphoonTask) {
+	taskInstance, ok := GetContextValue(c, interfaces.TASK).(*TyphoonTask)
+	return ok, taskInstance
+}
+
+func GetTaskCtx(ctx context.Context) *TyphoonTask {
+	return GetContextValue(ctx, interfaces.TASK).(*TyphoonTask)
+}
+
+func NewTaskCtx(task *TyphoonTask) context.Context {
+	return context.WithValue(context.Background(), ContextKey(interfaces.TASK), task)
+}
 
 func init()  {
 	//fmt.Println("TEST STATUSES", errorStatuses)

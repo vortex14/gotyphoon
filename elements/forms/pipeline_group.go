@@ -5,7 +5,6 @@ import (
 	"github.com/vortex14/gotyphoon/interfaces"
 	"golang.org/x/net/context"
 
-	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/log"
 )
 
@@ -37,13 +36,13 @@ func (g *PipelineGroup) Run(context context.Context) {
 
 	middlewareContext, mainContext = context, context
 
-	mainContext = ctx.UpdateContext(mainContext, interfaces.LOGGER, log.GetContext(log.D{"group": g.GetName()}))
+	mainContext = log.NewCtxValues(mainContext, log.D{"group": g.GetName()})
 
 	for _, pipeline := range g.Stages {
 		if failedFlow { break }
-		logger := log.GetContext(log.D{"pipeline": pipeline.GetName(), "group": g.GetName() })
+		logger := log.New(log.D{"pipeline": pipeline.GetName(), "group": g.GetName() })
 
-		middlewareContext = ctx.UpdateContext(mainContext, interfaces.LOGGER, logger)
+		middlewareContext = log.PatchCtx(mainContext, logger)
 
 		{
 			var failed bool
@@ -56,7 +55,7 @@ func (g *PipelineGroup) Run(context context.Context) {
 			if failed { break }
 		}
 
-		mainContext = ctx.UpdateContext(middlewareContext, interfaces.LOGGER, logger)
+		mainContext = log.PatchCtx(middlewareContext, logger)
 
 		{
 			pipeline.Run(mainContext, func(pipeline interfaces.BasePipelineInterface, err error) {

@@ -3,8 +3,8 @@ package pipelines
 import (
 	"context"
 	"github.com/vortex14/gotyphoon/elements/forms"
+	"github.com/vortex14/gotyphoon/log"
 
-	"github.com/vortex14/gotyphoon/ctx"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/task"
@@ -23,8 +23,8 @@ func (t *TaskPipeline) Run(
 
 	if t.Fn == nil { reject(t, Errors.TaskPipelineRequiredHandler); return }
 
-	taskInstance, okT := ctx.GetContextValue(context, interfaces.TASK).(*task.TyphoonTask)
-	logger,okL := ctx.GetContextValue(context, interfaces.LOGGER).(interfaces.LoggerInterface)
+	okT, taskInstance := task.Get(context)
+	okL, logger := log.Get(context)
 	if !okL || !okT { reject(t, Errors.PipelineContexFailed); return }
 
 	err, newContext := t.Fn(context, taskInstance, logger)

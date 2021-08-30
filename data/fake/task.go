@@ -30,6 +30,11 @@ func init()  {
 	})
 }
 
+func CreateDefaultTask() *typhoonTask.TyphoonTask {
+	task, _ := CreateFakeTask(interfaces.FakeTaskOptions{})
+	return task
+}
+
 func CreateFakeTask(options interfaces.FakeTaskOptions)  (*typhoonTask.TyphoonTask, error){
 	// TODO: task.yaml
 	var task typhoonTask.TyphoonTask

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/data/fake"
 	"github.com/vortex14/gotyphoon/elements/forms"
@@ -17,15 +18,7 @@ func init()  {
 
 func main() {
 
-	fakeTask, _ := fake.CreateFakeTask(interfaces.FakeTaskOptions{
-		UserAgent:   false,
-		Cookies:     false,
-		Auth:        false,
-		Proxy:       false,
-		AllowedHttp: nil,
-	})
-
-	ctxGroup := context.WithValue(context.Background(), ctx.ContextKey(interfaces.TASK), fakeTask)
+	ctxGroup := task.NewTaskCtx(fake.CreateDefaultTask())
 
 	(&forms.PipelineGroup{
 		BaseLabel: interfaces.BaseLabel{
@@ -39,7 +32,7 @@ func main() {
 				},
 				Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface) (error, context.Context) {
 
-					newCtx := ctx.UpdateContext(context, "key", "CONTEXT DATA VALUE")
+					newCtx := ctx.Update(context, "key", "CONTEXT DATA VALUE")
 
 
 					return nil, newCtx
@@ -65,7 +58,7 @@ func main() {
 					Name: "task-pipeline",
 				},
 				Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface) (error, context.Context) {
-					ctxData := ctx.GetContextValue(context, "key")
+					ctxData := ctx.Get(context, "key")
 
 					logger.Info(ctxData)
 

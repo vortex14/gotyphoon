@@ -75,8 +75,9 @@ func (p *BasePipeline) Run(
 	next func(ctx context.Context),
 	) {
 	if p.Fn == nil { reject(p,Errors.LambdaRequired); return}
-
-	err, newContext := p.Fn(context, log.GetCtxLog(context))
+	var logCtx interfaces.LoggerInterface
+	if ok, logger := log.Get(context); !ok { reject(p, Errors.CtxLogFailed); return } else { logCtx = logger }
+	err, newContext := p.Fn(context, logCtx)
 	if err != nil { reject(p, err); return }
 
 	next(newContext)
@@ -101,7 +102,7 @@ func (p *BasePipeline) RunMiddlewareStack(
 	for _, middleware := range p.Middlewares {
 		if failed || forceSkip { break }
 
-		logger := log.GetContext(log.D{"middleware": middleware.GetName(), "pipeline": p.GetName()})
+		logger := log.New(log.D{"middleware": middleware.GetName(), "pipeline": p.GetName()})
 
 		middleware.Pass(middlewareContext, logger, func(err error) {
 			if middleware.IsRequired() {baseException = err; err = Errors.MiddlewareRequired}

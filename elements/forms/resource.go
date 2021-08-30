@@ -87,7 +87,7 @@ func (r *Resource) RunMiddlewareStack(
 
 	for _, middleware := range r.Middlewares {
 		if failed { break }
-		logger :=  log.GetContext(log.D{"middleware": middleware.GetName(), "resource": r.GetName()})
+		logger :=  log.New(log.D{"middleware": middleware.GetName(), "resource": r.GetName()})
 		middleware.Pass(ctx, logger, func(err error) {
 			if middleware.IsRequired() { failed = true; reject(err) } else {
 				logrus.Warning(err.Error())
