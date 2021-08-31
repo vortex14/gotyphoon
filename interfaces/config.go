@@ -19,33 +19,34 @@ const (
 	TASK                    =   "task"
 	LOGGER                  =   "logger"
 	REQUIRED                =   "required"
+	REQUEST                 =   "request"
 
-	FETCHER 				=	"Fetcher"
-	PROCESSOR 				= 	"Processor"
-	TRANSPORTER 			= 	"ResultTransporter"
-	SCHEDULER 				= 	"Scheduler"
-	DONOR 					= 	"Donor"
+	FETCHER                 =   "Fetcher"
+	PROCESSOR               =   "Processor"
+	TRANSPORTER             =   "ResultTransporter"
+	SCHEDULER               =   "Scheduler"
+	DONOR                   =   "Donor"
 
-	DEFERRED				= 	"Deferred"
-	PRIORITY				=	"Priority"
-	RETRIES					=	"Retries"
-	EXCEPTIONS				=	"Exceptions"
+	DEFERRED                =   "Deferred"
+	PRIORITY                =   "Priority"
+	RETRIES                 =   "Retries"
+	EXCEPTIONS              =   "Exceptions"
 
-	PRIORITY2FIRST			=   1
-	PRIORITY2SECOND  		=	2
-	PRIORITY2THIRD  		=	3
+	PRIORITY2FIRST          =   1
+	PRIORITY2SECOND         =   2
+	PRIORITY2THIRD          =   3
 
-	PROCESSOR2PRIORITY 		= 	"ProcessorPriority"
-	PROCESSOR2EXCEPTIONS	=	"ProcessorExceptions"
+	PROCESSOR2PRIORITY      =   "ProcessorPriority"
+	PROCESSOR2EXCEPTIONS    =   "ProcessorExceptions"
 
-	FETCHER2PRIORITY		=	"FetcherPriority"
-	FETCHER2EXCEPTIONS		=	"FetcherExceptions"
+	FETCHER2PRIORITY        =   "FetcherPriority"
+	FETCHER2EXCEPTIONS      =   "FetcherExceptions"
 
-	SCHEDULER2PRIORITY		=	"SchedulerPriority"
-	SCHEDULER2EXCEPTIONS	=	"SchedulerExceptions"
+	SCHEDULER2PRIORITY      =   "SchedulerPriority"
+	SCHEDULER2EXCEPTIONS    =   "SchedulerExceptions"
 
-	TRANSPORTER2PRIORITY	=	"ResultTransporterPriority"
-	TRANSPORTER2EXCEPTIONS	=	"ResultTransporterExceptions"
+	TRANSPORTER2PRIORITY    =    "ResultTransporterPriority"
+	TRANSPORTER2EXCEPTIONS  =    "ResultTransporterExceptions"
 
 )
 

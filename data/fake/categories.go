@@ -11,15 +11,16 @@ import (
 )
 
 func init()  {
-	level := 1
 	gofakeit.AddFuncLookup("categories", gofakeit.Info{
-		Category:    fmt.Sprintf("custom category level - %d", level),
+		Category:    fmt.Sprintf("custom category level"),
 		Description: "Random set categories",
 		Output:      "item",
 
 		Generate: func(r *rand.Rand, m *gofakeit.MapParams, info *gofakeit.Info) (interface{}, error) {
 
 			u := utils.Utils{}
+
+			level := utils.GetRandomIntRange(4,1)
 			var categoryName string
 
 			switch level {
@@ -29,15 +30,14 @@ func init()  {
 				categoryName = u.GetRandomFromSlice(data.CategoriesSecondLevel)
 			case 3:
 				categoryName = u.GetRandomFromSlice(data.CategoriesThirdLevel)
-			}
 
-			level += 1
+			}
 			return categoryName, nil
 		},
 	})
 
 	gofakeit.AddFuncLookup("categories_ids", gofakeit.Info{
-		Category:    fmt.Sprintf("custom category level - %d", level),
+		Category:    fmt.Sprintf("custom category level"),
 		Description: "Random set images",
 		Output:      "item",
 

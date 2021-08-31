@@ -207,7 +207,6 @@ var (
 		"Wholesale Lots",
 		"Science Fiction & Horror",
 		"Other Jewelry & Watches",
-
 	}
 
 	CategoriesThirdLevel = []string{
@@ -313,7 +312,6 @@ var (
 		"Collections, Lots",
 		"United Arab Emirates",
 		"Palestine (1948-Now)",
-
 	}
 )
 

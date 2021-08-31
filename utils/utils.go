@@ -327,13 +327,19 @@ func (u *Utils) ReadCSV(object *interfaces.FileObject, bindings interface{})  {
 	}
 }
 
+func GetRandomIntRange(max int, min int) int {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(max - min) + min
+
+}
+
 func (u *Utils) GetRandomFromSlice(slice []string) string {
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().UnixNano())
 	return slice[rand.Intn(len(slice))]
 }
 
 func (u *Utils) GetRandomString(length int, sequence string)  string {
-
+	rand.Seed(time.Now().UnixNano())
 	var letters = []rune(sequence)
 	b := make([]rune, length)
 	for i := range b {

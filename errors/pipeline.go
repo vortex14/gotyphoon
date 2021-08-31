@@ -1,3 +1,6 @@
 package errors
 
-//var ForceSkipPipeline = Errors.New("skip all future middleware stack")
+import Errors "errors"
+
+var PipelineContexFailed = Errors.New("invalid pipeline context")
+var CtxLogFailed  = Errors.New("context has not logger")

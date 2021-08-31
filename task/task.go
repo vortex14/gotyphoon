@@ -1,9 +1,12 @@
 package task
 
 import (
-	"github.com/fatih/color"
-)
+	"context"
+	"github.com/vortex14/gotyphoon/ctx"
 
+	"github.com/fatih/color"
+	"github.com/vortex14/gotyphoon/interfaces"
+)
 
 type TyphoonTask struct {
 	Fetcher           FetcherTask   `json:"fetcher"`
@@ -17,6 +20,74 @@ type TyphoonTask struct {
 	//msg *nsq.Message
 }
 
+func (t *TyphoonTask) GetFetcherMethod() string {
+	return t.Fetcher.Method
+}
+
+func (t *TyphoonTask) GetFetcherTimeout() int {
+	return t.Fetcher.Timeout
+}
+
+func (t *TyphoonTask) GetFetcherUrl() string {
+	return t.URL
+}
+
+func (t *TyphoonTask) SetFetcherUrl(url string)  {
+	t.URL = url
+}
+
+func (t *TyphoonTask) SetProxyServerUrl(url string)  {
+	t.Fetcher.IsProxyRequired = true
+	t.Fetcher.ProxyServer = url
+}
+
+func (t *TyphoonTask) SetUserAgent(agent string)  {
+	if t.Fetcher.Headers == nil {
+		t.Fetcher.Headers = make(map[string]string)
+	}
+	t.Fetcher.Headers["User-Agent"] = agent
+}
+
+func (t *TyphoonTask) SetProxyAddress(address string)  {
+	t.Fetcher.Proxy = address
+}
+
+func (t *TyphoonTask) IsProxyRequired() bool {
+	return t.Fetcher.IsProxyRequired
+}
+
+func (t *TyphoonTask) GetProxyAddress() string {
+	return t.Fetcher.Proxy
+}
+
+func (t *TyphoonTask) GetUserAgent() string {
+	return t.Fetcher.Headers["User-Agent"]
+}
+
+func (t *TyphoonTask) GetProxyServerUrl() string  {
+	return t.Fetcher.ProxyServer
+}
+
+func (t *TyphoonTask) SetStatusCode(code int)  {
+	t.Fetcher.Response.Code = code
+}
+
+func Get(c context.Context) (bool, *TyphoonTask) {
+	taskInstance, ok := ctx.Get(c, interfaces.TASK).(*TyphoonTask)
+	return ok, taskInstance
+}
+
+func GetTaskCtx(context context.Context) *TyphoonTask {
+	return ctx.Get(context, interfaces.TASK).(*TyphoonTask)
+}
+
+func NewTaskCtx(task *TyphoonTask) context.Context {
+	return ctx.Update(context.Background(), interfaces.TASK, task)
+}
+
+func PatchCtx(context context.Context, task *TyphoonTask) context.Context {
+	return ctx.Update(context, interfaces.TASK, task)
+}
 
 func init()  {
 	//fmt.Println("TEST STATUSES", errorStatuses)

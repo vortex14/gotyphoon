@@ -35,6 +35,7 @@ func (m *HTTPResponseDefaultMiddleware) Pass(
 	context context.Context,
 	loggerInterface interfaces.LoggerInterface,
 	catch func(err error),
+	next func(ctx context.Context),
 
 	) {
 	taskInstance, _ := context.Value(TASK).(*task.TyphoonTask)
@@ -48,7 +49,7 @@ func (m *HTTPResponseDefaultMiddleware) Pass(
 func ConstructorHTTPResponseDefaultMiddleware(required bool) interfaces.MiddlewareInterface {
 	return &HTTPResponseDefaultMiddleware{
 		BaseLabel: &interfaces.BaseLabel{
-			Required: required,
+			Required:    required,
 			Name:        NAMEHttpBasicAuthMiddleware,
 			Description: DESCRIPTIONHttpBasicAuthMiddleware,
 		},

@@ -1,30 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/vortex14/gotyphoon/data/fake"
-	"github.com/vortex14/gotyphoon/extensions/logger"
 	httpPipeline "github.com/vortex14/gotyphoon/extensions/pipelines/http/strategies/default"
 	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"
-	"strconv"
 )
 
 func init()  {
-	(&logger.TyphoonLogger{
-		Name: "App",
-		Options: logger.Options{
-			BaseLoggerOptions: &interfaces.BaseLoggerOptions{
-				Name:          "Test-App",
-				Level:         "DEBUG",
-				ShowLine:      true,
-				ShowFile:      true,
-				ShortFileName: true,
-				FullTimestamp: true,
-			},
-		},
-	}).Init()
+	log.InitD()
 }
 
 
@@ -49,7 +37,7 @@ var productIds = []int{3454581, 3454582, 3470493, 3931128, 3628008, 3628009, 368
 	4039025, 3694521, 2112500,
 }
 
-func main()  {
+func main40()  {
 	var tableData [][]string
 	var notFoundtableData [][]string
 	u := utils.Utils{}
@@ -89,33 +77,34 @@ func main()  {
 
 		pipeline := httpPipeline.Constructor(fakeTask, nil)
 
-		err, responseData := pipeline.Run()
+		err, _ := pipeline.Run(context.TODO())
 		if err != nil {
 			return
 		}
 
 
-		if fakeTask.Fetcher.Response.Code == 200 {
 
-			_ = u.DumpToFile(&interfaces.FileObject{
-				Path:       fmt.Sprintf("images/%d.jpg", productId),
-				Data:       string(responseData.([]byte)),
-			})
-
-			tableData = append(tableData, []string{
-				strconv.Itoa(Istep),
-				fakeTask.URL,
-				strconv.Itoa(productId),
-				strconv.Itoa(fakeTask.Fetcher.Response.Code),
-			})
-		} else {
-			notFoundtableData = append(notFoundtableData, []string{
-				strconv.Itoa(Istep),
-				fakeTask.URL,
-				strconv.Itoa(productId),
-				strconv.Itoa(fakeTask.Fetcher.Response.Code),
-			})
-		}
+		//if fakeTask.Fetcher.Response.Code == 200 {
+		//
+		//	_ = u.DumpToFile(&interfaces.FileObject{
+		//		Path:       fmt.Sprintf("images/%d.jpg", productId),
+		//		Data:       string(responseData.([]byte)),
+		//	})
+		//
+		//	tableData = append(tableData, []string{
+		//		strconv.Itoa(Istep),
+		//		fakeTask.URL,
+		//		strconv.Itoa(productId),
+		//		strconv.Itoa(fakeTask.Fetcher.Response.Code),
+		//	})
+		//} else {
+		//	notFoundtableData = append(notFoundtableData, []string{
+		//		strconv.Itoa(Istep),
+		//		fakeTask.URL,
+		//		strconv.Itoa(productId),
+		//		strconv.Itoa(fakeTask.Fetcher.Response.Code),
+		//	})
+		//}
 
 
 

@@ -47,11 +47,11 @@ func main()  {
 		Name: "Home",
 		Description: "Home Resource",
 		Middlewares: []interfaces.MiddlewareInterface{
-			&interfaces.Middleware{
+			&forms.Middleware{
 				Required: true,
 				Name:        "Resource middleware 1",
-				Callback: func(context context.Context, logger interfaces.LoggerInterface, reject func(err error)) {
-					logger.Debug("Run")
+				Fn: func(context context.Context, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
+
 				},
 			},
 		},
@@ -63,11 +63,11 @@ func main()  {
 				Path :       "some-test",
 				Methods:     []string{interfaces.GET},
 				Middlewares: []interfaces.MiddlewareInterface{
-					&interfaces.Middleware{
+					&forms.Middleware{
 						Required: true,
 						Name:        "middleware-1",
-						Callback: func(context context.Context, logger interfaces.LoggerInterface, reject func(err error)) {
-							logger.Debug("middleware - 1")
+						Fn: func(context context.Context, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
+
 						},
 					},
 				},

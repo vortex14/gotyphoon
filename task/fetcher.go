@@ -2,6 +2,7 @@ package task
 
 type FetcherTask struct {
 	Proxy string `json:"proxy"`
+	ProxyServer string `json:"proxy_server"`
 	Method  string `json:"method" default:"GET" fake:"{randomstring:[GET]}"`
 	Timeout int    `json:"timeout" default:"30" fake:"{number:30,60}"`
 	MaxRetries int `json:"max_retries" default:"15" fake:"{number:5,30}"`

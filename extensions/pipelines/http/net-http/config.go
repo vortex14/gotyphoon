@@ -7,4 +7,5 @@ const (
 	TRANSPORT = "transport"
 	REQUEST   = "request"
 	RESPONSE  = "response"
+	DATA      =  "data"
 )

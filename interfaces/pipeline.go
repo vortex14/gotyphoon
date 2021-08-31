@@ -4,15 +4,24 @@ import (
 	"context"
 )
 
-
 type BasePipelineInterface interface {
-	Run(ctx context.Context) (error, context.Context)
-	RunMiddlewareStack(
+	Run(
 		context context.Context,
-		reject func(middleware MiddlewareInterface,err error),
+		reject func(pipeline BasePipelineInterface, err error),
 		next func(ctx context.Context),
 	)
+	RunMiddlewareStack(
+		context context.Context,
+		reject func(middleware MiddlewareInterface, err error),
+		next func(ctx context.Context),
+	)
+	Cancel(
+		context context.Context,
+		logger LoggerInterface,
+		err error,
+	)
 	GetName() string
+	IsRequired() bool
 	GetDescription()string
 }
 
