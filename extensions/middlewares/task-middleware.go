@@ -30,7 +30,7 @@ func (m *TaskMiddleware) Pass(
 
 	) {
 
-	taskInstance, _ := ctx.GetContextValue(context, interfaces.TASK).(*task.TyphoonTask)
+	taskInstance, _ := ctx.Get(context, interfaces.TASK).(*task.TyphoonTask)
 	m.Fn(context, taskInstance, logger, reject, next)
 }
 

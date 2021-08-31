@@ -25,7 +25,8 @@ func NewCtxValues(context context.Context, values D) context.Context {
 }
 
 func Get(context context.Context) (bool, interfaces.LoggerInterface) {
-	log, ok := context.Value(ctx.ContextKey(interfaces.LOGGER)).(*logrus.Entry)
+	log, ok := ctx.Get(context, interfaces.LOGGER).(*logrus.Entry)
+	if !ok { log = New(D{"unstable context": true})}
 	return ok, log
 }
 
@@ -39,7 +40,7 @@ func InitD()  {
 				Level:         "DEBUG",
 				ShowLine:      true,
 				ShowFile:      true,
-				ShortFileName: true,
+				ShortFileName: false,
 				FullTimestamp: true,
 			},
 		},

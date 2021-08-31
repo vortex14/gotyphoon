@@ -4,7 +4,6 @@ import (
 	"context"
 )
 
-
 type BasePipelineInterface interface {
 	Run(
 		context context.Context,
@@ -15,6 +14,11 @@ type BasePipelineInterface interface {
 		context context.Context,
 		reject func(middleware MiddlewareInterface, err error),
 		next func(ctx context.Context),
+	)
+	Cancel(
+		context context.Context,
+		logger LoggerInterface,
+		err error,
 	)
 	GetName() string
 	IsRequired() bool

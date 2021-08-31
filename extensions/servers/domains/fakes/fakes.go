@@ -1,8 +1,6 @@
 package fakes
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/fatih/color"
 	"github.com/gin-gonic/gin"
 
 	"github.com/vortex14/gotyphoon/data/fake"
@@ -16,8 +14,9 @@ const (
 	NAME = "Fakes"
 	DESCRIPTION = "Server for data fakes"
 
-	FakeProductPath = "product-fake"
-	FakeTaskPath = "task-fake"
+	FakeProductPath = "product"
+	FakeTaskPath = "task"
+	FakeProxyPath = "proxy"
 )
 
 func Constructor(
@@ -28,8 +27,7 @@ func Constructor(
 	swaggerOptions *interfaces.SwaggerOptions,
 
 ) interfaces.ServerInterface {
-
-	FakerServer := (
+	return (
 		&server.TyphoonServer{
 			Port: port,
 			Level: interfaces.INFO,
@@ -45,7 +43,7 @@ func Constructor(
 		InitLogger().
 		AddResource(
 			&forms.Resource{
-				Path: "/",
+				Path: "/fake",
 				Name: "Main faker",
 				Description: "Main Resource",
 				Resources:    make(map[string]interfaces.ResourceInterface),
@@ -57,16 +55,7 @@ func Constructor(
 						Path: FakeProductPath,
 						Description: "Fake Product",
 						Controller: func(ctx *gin.Context, logger interfaces.LoggerInterface) {
-
-							var f fake.Product
-							err := gofakeit.Struct(&f)
-							if err != nil {
-								color.Red("%s", err.Error())
-								ctx.JSON(400, gin.H{"status": false})
-								return
-							}
-
-							ctx.JSON(200, f)
+							ctx.JSON(200, fake.CreateProduct())
 						},
 						Methods : []string{interfaces.GET},
 					},
@@ -79,9 +68,16 @@ func Constructor(
 						},
 						Methods : []string{interfaces.GET},
 					},
+					FakeProxyPath: &interfaces.Action{
+						Name: NAME,
+						Path: FakeProxyPath,
+						Description: "Fake Typhoon proxy",
+						Controller: func(ctx *gin.Context, logger interfaces.LoggerInterface) {
+							ctx.JSON(200, fake.CreateFakeProxy())
+						},
+						Methods : []string{interfaces.GET},
+					},
 				},
 			},
 		)
-
-	return FakerServer
-}
+	}

@@ -44,7 +44,7 @@ type BasePipeline struct {
 	//Consumers   map[string]interfaces.ConsumerInterface
 
 	Fn func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context)
-	CancelHandler func(ctx context.Context, err error)
+	Cn func(ctx context.Context, logger interfaces.LoggerInterface, err error)
 
 	interfaces.BaseLabel
 }
@@ -83,8 +83,9 @@ func (p *BasePipeline) Run(
 	next(newContext)
 }
 
-func (p *BasePipeline) Cancel(err error) {
-	//p.CancelHandler(p.Context, err)
+func (p *BasePipeline) Cancel(ctx context.Context, logger interfaces.LoggerInterface, err error) {
+	if p.Cn == nil { return }
+	p.Cn(ctx, logger, err)
 }
 
 func (p *BasePipeline) RunMiddlewareStack(
@@ -106,7 +107,6 @@ func (p *BasePipeline) RunMiddlewareStack(
 
 		middleware.Pass(middlewareContext, logger, func(err error) {
 			if middleware.IsRequired() {baseException = err; err = Errors.MiddlewareRequired}
-
 			switch err {
 			case Errors.ForceSkipMiddlewares:
 				forceSkip = true

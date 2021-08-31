@@ -16,7 +16,7 @@ const (
 func ConstructorRequestHeaderMiddleware(required bool) interfaces.MiddlewareInterface {
 	return &HttpMiddleware{
 		Middleware: &forms.Middleware{
-			Required: required,
+			Required:    required,
 			Name:        NAME,
 			Description: DESCRIPTION,
 		},

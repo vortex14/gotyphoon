@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"github.com/vortex14/gotyphoon/extensions/pipelines"
+	httpMiddlewares "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
 	"net/http"
 
 	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/data/fake"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/extensions/middlewares"
-	httpMiddlewares "github.com/vortex14/gotyphoon/extensions/pipelines/http/middlewares/net-http"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/task"
@@ -44,7 +44,7 @@ func main20() {
 					Name: "task-pipeline",
 				},
 				Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface) (error, context.Context) {
-					ctxData := ctx.GetContextValue(context, "test-ctx-key")
+					ctxData := ctx.Get(context, "test-ctx-key")
 					if ctxData  != nil{
 						logger.Info("FOUND CTX DATA: in LambdaHandler", ctxData.(string))
 					} else {
@@ -64,7 +64,7 @@ func main20() {
 						Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
 							//reject(Errors.ForceSkipMiddlewares)
 
-							newCtx := ctx.UpdateContext(context, "test-ctx-key", "test-ctx-data-1")
+							newCtx := ctx.Update(context, "test-ctx-key", "test-ctx-data-1")
 
 							//ctxData := interfaces.GetContextValue(newCtx, "test-ctx-key")
 							//println("CTX DATA", ctxData)
@@ -78,7 +78,7 @@ func main20() {
 							Name: "task-middleware-2",
 						},
 						Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
-							ctxData := ctx.GetContextValue(context, "test-ctx-key")
+							ctxData := ctx.Get(context, "test-ctx-key")
 							logger.Info("not skip !, new CONTEXT ::: ", ctxData)
 						},
 					},
@@ -93,7 +93,7 @@ func main20() {
 					},
 				},
 				Fn: func(context context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
-					ctxData := ctx.GetContextValue(context, "test-ctx-key")
+					ctxData := ctx.Get(context, "test-ctx-key")
 					if ctxData  != nil{
 						logger.Info("CTX DATA:", ctxData.(string))
 					} else {
@@ -115,7 +115,7 @@ func main20() {
 					Name: "task-pipeline",
 				},
 				Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface) (error, context.Context) {
-					ctxData := ctx.GetContextValue(context, "test-ctx-key")
+					ctxData := ctx.Get(context, "test-ctx-key")
 					if ctxData  != nil{
 						logger.Info("FOUND CTX DATA: in LambdaHandler", ctxData.(string))
 					} else {

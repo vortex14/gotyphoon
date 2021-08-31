@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/fatih/color"
 
 	"github.com/vortex14/gotyphoon/data"
 	"github.com/vortex14/gotyphoon/utils"
@@ -52,6 +53,16 @@ type Product struct {
 	CountryOfOrigin string `fake:"{randomstring:[USA,CA]}" json:"countryoforigin"`
 	CategoriesIds []string `fake:"{categories_ids}" fakesize:"3" json:"categories_ids"`
 	Marketplace string `fake:"{randomstring:[ebay.com,amazon.com,walmart.com,homedepot.com]}" json:"marketplace"`
+}
+
+func CreateProduct() *Product {
+	var p *Product
+	err := gofakeit.Struct(&p)
+	if err != nil {
+		color.Red("%s", err.Error())
+		return nil
+	}
+	return p
 }
 
 

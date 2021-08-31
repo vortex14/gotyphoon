@@ -3,7 +3,6 @@ package net_http
 import (
 	"context"
 	"github.com/sirupsen/logrus"
-	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"net/http"
 	"net/url"
@@ -13,31 +12,34 @@ import (
 	"github.com/vortex14/gotyphoon/task"
 )
 
-func ConstructorProxyMiddleware(required bool) interfaces.MiddlewareInterface {
+const (
+	InstallingProxyMiddleware = "Proxy middleware"
+	DescriptionDProxyMiddleware = "Proxy Middleware"
+)
+
+func ConstructorProxyRequestSettingsMiddleware(required bool) interfaces.MiddlewareInterface {
 	return &HttpMiddleware{
 		Middleware: &forms.Middleware{
 			Required:    required,
-			Name:        NAMEHttpBasicAuthMiddleware,
-			Description: DESCRIPTIONHttpBasicAuthMiddleware,
+			Name:        InstallingProxyMiddleware,
+			Description: DescriptionDProxyMiddleware,
 		},
 		Fn: func(context context.Context, task *task.TyphoonTask, request *http.Request, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
-			transport, ok := ctx.GetContextValue(context,TRANSPORT).(*http.Transport)
-
-			if !ok || !task.Fetcher.IsProxyRequired { reject(Errors.MiddlewareContextFailed); return }
-
-			logrus.Debug("init proxy address ")
-			proxyURL, err := url.Parse(task.Fetcher.Proxy)
-			if err != nil {
+			ok, transport := GetTransportCtx(context)
+			if !ok { reject(Errors.MiddlewareContextFailed); return }
+			if !task.IsProxyRequired() { reject(Errors.ProxyTaskRequired); return}
+			logrus.Debug("init proxy address ...", task.GetProxyAddress())
+			proxyURL, err := url.Parse(task.GetProxyAddress())
+			if err != nil || proxyURL == nil {
 				logrus.Error(err.Error())
 				reject(Errors.ProxyUrlWrong)
+				return
 			}
 			if proxyURL.Host != "" && proxyURL.Port() != "" {
 				transport.Proxy = http.ProxyURL(proxyURL)
-				logrus.Debug("task proxy ", proxyURL.Path)
 			} else if proxyURL.Host == "" || proxyURL.Port() == "" {
 				reject(Errors.ProxyTaskNotFound)
 			}
-
 		},
 	}
 }

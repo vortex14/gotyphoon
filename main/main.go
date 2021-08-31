@@ -83,6 +83,7 @@ func main40()  {
 		}
 
 
+
 		//if fakeTask.Fetcher.Response.Code == 200 {
 		//
 		//	_ = u.DumpToFile(&interfaces.FileObject{

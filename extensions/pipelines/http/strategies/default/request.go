@@ -3,6 +3,8 @@ package _default
 import (
 	//"compress/gzip"
 	"context"
+	"github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
+
 	//"io"
 	//"io/ioutil"
 	"net/http"
@@ -10,7 +12,6 @@ import (
 
 	//"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/elements/forms"
-	netHttp "github.com/vortex14/gotyphoon/extensions/pipelines/http/middlewares/net-http"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/task"
 )
@@ -89,7 +90,7 @@ func (h *HttpPipelineDefault) Run(
 	//
 	//
 	//// Before http request. First step for prefetching
-	//ctx := context.WithValue(h.Context, interfaces.ContextKey(netHttp.TASK), h.Task)
+	//ctx := context.WithValue(h.Context, interfaces.s(netHttp.TASK), h.Task)
 	//ctx = context.WithValue(ctx, interfaces.ContextKey(netHttp.CLIENT), client)
 	//ctx = context.WithValue(ctx, interfaces.ContextKey(netHttp.REQUEST), request)
 	//ctx = context.WithValue(ctx, interfaces.ContextKey(netHttp.TRANSPORT), transport)
@@ -125,8 +126,8 @@ func Constructor(
 			Middlewares: []interfaces.MiddlewareInterface{
 
 				//netHttp.ConstructorProxyMiddleware(false),
-				netHttp.ConstructorBasicAuthMiddleware(false),
-				netHttp.ConstructorRequestHeaderMiddleware(true),
+				net_http.ConstructorBasicAuthMiddleware(false),
+				net_http.ConstructorRequestHeaderMiddleware(true),
 			},
 			Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
 

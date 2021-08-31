@@ -11,8 +11,15 @@ import (
 )
 
 type TaskPipeline struct {
-	Fn func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface)  (error, context.Context)
+	Fn func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface)  (error, context.Context)
+	Cn func(err error, context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface)
 	*forms.BasePipeline
+}
+
+func (t *TaskPipeline) UnpackCtx(ctx context.Context) (bool, interfaces.TaskInterface, interfaces.LoggerInterface)  {
+	okT, taskInstance := task.Get(ctx)
+	okL, logger := log.Get(ctx)
+	return okL && okT, taskInstance, logger
 }
 
 func (t *TaskPipeline) Run(
@@ -23,11 +30,25 @@ func (t *TaskPipeline) Run(
 
 	if t.Fn == nil { reject(t, Errors.TaskPipelineRequiredHandler); return }
 
-	okT, taskInstance := task.Get(context)
-	okL, logger := log.Get(context)
-	if !okL || !okT { reject(t, Errors.PipelineContexFailed); return }
+	ok,taskInstance, logger := t.UnpackCtx(context)
+	if !ok { reject(t, Errors.PipelineContexFailed); return }
 
 	err, newContext := t.Fn(context, taskInstance, logger)
 	if err != nil { reject(t, err); return }
 	next(newContext)
+}
+
+func (t *TaskPipeline) Cancel(
+	context context.Context,
+	logger interfaces.LoggerInterface,
+	err error,
+) {
+
+	if t.Cn == nil { return }
+
+	ok,taskInstance, logger := t.UnpackCtx(context)
+	if !ok { return }
+
+	t.Cn(err, context, taskInstance, logger)
+
 }

@@ -11,7 +11,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.7.1 // indirect
 	github.com/banzaicloud/logrus-runtime-formatter v0.0.0-20190729070250-5ae5475bae5e
 	github.com/brianvoe/gofakeit/v6 v6.5.0
-	github.com/bxcodec/faker v2.0.1+incompatible // indirect
+	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/containerd/containerd v1.5.4 // indirect
 	github.com/datadog/go-python3 v0.0.0-20210805105248-03d93fb21b67 // indirect
@@ -54,6 +54,7 @@ require (
 	github.com/xanzy/go-gitlab v0.50.1
 	go.mongodb.org/mongo-driver v1.7.0
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
 	google.golang.org/grpc v1.39.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )

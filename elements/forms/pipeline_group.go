@@ -26,7 +26,6 @@ type PipelineGroup struct {
 
 }
 
-
 func (g *PipelineGroup) Run(context context.Context) {
 	println("run pipeline group !")
 
@@ -43,24 +42,27 @@ func (g *PipelineGroup) Run(context context.Context) {
 		logger := log.New(log.D{"pipeline": pipeline.GetName(), "group": g.GetName() })
 
 		middlewareContext = log.NewCtx(mainContext, logger)
-
+		var errStack error
 		{
 			var failed bool
 			pipeline.RunMiddlewareStack(middlewareContext, func(middleware interfaces.MiddlewareInterface, err error) {
+				errStack = err
 				failed = true
-				logger.Error("exit from middleware stack . Error: ", err.Error())
+				logger.Error("exit from middleware stack . Error: ", errStack.Error())
 			}, func(returnedContext Context.Context) {
 				middlewareContext = returnedContext
 			})
-			if failed { break }
+			if failed { pipeline.Cancel(middlewareContext, logger, errStack); break }
 		}
 
 		mainContext = log.NewCtx(middlewareContext, logger)
 
 		{
-			pipeline.Run(mainContext, func(pipeline interfaces.BasePipelineInterface, err error) {
+			pipeline.Run(mainContext, func(p interfaces.BasePipelineInterface, err error) {
 				failedFlow = true
-				logger.Error("Exit from group. Error: ",err.Error(), pipeline.GetName())
+				errStack = err
+				logger.Error("Exit from group. Error: ",err.Error(), p.GetName())
+				p.Cancel(mainContext, logger, err)
 
 			}, func(returnedResultPipelineContext Context.Context) {
 				mainContext = returnedResultPipelineContext

@@ -2,7 +2,6 @@ package net_http
 
 import (
 	"context"
-	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -33,8 +32,9 @@ func (m *HttpMiddleware) Pass(
 	next func(ctx context.Context),
 	) {
 
-	taskInstance, okT := ctx.GetContextValue(context, TASK).(*task.TyphoonTask)
-	request, okR := ctx.GetContextValue(context, REQUEST).(*http.Request)
+	okT, taskInstance := task.Get(context)
+	okR, request := GetRequestCtx(context)
+
 	if !okT || !okR { reject(Errors.MiddlewareContextFailed); return }
 	m.Fn(context, taskInstance, request, logger, reject, next)
 }

@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/vortex14/gotyphoon/elements/forms"
-	netHttp "github.com/vortex14/gotyphoon/extensions/pipelines/http/middlewares/net-http"
+	"github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/task"
 	"net/http"
@@ -120,8 +120,8 @@ func Constructor(
 			Middlewares: []interfaces.MiddlewareInterface{
 
 				//netHttp.ConstructorProxyMiddleware(false),
-				netHttp.ConstructorBasicAuthMiddleware(false),
-				netHttp.ConstructorRequestHeaderMiddleware(true),
+				net_http.ConstructorBasicAuthMiddleware(false),
+				net_http.ConstructorRequestHeaderMiddleware(true),
 			},
 			Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
 

@@ -49,7 +49,7 @@ func (m *HTTPResponseDefaultMiddleware) Pass(
 func ConstructorHTTPResponseDefaultMiddleware(required bool) interfaces.MiddlewareInterface {
 	return &HTTPResponseDefaultMiddleware{
 		BaseLabel: &interfaces.BaseLabel{
-			Required: required,
+			Required:    required,
 			Name:        NAMEHttpBasicAuthMiddleware,
 			Description: DESCRIPTIONHttpBasicAuthMiddleware,
 		},

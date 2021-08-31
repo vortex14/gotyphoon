@@ -1,11 +1,11 @@
 package main
 
 import (
-	"context"
+	Context "context"
+	"github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
+	"golang.org/x/net/context"
 	"net/http"
-	"time"
 
-	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/data/fake"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/extensions/pipelines"
@@ -19,8 +19,11 @@ func init()  {
 }
 
 func main() {
+	taskTest := fake.CreateDefaultTask()
+	taskTest.SetFetcherUrl("http://localhost:12666/fake/product")
 
-	ctxGroup := task.NewTaskCtx(fake.CreateDefaultTask())
+	ctxGroup := task.NewTaskCtx(taskTest)
+
 
 	(&forms.PipelineGroup{
 		BaseLabel: interfaces.BaseLabel{
@@ -30,55 +33,61 @@ func main() {
 		Stages: []interfaces.BasePipelineInterface{
 			&pipelines.TaskPipeline{
 				BasePipeline: &forms.BasePipeline{
-					Name: "prepare request",
+					Name: "prepare",
 				},
-				Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface) (error, context.Context) {
+				Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) (error, context.Context) {
 
-					newCtx := ctx.Update(context, "key", "CONTEXT DATA VALUE")
+					transport, client := net_http.GetHttpClientTransport(task)
+					request, err := http.NewRequest(task.GetFetcherMethod(), task.GetFetcherUrl(), nil)
 
+					if err != nil { return err, nil }
 
+					httpContext := net_http.NewClientCtx(context, client)
+					httpContext = net_http.NewRequestCtx(httpContext, request)
+					httpContext = net_http.NewTransportCtx(httpContext, transport)
 
-					transport := &http.Transport{
-						ResponseHeaderTimeout: time.Duration(task.Fetcher.Timeout) * time.Second,
-						IdleConnTimeout: time.Duration(task.Fetcher.Timeout) * time.Second,
-					}
-
-					client := &http.Client{
-						Transport: transport,
-						Timeout: time.Duration(task.Fetcher.Timeout) * time.Second,
-					}
-
-
-					request, err := http.NewRequest(task.Fetcher.Method, h.Task.URL, nil)
-
-					return nil, newCtx
+					return nil, httpContext
 				},
 			},
-			&forms.BasePipeline{
-				Name: "Request",
-				Fn: func(context context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
-
-					return nil, context
-				},
-			},
-			&forms.BasePipeline{
-				Name: "SECOND STEP 2",
-				Fn: func(context context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
-
-
-					return nil, context
-				},
-			},
-			&pipelines.TaskPipeline{
+			&net_http.HttpRequestPipeline{
 				BasePipeline: &forms.BasePipeline{
-					Name: "task-pipeline",
+					Name: "http-request",
+					Middlewares: []interfaces.MiddlewareInterface{
+						//netHttp.ConstructorProxySettingOldMiddleware(true),
+						//netHttp.ConstructorProxyRequestSettingsMiddleware(true),
+						//netHttp.ConstructorRequestHeaderMiddleware(true),
+					},
 				},
-				Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface) (error, context.Context) {
-					ctxData := ctx.Get(context, "key")
+				Fn: func(context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface, client *http.Client, request *http.Request, transport *http.Transport) (error, Context.Context) {
 
-					logger.Info(ctxData)
+					err, response, data := net_http.Request(client, request, logger)
+					if err != nil { return err, nil }
+					context = net_http.NewResponseCtx(context, response)
+					context = net_http.NewResponseDataCtx(context, data)
+
 
 					return nil, context
+
+				},
+				Cn: func(err error, context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) {
+					logger.Error("TEST --- ",err.Error())
+				},
+			},
+			&net_http.HttpResponsePipeline{
+				BasePipeline: &forms.BasePipeline{
+					Name:        "Response pipeline",
+				},
+				Fn: func(
+					context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface,
+					client *http.Client, request *http.Request, transport *http.Transport,
+					response *http.Response, data *string) (error, Context.Context){
+
+					logger.Warning("response", *data)
+
+					return nil, context
+				},
+				Cn: func(err error, context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) {
+					logger.Error("pipeline error")
 				},
 			},
 		},
