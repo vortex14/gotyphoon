@@ -32,6 +32,10 @@ type ProcessorPipelineInterface interface {
 	Switch()
 }
 
+type PipelineGroupInterface interface {
+	Run(ctx context.Context)
+}
+
 type BaseLabel struct {
 	Name        string
 	Description string

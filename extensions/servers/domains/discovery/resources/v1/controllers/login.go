@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/vortex14/gotyphoon/interfaces"
 )
-
 
 const (
 	NAME 		= "login"
@@ -14,7 +14,6 @@ const (
 		"NTYifQ.e30.7m63q7oIzRooWceOw5DX-S8av4NHx_AbQx8oibISgZU"
 
 )
-
 
 // handler
 // @Tags Auth

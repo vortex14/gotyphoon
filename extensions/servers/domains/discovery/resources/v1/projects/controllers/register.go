@@ -3,10 +3,11 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	Errors "github.com/vortex14/gotyphoon/errors"
-	"github.com/vortex14/gotyphoon/interfaces"
 	"net/http"
 	"time"
+
+	Errors "github.com/vortex14/gotyphoon/errors"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 const (
@@ -17,7 +18,6 @@ const (
 type Status struct {
 	Status bool
 }
-
 
 // registerHandler
 // @Tags Auth

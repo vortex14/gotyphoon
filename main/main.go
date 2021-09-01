@@ -1,11 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/vortex14/gotyphoon/data/fake"
-	httpPipeline "github.com/vortex14/gotyphoon/extensions/pipelines/http/strategies/default"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"
@@ -75,12 +73,12 @@ func main40()  {
 		//println(u.PrintPrettyJson(fakeTask))
 
 
-		pipeline := httpPipeline.Constructor(fakeTask, nil)
-
-		err, _ := pipeline.Run(context.TODO())
-		if err != nil {
-			return
-		}
+		//pipeline := httpPipeline.Constructor(fakeTask, nil)
+		//
+		//err, _ := pipeline.Run(context.TODO())
+		//if err != nil {
+		//	return
+		//}
 
 
 
