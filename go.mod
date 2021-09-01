@@ -21,6 +21,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/fatih/color v1.12.0
 	github.com/fatih/structs v1.1.0
+	github.com/fogleman/gg v1.3.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/gin-gonic/gin v1.7.4
@@ -32,9 +33,11 @@ require (
 	github.com/gobuffalo/packd v1.0.0
 	github.com/gobuffalo/packr v1.30.1
 	github.com/gocarina/gocsv v0.0.0-20210516172204-ca9e8a8ddea8
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/grafana-tools/sdk v0.0.0-20210714133701-11b1efc100c9
 	github.com/hashicorp/go-retryablehttp v0.6.8
+	github.com/jaswdr/faker v1.4.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/mongodb/mongo-tools v0.0.0-20210723181737-9fcadb98cca5

@@ -7,13 +7,13 @@ import (
 
 const (
 
+	PATH                    = "me"
 	NAMEMeController 		= "me"
-	PATH = "me"
 	DESCRIPTIONMeController = "Me discovery JWT controller extension for Typhoon server"
 
-	JWTAUTHLOGINDefault = "typhoon"
-	JWTAUTHEmailDefault = "typhoon@typhoon-s1.ru"
-	JWTRoleDefault = "admin"
+	JWTAUTHLOGINDefault     = "typhoon"
+	JWTAUTHEmailDefault     = "typhoon@typhoon-s1.ru"
+	JWTRoleDefault          = "admin"
 )
 
 type MeResponse struct {
@@ -39,10 +39,9 @@ func meHandler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 }
 
 var MeController = &interfaces.Action{
-	Path: NAMEMeController,
+	Path: PATH,
 	Name: NAMEMeController,
 	Description: DESCRIPTIONMeController,
 	Controller: meHandler,
 	Methods : []string{interfaces.GET},
 }
-

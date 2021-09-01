@@ -9,6 +9,7 @@ type Action struct {
 	Methods        [] string  // just yet HTTP Methods
 	AllowedMethods [] string
 	Controller     Controller // Controller of Action
+	Pipeline       PipelineGroupInterface
 	PyController   Controller // Python Controller Bridge of Action
 	Middlewares    [] MiddlewareInterface // Before a call to action we need to check this into middleware. May be client state isn't ready for serve
 }
@@ -23,6 +24,7 @@ type ActionInterface interface {
 	AddMethod(name string)
 	GetController() Controller
 	GetMiddlewareStack() []MiddlewareInterface
+	GetPipeline() PipelineGroupInterface
 
 	MetaDataInterface
 }
@@ -45,6 +47,10 @@ func (a *Action) GetMethods() []string {
 
 func (a *Action) GetController() Controller {
 	return a.Controller
+}
+
+func (a *Action) GetPipeline() PipelineGroupInterface {
+	return a.Pipeline
 }
 
 func (a *Action) GetPath() string {

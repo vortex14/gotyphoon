@@ -1,11 +1,9 @@
-package required
+package headers
 
 import (
 	"context"
-
-	"github.com/gin-gonic/gin"
-
-	"github.com/vortex14/gotyphoon/extensions/servers/middlewares/gin-gonic/headers"
+	Gin "github.com/gin-gonic/gin"
+	"github.com/vortex14/gotyphoon/extensions/servers/pipelines/gin"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
@@ -19,7 +17,7 @@ type HttpRequestSetHeaderMiddleware struct {
 }
 
 func (h *HttpRequestSetHeaderMiddleware) Run(
-	request *gin.Context,
+	request *Gin.Context,
 ) error {
 
 
@@ -32,10 +30,10 @@ func (h *HttpRequestSetHeaderMiddleware) Pass(
 	context context.Context,
 	loggerInterface interfaces.LoggerInterface,
 	reject func(err error),
-
+	next func(ctx context.Context),
 	) {
 
-	request, _ := context.Value(headers.REQUEST).(*gin.Context)
+	request, _ := context.Value(gin.REQUEST).(*Gin.Context)
 	err := h.Run(request)
 	if err != nil {
 		reject(err)

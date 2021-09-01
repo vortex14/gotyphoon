@@ -38,7 +38,7 @@ func (t *HttpRequestPipeline) UnpackRequestCtx(ctx context.Context) (bool, inter
 
 	if (!okC || !okR) || (!okT || !okL || !okTr) { return false, nil, nil, nil, nil, nil }
 
-	return okL && okT && okC && okR, taskInstance, logger, client, request, transport
+	return okL && okT && okC && okR && okTr, taskInstance, logger, client, request, transport
 }
 
 func (t *HttpRequestPipeline) Run(
@@ -50,7 +50,7 @@ func (t *HttpRequestPipeline) Run(
 	if t.Fn == nil { reject(t, Errors.TaskPipelineRequiredHandler); return }
 
 	ok, taskInstance, logger, client, request, transport := t.UnpackRequestCtx(context)
-	println("RETURN ... ",ok, taskInstance, logger, client, request, transport)
+
 	if !ok { reject(t, Errors.PipelineContexFailed); return }
 
 	err, newContext := t.Fn(context, taskInstance, logger, client, request, transport)

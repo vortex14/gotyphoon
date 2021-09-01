@@ -1,18 +1,19 @@
 package controllers
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"net/http"
 )
 
 const (
 	UnmoorControllerName = "unmoor"
 	unmoorControllerDescription = "Unmoor projects from discovery"
 )
-
 
 type unmoorRequest struct {
 	Project string `json:"project"`

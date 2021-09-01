@@ -1,4 +1,4 @@
-package headers
+package gin
 
 const (
 	REQUEST = "gin"

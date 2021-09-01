@@ -2,6 +2,7 @@ package forms
 
 import (
 	"context"
+	"fmt"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 
@@ -18,6 +19,7 @@ type Resource struct {
 	Description string
 	Actions     map[string] interfaces.ActionInterface
 	Resources   map[string] interfaces.ResourceInterface
+	LOG         *logrus.Entry
 	Middlewares [] interfaces.MiddlewareInterface
 }
 
@@ -100,6 +102,7 @@ func (r *Resource) RunMiddlewareStack(
 
 func (r *Resource) AddAction(action interfaces.ActionInterface) interfaces.ResourceInterface {
 	if found := r.Actions[action.GetPath()]; found != nil { color.Red("%s", Errors.ActionAlreadyExists.Error()) }
+	logrus.Info(fmt.Sprintf("Registered new action /%s for resource: < %s > ", action.GetName(), r.GetName()))
 	r.Actions[action.GetPath()] = action
 	return r
 }

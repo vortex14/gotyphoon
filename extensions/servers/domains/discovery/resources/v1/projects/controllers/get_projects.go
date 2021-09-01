@@ -2,8 +2,9 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/vortex14/gotyphoon/interfaces"
 	"time"
+
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 const (
@@ -27,7 +28,6 @@ type Project struct {
 }
 
 var Projects = make(map[string]map[string]*Component)
-
 
 // projectsHandler
 // @Tags Auth
