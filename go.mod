@@ -33,11 +33,12 @@ require (
 	github.com/gobuffalo/packd v1.0.0
 	github.com/gobuffalo/packr v1.30.1
 	github.com/gocarina/gocsv v0.0.0-20210516172204-ca9e8a8ddea8
-	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	github.com/goccy/go-graphviz v0.0.9
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.3.0
 	github.com/grafana-tools/sdk v0.0.0-20210714133701-11b1efc100c9
 	github.com/hashicorp/go-retryablehttp v0.6.8
-	github.com/jaswdr/faker v1.4.2
+	github.com/jaswdr/faker v1.4.2 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/mongodb/mongo-tools v0.0.0-20210723181737-9fcadb98cca5
@@ -49,7 +50,7 @@ require (
 	github.com/sbunce/bson v0.0.0-20181119052045-2aa5ebe749b2 // indirect
 	github.com/segmentio/nsq-go v1.2.4
 	github.com/sirupsen/logrus v1.8.1
-	github.com/smartystreets/goconvey v1.6.4 // indirect
+	github.com/smartystreets/goconvey v1.6.4
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2
 	github.com/swaggo/gin-swagger v1.3.1
 	github.com/uber/jaeger-client-go v2.23.1+incompatible

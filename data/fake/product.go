@@ -58,7 +58,7 @@ type Product struct {
 func CreateProduct() *Product {
 	var p *Product
 	err := gofakeit.Struct(&p)
-	if err != nil {
+	if utils.NotNill(err) {
 		color.Red("%s", err.Error())
 		return nil
 	}

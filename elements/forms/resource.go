@@ -3,6 +3,7 @@ package forms
 import (
 	"context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 
@@ -14,31 +15,12 @@ import (
 
 
 type Resource struct {
-	Name        string
-	Path        string
-	Description string
+	*label.MetaInfo
+
+	LOG         *logrus.Entry
 	Actions     map[string] interfaces.ActionInterface
 	Resources   map[string] interfaces.ResourceInterface
-	LOG         *logrus.Entry
 	Middlewares [] interfaces.MiddlewareInterface
-}
-
-func (r *Resource) GetPath() string {
-	return r.Path
-}
-
-func (r *Resource) SetName(name string)  {
-	r.Name = name
-}
-
-
-func (r *Resource) SetDescription(description string)  {
-	r.Description = description
-}
-
-
-func (r *Resource) GetName() string {
-	return r.Name
 }
 
 func (r *Resource) GetActions() map[string] interfaces.ActionInterface {
@@ -47,10 +29,6 @@ func (r *Resource) GetActions() map[string] interfaces.ActionInterface {
 
 func (r *Resource) GetResources() map[string] interfaces.ResourceInterface {
 	return r.Resources
-}
-
-func (r *Resource) GetDescription() string {
-	return r.Description
 }
 
 func (r *Resource) Get() interfaces.ResourceInterface {
@@ -102,12 +80,13 @@ func (r *Resource) RunMiddlewareStack(
 
 func (r *Resource) AddAction(action interfaces.ActionInterface) interfaces.ResourceInterface {
 	if found := r.Actions[action.GetPath()]; found != nil { color.Red("%s", Errors.ActionAlreadyExists.Error()) }
-	logrus.Info(fmt.Sprintf("Registered new action /%s for resource: < %s > ", action.GetName(), r.GetName()))
+	logrus.Info(fmt.Sprintf("Registered new action <%s> for resource: < %s > ", action.GetPath(), r.GetName()))
 	r.Actions[action.GetPath()] = action
 	return r
 }
 
 func (r *Resource) AddResource(resource interfaces.ResourceInterface) interfaces.ResourceInterface {
+	if r.Resources == nil { r.Resources = make(map[string]interfaces.ResourceInterface) }
 	if found := r.Resources[resource.GetPath()]; found != nil { color.Red("%s", Errors.ResourceAlreadyExist.Error()) }
 	r.Resources[resource.GetPath()] = resource
 	return r

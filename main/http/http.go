@@ -2,24 +2,11 @@ package main
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/vortex14/gotyphoon/extensions/logger"
-	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 func init()  {
-	(&logger.TyphoonLogger{
-		Name: "App",
-		Options: logger.Options{
-			BaseLoggerOptions: &interfaces.BaseLoggerOptions{
-				Name:          "Test-App",
-				Level:         "DEBUG",
-				ShowLine:      true,
-				ShowFile:      true,
-				ShortFileName: true,
-				FullTimestamp: true,
-			},
-		},
-	}).Init()
+	log.InitD()
 }
 
 

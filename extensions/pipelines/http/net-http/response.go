@@ -2,15 +2,16 @@ package net_http
 
 import (
 	"context"
+	"github.com/vortex14/gotyphoon/elements/models/label"
+	"github.com/vortex14/gotyphoon/elements/models/task"
 	"net/http"
 	"strings"
 
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/task"
 )
 
 type HTTPResponseDefaultMiddleware struct {
-	*interfaces.BaseLabel
+	*label.MetaInfo
 }
 
 func (m *HTTPResponseDefaultMiddleware) Run(
@@ -48,7 +49,7 @@ func (m *HTTPResponseDefaultMiddleware) Pass(
 
 func ConstructorHTTPResponseDefaultMiddleware(required bool) interfaces.MiddlewareInterface {
 	return &HTTPResponseDefaultMiddleware{
-		BaseLabel: &interfaces.BaseLabel{
+		MetaInfo: &label.MetaInfo{
 			Required:    required,
 			Name:        NAMEHttpBasicAuthMiddleware,
 			Description: DESCRIPTIONHttpBasicAuthMiddleware,

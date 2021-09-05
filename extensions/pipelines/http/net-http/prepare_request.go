@@ -3,6 +3,7 @@ package net_http
 import (
 	"context"
 	"github.com/vortex14/gotyphoon/elements/forms"
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/extensions/pipelines"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"net/http"
@@ -11,7 +12,9 @@ import (
 func CreatePrepareRequestPipeline() *pipelines.TaskPipeline {
 	return &pipelines.TaskPipeline{
 		BasePipeline: &forms.BasePipeline{
-			Name: "prepare",
+			MetaInfo: &label.MetaInfo{
+				Name: "prepare",
+			},
 		},
 		Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) (error, context.Context) {
 

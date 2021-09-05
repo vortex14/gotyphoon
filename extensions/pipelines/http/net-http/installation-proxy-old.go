@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/fatih/color"
+	"github.com/vortex14/gotyphoon/elements/models/label"
+	"github.com/vortex14/gotyphoon/elements/models/task"
 	"net/http"
 
 	"github.com/vortex14/gotyphoon/elements/forms"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/extensions/models"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/task"
 	"github.com/vortex14/gotyphoon/utils"
 )
 
@@ -22,9 +23,11 @@ const (
 func ConstructorProxySettingOldMiddleware(required bool) interfaces.MiddlewareInterface {
 	return &HttpMiddleware{
 		Middleware: &forms.Middleware{
-			Required:    required,
-			Name:        NAMEProxyOldMiddleware,
-			Description: DescriptionProxyOldMiddleware,
+			MetaInfo: &label.MetaInfo{
+				Required:    required,
+				Name:        NAMEProxyOldMiddleware,
+				Description: DescriptionProxyOldMiddleware,
+			},
 		},
 		Fn: func(context context.Context, task *task.TyphoonTask, request *http.Request, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
 

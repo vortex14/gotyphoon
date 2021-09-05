@@ -1,8 +1,8 @@
 package ghosts
 
 import (
+	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/server"
 )
 
 type DemonCallOptions struct {
@@ -20,18 +20,14 @@ type ArchonInterface interface {
 	RunProjectServers(project interfaces.Project)
 }
 
-
-
-
 type Archon struct {
 	Name 		string
 	Description string
 	Demons 		[] *DemonBuilder
 	Observers 	map[string]	ObserverInterface
 	Sisyphuses 	map[string]	SisyphusInterface
-	Servers 	map[string]	*server.ServerBuilder
+	Servers 	map[string]	*forms.ServerBuilder
 }
-
 
 type ProtoArchon struct {
 	Archons []ArchonInterface

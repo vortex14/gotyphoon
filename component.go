@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	TyLog "github.com/vortex14/gotyphoon/log"
 	"io"
 	"io/ioutil"
 	"log"
@@ -18,7 +19,6 @@ import (
 	"github.com/go-cmd/cmd"
 	"github.com/go-logfmt/logfmt"
 
-	TyLog "github.com/vortex14/gotyphoon/extensions/logger"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 

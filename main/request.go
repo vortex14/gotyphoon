@@ -2,6 +2,8 @@ package main
 
 import (
 	Context "context"
+	"github.com/vortex14/gotyphoon/elements/models/label"
+	"github.com/vortex14/gotyphoon/elements/models/task"
 	"golang.org/x/net/context"
 	"net/http"
 
@@ -11,7 +13,6 @@ import (
 	"github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
-	"github.com/vortex14/gotyphoon/task"
 )
 
 func init()  {
@@ -33,7 +34,9 @@ func main() {
 		Stages: []interfaces.BasePipelineInterface{
 			&pipelines.TaskPipeline{
 				BasePipeline: &forms.BasePipeline{
-					Name: "prepare",
+					MetaInfo: &label.MetaInfo{
+						Name: "prepare",
+					},
 				},
 				Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) (error, context.Context) {
 
@@ -51,7 +54,9 @@ func main() {
 			},
 			&net_http.HttpRequestPipeline{
 				BasePipeline: &forms.BasePipeline{
-					Name: "http-request",
+					MetaInfo: &label.MetaInfo{
+						Name: "http-request",
+					},
 					Middlewares: []interfaces.MiddlewareInterface{
 						//netHttp.ConstructorProxySettingOldMiddleware(true),
 						//netHttp.ConstructorProxyRequestSettingsMiddleware(true),
@@ -75,7 +80,9 @@ func main() {
 			},
 			&net_http.HttpResponsePipeline{
 				BasePipeline: &forms.BasePipeline{
-					Name:        "Response pipeline",
+					MetaInfo: &label.MetaInfo{
+						Name: "Response pipeline",
+					},
 				},
 				Fn: func(
 					context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface,

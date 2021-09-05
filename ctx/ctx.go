@@ -18,8 +18,6 @@ func Get(ctx context.Context, key string) interface{} {
 	return ctx.Value(ContextKey(key))
 }
 
-
-
 func New() context.Context {
 	return context.Background()
 }

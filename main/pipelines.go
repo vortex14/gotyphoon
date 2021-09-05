@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"github.com/vortex14/gotyphoon/elements/models/label"
+	"github.com/vortex14/gotyphoon/elements/models/task"
 	"github.com/vortex14/gotyphoon/extensions/pipelines"
 	httpMiddlewares "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
 	"net/http"
@@ -12,7 +14,6 @@ import (
 	"github.com/vortex14/gotyphoon/extensions/middlewares"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
-	"github.com/vortex14/gotyphoon/task"
 )
 
 func init() {
@@ -41,25 +42,24 @@ func main20() {
 		Stages: []interfaces.BasePipelineInterface{
 			&pipelines.TaskPipeline{
 				BasePipeline: &forms.BasePipeline{
-					Name: "task-pipeline",
+					MetaInfo: &label.MetaInfo{
+						Name: "task-pipeline",
+					},
 				},
-				Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface) (error, context.Context) {
-					ctxData := ctx.Get(context, "test-ctx-key")
-					if ctxData  != nil{
-						logger.Info("FOUND CTX DATA: in LambdaHandler", ctxData.(string))
-					} else {
-						logger.Error("Not found CTX DATA !!!")
-					}
-
-					return nil, context
+				Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) (error, context.Context) {
+					return nil, nil
 				},
 			},
 			&forms.BasePipeline{
-				Name: "FIST STEP 1",
+				MetaInfo: &label.MetaInfo{
+					Name: "FIST STEP 1",
+				},
 				Middlewares: []interfaces.MiddlewareInterface{
 					&middlewares.TaskMiddleware{
 						Middleware: &forms.Middleware{
-							Name: "task-middleware",
+							MetaInfo: &label.MetaInfo{
+								Name: "task-middleware",
+							},
 						},
 						Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
 							//reject(Errors.ForceSkipMiddlewares)
@@ -75,7 +75,9 @@ func main20() {
 					},
 					&middlewares.TaskMiddleware{
 						Middleware: &forms.Middleware{
-							Name: "task-middleware-2",
+							MetaInfo: &label.MetaInfo{
+								Name: "task-middleware-2",
+							},
 						},
 						Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
 							ctxData := ctx.Get(context, "test-ctx-key")
@@ -84,8 +86,10 @@ func main20() {
 					},
 					&httpMiddlewares.HttpMiddleware{
 						Middleware: &forms.Middleware{
-							Required: true,
-							Name: "task-middleware-2",
+							MetaInfo: &label.MetaInfo{
+								Required: true,
+								Name: "task-middleware-2",
+							},
 						},
 						Fn: func(context context.Context, task *task.TyphoonTask, request *http.Request, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
 							logger.Error("!!!!!!!!!!")
@@ -104,7 +108,9 @@ func main20() {
 				},
 			},
 			&forms.BasePipeline{
-				Name: "SECOND STEP 2",
+				MetaInfo: &label.MetaInfo{
+					Name: "SECOND STEP 2",
+				},
 				Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
 
 					return nil, ctx
@@ -112,17 +118,12 @@ func main20() {
 			},
 			&pipelines.TaskPipeline{
 				BasePipeline: &forms.BasePipeline{
-					Name: "task-pipeline",
+					MetaInfo: &label.MetaInfo{
+						Name: "task-pipeline",
+					},
 				},
-				Fn: func(context context.Context, task *task.TyphoonTask, logger interfaces.LoggerInterface) (error, context.Context) {
-					ctxData := ctx.Get(context, "test-ctx-key")
-					if ctxData  != nil{
-						logger.Info("FOUND CTX DATA: in LambdaHandler", ctxData.(string))
-					} else {
-						logger.Error("Not found CTX DATA !!!")
-					}
-
-					return nil, context
+				Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) (error, context.Context) {
+					return nil, nil
 				},
 			},
 		},

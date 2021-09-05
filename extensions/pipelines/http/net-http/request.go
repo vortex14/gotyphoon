@@ -2,9 +2,10 @@ package net_http
 
 import (
 	"github.com/vortex14/gotyphoon/elements/forms"
+	"github.com/vortex14/gotyphoon/elements/models/label"
+	"github.com/vortex14/gotyphoon/elements/models/task"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/task"
 	"net/http"
 
 	"context"
@@ -36,7 +37,9 @@ func FetchData(task *task.TyphoonTask) (error, *string) {
 func CreateRequestPipeline() *HttpRequestPipeline {
 	return &HttpRequestPipeline{
 		BasePipeline: &forms.BasePipeline{
-			Name: "http-request",
+			MetaInfo: &label.MetaInfo{
+				Name: "http-request",
+			},
 		},
 		Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface, client *http.Client, request *http.Request, transport *http.Transport) (error, context.Context) {
 

@@ -2,28 +2,16 @@ package forms
 
 import (
 	"context"
+	"github.com/vortex14/gotyphoon/elements/models/label"
 
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 type Middleware struct {
-	Name        string
-	Required    bool
-	Description string
+	*label.MetaInfo
+
 	Fn          interfaces.MiddlewareCallback
-	PyCallback  interfaces.MiddlewareCallback
-}
-
-func (m *Middleware) GetName() string {
-	return m.Name
-}
-
-func (m *Middleware) GetDescription() string {
-	return m.Description
-}
-
-func (m *Middleware) IsRequired() bool {
-	return m.Required
+	PyFn        interfaces.MiddlewareCallback
 }
 
 func (m *Middleware) Pass(

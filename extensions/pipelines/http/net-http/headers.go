@@ -3,8 +3,9 @@ package net_http
 import (
 	"context"
 	"github.com/vortex14/gotyphoon/elements/forms"
+	"github.com/vortex14/gotyphoon/elements/models/label"
+	"github.com/vortex14/gotyphoon/elements/models/task"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/task"
 	"net/http"
 )
 
@@ -16,9 +17,11 @@ const (
 func ConstructorRequestHeaderMiddleware(required bool) interfaces.MiddlewareInterface {
 	return &HttpMiddleware{
 		Middleware: &forms.Middleware{
-			Required:    required,
-			Name:        NAME,
-			Description: DESCRIPTION,
+			MetaInfo: &label.MetaInfo{
+				Required:    required,
+				Name:        NAME,
+				Description: DESCRIPTION,
+			},
 		},
 		Fn: func(context context.Context, task *task.TyphoonTask, request *http.Request,
 			logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context),

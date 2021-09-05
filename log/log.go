@@ -2,11 +2,15 @@ package log
 
 import (
 	"context"
+	"sync"
+
 	"github.com/sirupsen/logrus"
+
 	"github.com/vortex14/gotyphoon/ctx"
-	"github.com/vortex14/gotyphoon/extensions/logger"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
+
+var logOnce sync.Once
 
 // D is data custom log data for logger. Logrus.Field{} is equivalent D, but shorty for import
 type D map[string]interface{}
@@ -24,6 +28,10 @@ func NewCtxValues(context context.Context, values D) context.Context {
 	return ctx.Update(context, interfaces.LOGGER, New(values))
 }
 
+func Patch(logger *logrus.Entry, values map[string]interface{}) *logrus.Entry {
+	return logger.WithFields(values)
+}
+
 func Get(context context.Context) (bool, interfaces.LoggerInterface) {
 	log, ok := ctx.Get(context, interfaces.LOGGER).(*logrus.Entry)
 	if !ok { log = New(D{"unstable context": true})}
@@ -32,17 +40,19 @@ func Get(context context.Context) (bool, interfaces.LoggerInterface) {
 
 // InitD is debug logger configuration
 func InitD()  {
-	(&logger.TyphoonLogger{
-		Name: "App",
-		Options: logger.Options{
-			BaseLoggerOptions: &interfaces.BaseLoggerOptions{
-				Name:          "App-Debug-Logger",
-				Level:         "DEBUG",
-				ShowLine:      true,
-				ShowFile:      true,
-				ShortFileName: false,
-				FullTimestamp: true,
+	logOnce.Do(func() {
+		(&TyphoonLogger{
+			Name: "App",
+			Options: Options{
+				BaseOptions: &BaseOptions{
+					Name:          "App-Debug-Logger",
+					Level:         "DEBUG",
+					ShowLine:      true,
+					ShowFile:      true,
+					ShortFileName: false,
+					FullTimestamp: true,
+				},
 			},
-		},
-	}).Init()
+		}).Init()
+	})
 }

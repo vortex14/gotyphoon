@@ -2,22 +2,22 @@ package forms
 
 import (
 	"context"
+	"github.com/vortex14/gotyphoon/elements/models/awaitable"
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
-	"sync"
+	"github.com/vortex14/gotyphoon/utils"
 
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 )
 
 type BasePipeline struct {
-	Name        string
-	Description string
-	Required    bool
+	*label.MetaInfo
+	*awaitable.Object
 	//Task          *task.TyphoonTask
 	//Project       interfaces.Project
 
 	//stageIndex    int32
-	promise       sync.WaitGroup
 
 	//inputCount    int64
 	//inputByte     int64
@@ -45,28 +45,10 @@ type BasePipeline struct {
 
 	Fn func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context)
 	Cn func(ctx context.Context, logger interfaces.LoggerInterface, err error)
-
-	interfaces.BaseLabel
 }
 
 func (p *BasePipeline) NextStage()  {
 
-}
-
-func (p *BasePipeline) IsRequired() bool {
-	return p.Required
-}
-
-func (p *BasePipeline) GetName() string {
-	return p.Name
-}
-
-func (p *BasePipeline) GetDescription() string {
-	return p.Description
-}
-
-func (p *BasePipeline) Await()  {
-	p.promise.Wait()
 }
 
 func (p *BasePipeline) Run(
@@ -74,17 +56,17 @@ func (p *BasePipeline) Run(
 	reject func(pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx context.Context),
 	) {
-	if p.Fn == nil { reject(p,Errors.LambdaRequired); return}
+	if utils.IsNill(p.Fn) { reject(p,Errors.LambdaRequired); return}
 	var logCtx interfaces.LoggerInterface
 	if ok, logger := log.Get(context); !ok { reject(p, Errors.CtxLogFailed); return } else { logCtx = logger }
 	err, newContext := p.Fn(context, logCtx)
-	if err != nil { reject(p, err); return }
+	if utils.NotNill(err) { reject(p, err); return }
 
 	next(newContext)
 }
 
 func (p *BasePipeline) Cancel(ctx context.Context, logger interfaces.LoggerInterface, err error) {
-	if p.Cn == nil { return }
+	if utils.IsNill(p.Cn) { return }
 	p.Cn(ctx, logger, err)
 }
 
