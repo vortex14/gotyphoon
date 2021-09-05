@@ -14,6 +14,7 @@ type HttpResponsePipeline struct {
 	*forms.BasePipeline
 	*pipelines.TaskPipeline
 	*HttpRequestPipeline
+
 	Fn func(
 		context context.Context,
 		task interfaces.TaskInterface,
@@ -22,11 +23,19 @@ type HttpResponsePipeline struct {
 		client *http.Client,
 		request *http.Request,
 		transport *http.Transport,
+
 		response *http.Response,
 		data *string,
 
 	)  (error, context.Context)
-	Cn func(err error, context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface)
+
+	Cn func(
+		err error,
+		context context.Context,
+
+		task interfaces.TaskInterface,
+		logger interfaces.LoggerInterface,
+	)
 }
 
 func (t *HttpResponsePipeline) UnpackResponse(ctx context.Context) (
@@ -37,6 +46,7 @@ func (t *HttpResponsePipeline) UnpackResponse(ctx context.Context) (
 	*http.Client,
 	*http.Request,
 	*http.Transport,
+
 	*http.Response,
 	*string,
 	) {
@@ -75,5 +85,4 @@ func (t *HttpResponsePipeline) Cancel(
 	ok, taskInstance, logger := t.UnpackCtx(context)
 	if !ok { return }
 	t.Cn(err, context, taskInstance, logger)
-
 }

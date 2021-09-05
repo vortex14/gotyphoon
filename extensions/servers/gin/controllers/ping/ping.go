@@ -49,10 +49,10 @@ func handler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 var Controller = &GinExtension.Action{
 	Action: &forms.Action{
 		MetaInfo: &label.MetaInfo{
-			Name:  NAME,
+			Name: NAME,
+			Path: PATH,
 			Description: DESCRIPTION,
 		},
-		Path: PATH,
 		Methods: []string{interfaces.GET, interfaces.PATCH, interfaces.POST, interfaces.PUT, interfaces.DELETE},
 	},
 	GinController: handler,

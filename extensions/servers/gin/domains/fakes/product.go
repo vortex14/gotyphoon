@@ -2,8 +2,8 @@ package fakes
 
 import (
 	Gin "github.com/gin-gonic/gin"
+	"github.com/vortex14/gotyphoon/extensions/data/fake"
 
-	"github.com/vortex14/gotyphoon/data/fake"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	GinExtension "github.com/vortex14/gotyphoon/extensions/servers/gin"

@@ -3,13 +3,11 @@ package forms
 import (
 	"context"
 	"github.com/vortex14/gotyphoon/elements/models/label"
-
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 type Middleware struct {
 	*label.MetaInfo
-
 	Fn          interfaces.MiddlewareCallback
 	PyFn        interfaces.MiddlewareCallback
 }

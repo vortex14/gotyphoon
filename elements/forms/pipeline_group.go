@@ -2,6 +2,7 @@ package forms
 
 import (
 	Context "context"
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"golang.org/x/net/context"
 
@@ -9,7 +10,7 @@ import (
 )
 
 type PipelineGroup struct {
-	interfaces.BaseLabel
+	*label.MetaInfo
 	//Name string
 	//Description string
 	//Required bool
@@ -67,8 +68,6 @@ func (g *PipelineGroup) Run(context context.Context) {
 			}, func(returnedResultPipelineContext Context.Context) {
 				mainContext = returnedResultPipelineContext
 			})
-
-
 		}
 
 	}

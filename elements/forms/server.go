@@ -36,15 +36,15 @@ const (
 type TyphoonServer struct {
 	*label.MetaInfo
 
-	Port 			int
+	Port            int
 	IsDebug         bool
 	IsRunning   	bool
-	Level 			string
+	Level           string
 	Instance        sync.Once
 
 	LOG             *logrus.Entry
 	logInstance     sync.Once
-	Logger 			*log.TyphoonLogger
+	Logger          *log.TyphoonLogger
 
 	Resources   	map[string]interfaces.ResourceInterface
 
@@ -65,16 +65,15 @@ type TyphoonServer struct {
 }
 
 func (s *TyphoonServer) Stop() error  {
-	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
-	return nil
+	s.LOG.Error(Errors.ServerMethodNotImplemented.Error()); return Errors.ServerMethodNotImplemented
 }
 
 func (s *TyphoonServer) Restart() error {
-	s.LOG.Error(Errors.ServerMethodNotImplemented.Error()); return nil
+	s.LOG.Error(Errors.ServerMethodNotImplemented.Error()); return Errors.ServerMethodNotImplemented
 }
 
 func (s *TyphoonServer) RunServer(port int) error {
-	s.LOG.Error(Errors.ServerMethodNotImplemented.Error()); return nil
+	s.LOG.Error(Errors.ServerMethodNotImplemented.Error()); return Errors.ServerMethodNotImplemented
 }
 
 func (s *TyphoonServer) Init() interfaces.ServerInterface {
@@ -114,7 +113,7 @@ func (s *TyphoonServer) Run() error {
 		color.Yellow("Running Server %d ", s.Port)
 
 	} else if len(s.Resources) == 0 {
-		s.LOG.Error(Errors.NoResourcesAvailable.Error())
+		s.LOG.Error(Errors.NoResourcesAvailable.Error()); return Errors.ServerMethodNotImplemented
 	}
 
 	return nil
@@ -240,39 +239,6 @@ func (s *TyphoonServer) RunMiddlewareStack(requestContext context.Context, actio
 
 }
 
-// requestHandler handle all HTTP request in here
-//func (s *TyphoonServer) requestHandler(requestContext context.Context)  {
-//	_, requestLogger := log.Get(requestContext)
-//
-//	action := s.GetAction(requestLogger, requestContext)
-//	if action == nil {
-//		requestLogger.Error(Errors.ServerNotFoundError.Error())
-//		s.OnResponse(404, interfaces.Response{
-//			"message": "Not Found",
-//			"status":  false,
-//		})
-//		return
-//	}
-//	requestLogger = log.New(log.D{"controller": action.GetName()})
-//
-//	LastErrorMiddleware, statusMiddlewareStack, _ := s.RunMiddlewareStack(requestContext, action)
-//
-//	if statusMiddlewareStack {
-//		controller := action.GetController()
-//		if controller != nil {
-//			controller(requestContext, requestLogger)
-//		} else if pipeline := action.GetPipeline(); pipeline != nil {
-//			mainCtx := ctx.Update(ctx.New(), RequestContext, requestContext)
-//			pipeline.Run(mainCtx)
-//		}
-//
-//	} else {
-//		color.Red("%s", LastErrorMiddleware.Error())
-//	}
-//
-//
-//}
-
 func (s *TyphoonServer) initActions(resource interfaces.ResourceInterface)  {
 	for _, action := range resource.GetActions() {
 
@@ -321,7 +287,7 @@ func (s *TyphoonServer) initResource(newResource interfaces.ResourceInterface) e
 	if newResource.GetPath() == "" {
 		return Errors.ResponsePathError
 	}
-	if s.Resources == nil { s.Resources = make(map[string]interfaces.ResourceInterface) }
+	if s.Resources == nil { s.InitResourcesMap() }
 
 	if _, ok := s.Resources[newResource.GetPath()]; ok {
 		return Errors.ResourceAlreadyExist

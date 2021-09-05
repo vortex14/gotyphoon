@@ -1,12 +1,12 @@
 package fake
 
 import (
+	"github.com/vortex14/gotyphoon/extensions/data"
 	"math/rand"
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/fatih/color"
 
-	"github.com/vortex14/gotyphoon/data"
 	"github.com/vortex14/gotyphoon/utils"
 )
 
@@ -32,8 +32,9 @@ type ProductShippingDimensions struct {
 	} `json:"dimensions"`
 }
 
-
 type Product struct {
+	Categories
+
 	Price struct {
 		OfferPrice float32 `fake:"{price:0,100}" json:"offerPrice"`
 		ListingPrice float32 `fake:"{price:100,200}" json:"listingPrice"`
@@ -43,15 +44,13 @@ type Product struct {
 	Color string `fake:"{color}" json:"color"`
 	Brand string `fake:"{brand}" json:"brand"`
 	Title string `fake:"{sentence}" json:"title"`
-	Quantity int `fake:"{number:1,10}" json:"quantity"`
-	Shipping ProductShippingDimensions `json:"shipping"`
-	ProductId string `fake:"{product_id}" json:"productId"`
+	Quantity  int                       `fake:"{number:1,10}" json:"quantity"`
+	Shipping  ProductShippingDimensions `json:"shipping"`
+	ProductId string                    `fake:"{product_id}" json:"productId"`
 	Description string `fake:"{paragraph}" json:"description"`
 	Images []string `fake:"{images}" fakesize:"3" json:"images"`
-	Categories []string `fake:"{categories}" fakesize:"3" json:"categories"`
 	ApiProvider string `json:"api_provider" fake:"{randomstring:[typhoon]}"`
 	CountryOfOrigin string `fake:"{randomstring:[USA,CA]}" json:"countryoforigin"`
-	CategoriesIds []string `fake:"{categories_ids}" fakesize:"3" json:"categories_ids"`
 	Marketplace string `fake:"{randomstring:[ebay.com,amazon.com,walmart.com,homedepot.com]}" json:"marketplace"`
 }
 
@@ -65,6 +64,16 @@ func CreateProduct() *Product {
 	return p
 }
 
+
+func CreateShipping() *ProductShippingDimensions {
+	var p *ProductShippingDimensions
+	err := gofakeit.Struct(&p)
+	if utils.NotNill(err) {
+		color.Red("%s", err.Error())
+		return nil
+	}
+	return p
+}
 
 
 func init()  {

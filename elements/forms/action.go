@@ -8,14 +8,9 @@ import (
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
-const (
-	CONTROLLERFnRedirectName = "Controller"
-)
-
 type Action struct {
 	*label.MetaInfo
 
-	RedirectFn     string
 	Path           string
 	Methods        [] string  // just yet HTTP Methods
 	AllowedMethods [] string
@@ -43,8 +38,4 @@ func (a *Action) GetController() interfaces.Controller {
 
 func (a *Action) GetPipeline() interfaces.PipelineGroupInterface {
 	return a.Pipeline
-}
-
-func (a *Action) GetRedirectFn() string {
-	return CONTROLLERFnRedirectName
 }

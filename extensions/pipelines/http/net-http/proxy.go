@@ -2,13 +2,13 @@ package net_http
 
 import (
 	"context"
+	"net/http"
+	"net/url"
+
 	"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/elements/models/task"
-	"net/http"
-	"net/url"
-
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
@@ -27,7 +27,13 @@ func ConstructorProxyRequestSettingsMiddleware(required bool) interfaces.Middlew
 				Description: DescriptionDProxyMiddleware,
 			},
 		},
-		Fn: func(context context.Context, task *task.TyphoonTask, request *http.Request, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
+		Fn: func(context context.Context,
+			task *task.TyphoonTask,
+			request *http.Request,
+			logger interfaces.LoggerInterface,
+			reject func(err error),
+			next func(ctx context.Context)) {
+
 			ok, transport := GetTransportCtx(context)
 			if !ok { reject(Errors.MiddlewareContextFailed); return }
 			if !task.IsProxyRequired() { reject(Errors.ProxyTaskRequired); return}

@@ -2,11 +2,13 @@ package net_http
 
 import (
 	"compress/gzip"
-	"github.com/fatih/color"
-	Errors "github.com/vortex14/gotyphoon/errors"
 	"io"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/fatih/color"
+
+	Errors "github.com/vortex14/gotyphoon/errors"
 )
 
 func GetBody(client *http.Client, request *http.Request) (error, *string, *http.Response) {

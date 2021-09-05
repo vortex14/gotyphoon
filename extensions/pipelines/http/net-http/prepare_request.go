@@ -2,11 +2,12 @@ package net_http
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/extensions/pipelines"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"net/http"
 )
 
 func CreatePrepareRequestPipeline() *pipelines.TaskPipeline {

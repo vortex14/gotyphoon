@@ -1,7 +1,8 @@
 package forms
 
 import (
-	"context"
+	Context "context"
+
 	"github.com/vortex14/gotyphoon/elements/models/awaitable"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
@@ -14,8 +15,6 @@ import (
 type BasePipeline struct {
 	*label.MetaInfo
 	*awaitable.Object
-	//Task          *task.TyphoonTask
-	//Project       interfaces.Project
 
 	//stageIndex    int32
 
@@ -27,15 +26,9 @@ type BasePipeline struct {
 	//outputByte    int64
 	//OutputMap     map[string]interface{}
 
-
 	//errorCount    int64
 	//duration      time.Time
 
-
-	//Handler     interfaces.HandlerInterface
-	//Response    interfaces.ResponseInterface
-	//
-	//LOG         *logrus.Entry
 	//Metrics     interfaces.MetricsInterface
 
 	Middlewares []interfaces.MiddlewareInterface
@@ -43,18 +36,14 @@ type BasePipeline struct {
 	Callbacks   []interfaces.CallbackPipelineInterface
 	//Consumers   map[string]interfaces.ConsumerInterface
 
-	Fn func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context)
-	Cn func(ctx context.Context, logger interfaces.LoggerInterface, err error)
-}
-
-func (p *BasePipeline) NextStage()  {
-
+	Fn func(ctx Context.Context, logger interfaces.LoggerInterface) (error, Context.Context)
+	Cn func(ctx Context.Context, logger interfaces.LoggerInterface, err error)
 }
 
 func (p *BasePipeline) Run(
-	context context.Context,
+	context Context.Context,
 	reject func(pipeline interfaces.BasePipelineInterface, err error),
-	next func(ctx context.Context),
+	next func(ctx Context.Context),
 	) {
 	if utils.IsNill(p.Fn) { reject(p,Errors.LambdaRequired); return}
 	var logCtx interfaces.LoggerInterface
@@ -65,23 +54,23 @@ func (p *BasePipeline) Run(
 	next(newContext)
 }
 
-func (p *BasePipeline) Cancel(ctx context.Context, logger interfaces.LoggerInterface, err error) {
+func (p *BasePipeline) Cancel(ctx Context.Context, logger interfaces.LoggerInterface, err error) {
 	if utils.IsNill(p.Cn) { return }
 	p.Cn(ctx, logger, err)
 }
 
 func (p *BasePipeline) RunMiddlewareStack(
-	ctx context.Context,
+	context Context.Context,
 	reject func(middleware interfaces.MiddlewareInterface,err error),
-	next func(ctx context.Context),
+	next func(ctx Context.Context),
 
 	) {
 	var failed bool
 	var forceSkip bool
 	var baseException error
-	var middlewareContext context.Context
+	var middlewareContext Context.Context
 
-	middlewareContext = ctx
+	middlewareContext = context
 	for _, middleware := range p.Middlewares {
 		if failed || forceSkip { break }
 
@@ -100,7 +89,7 @@ func (p *BasePipeline) RunMiddlewareStack(
 				logger.Warning(err.Error())
 			}
 
-		}, func(returnedMiddlewareContext context.Context) {
+		}, func(returnedMiddlewareContext Context.Context) {
 			middlewareContext = returnedMiddlewareContext
 		})
 		next(middlewareContext)

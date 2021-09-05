@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/vortex14/gotyphoon/elements/models/label"
+	Fake "github.com/vortex14/gotyphoon/extensions/data/fake"
 	"image"
 	"image/color"
 	"net/http"
@@ -15,8 +15,8 @@ import (
 	"github.com/gobuffalo/packr"
 	"github.com/golang/freetype/truetype"
 
-	Fake "github.com/vortex14/gotyphoon/data/fake"
 	"github.com/vortex14/gotyphoon/elements/forms"
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/interfaces"
 
 	"github.com/vortex14/gotyphoon/elements/models/task"
@@ -38,7 +38,7 @@ func CreateImageAction() interfaces.ActionInterface {
 			Methods:     []string{interfaces.GET},
 
 			Pipeline: &forms.PipelineGroup{
-				BaseLabel: interfaces.BaseLabel{
+				MetaInfo: &label.MetaInfo{
 					Name:        "Fake Image Server",
 					Description: "Creating fake image on request",
 				},

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/extensions/data"
 	tyLog "github.com/vortex14/gotyphoon/log"
 	"io"
 	"log"
@@ -26,7 +27,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/vortex14/gotyphoon/data"
 	"github.com/vortex14/gotyphoon/environment"
 	"github.com/vortex14/gotyphoon/integrations/mongo"
 	"github.com/vortex14/gotyphoon/integrations/redis"

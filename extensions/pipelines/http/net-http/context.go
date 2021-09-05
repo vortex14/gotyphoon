@@ -2,8 +2,19 @@ package net_http
 
 import (
 	Context "context"
-	"github.com/vortex14/gotyphoon/ctx"
 	"net/http"
+
+	"github.com/vortex14/gotyphoon/ctx"
+)
+
+const (
+	TASK      = "task"
+	CLIENT    = "client"
+
+	TRANSPORT = "transport"
+	REQUEST   = "request"
+	RESPONSE  = "response"
+	DATA      =  "data"
 )
 
 func NewRequestCtx(context Context.Context, request *http.Request) Context.Context {
