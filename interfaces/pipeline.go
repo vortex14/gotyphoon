@@ -20,9 +20,7 @@ type BasePipelineInterface interface {
 		logger LoggerInterface,
 		err error,
 	)
-	GetName() string
-	IsRequired() bool
-	GetDescription()string
+	MetaDataInterface
 }
 
 type ProcessorPipelineInterface interface {

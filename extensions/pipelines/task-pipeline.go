@@ -2,21 +2,35 @@ package pipelines
 
 import (
 	"context"
-	"github.com/vortex14/gotyphoon/elements/forms"
-	"github.com/vortex14/gotyphoon/log"
 
+	"github.com/vortex14/gotyphoon/elements/forms"
+	"github.com/vortex14/gotyphoon/elements/models/task"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/task"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 type TaskPipeline struct {
 	*forms.BasePipeline
-	Fn func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface)  (error, context.Context)
-	Cn func(err error, context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface)
+
+	Fn func(
+		context context.Context,
+		task interfaces.TaskInterface,
+		logger interfaces.LoggerInterface,
+	)  (error, context.Context)
+
+	Cn func(
+		err error,
+		context context.Context,
+		task interfaces.TaskInterface,
+		logger interfaces.LoggerInterface,
+	)
 }
 
-func (t *TaskPipeline) UnpackCtx(ctx context.Context) (bool, interfaces.TaskInterface, interfaces.LoggerInterface)  {
+func (t *TaskPipeline) UnpackCtx(
+	ctx context.Context,
+	) (bool, interfaces.TaskInterface, interfaces.LoggerInterface) {
+
 	okT, taskInstance := task.Get(ctx)
 	okL, logger := log.Get(ctx)
 	return okL && okT, taskInstance, logger

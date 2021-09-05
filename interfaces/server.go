@@ -1,9 +1,5 @@
 package interfaces
 
-import (
-	"github.com/gin-gonic/gin"
-)
-
 const (
 	GET    = "GET"
 	POST   = "POST"
@@ -12,31 +8,36 @@ const (
 	PATCH  = "PATCH"
 )
 
-type MetaDataInterface interface {
-	GetName() string
-	GetDescription() string
+type Response map[string]interface{}
+
+type ManageServerInterface interface {
+	Run() error
+	Stop() error
+	Restart() error
 }
 
-type BaseServerLabel struct {
-	Name string
-	Description string
+type ServerExtensionInterface interface {
+	RunServer(port int) error
+	InitResourcesMap()
 }
-
 
 type BuilderInterface interface {
 	Run(project Project) ServerInterface
 }
 
-type ServerInterface interface {
-	Run() error
-	Stop() error
-	Restart() error
-	AddResource(resource ResourceInterface) ServerInterface
-	Serve(method string, path string, callback func(ctx *gin.Context))
-
+type ServerOptionsInterface interface {
 	Init() ServerInterface
 	InitDocs() ServerInterface
 	InitTracer() ServerInterface
 	InitLogger() ServerInterface
+}
 
+type ServerInterface interface {
+	AddResource(resource ResourceInterface) ServerInterface
+
+	ServerExtensionInterface
+	ServerOptionsInterface
+	ManageServerInterface
+
+	MetaDataInterface
 }

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vortex14/gotyphoon/extensions/servers/domains/discovery"
+	"github.com/vortex14/gotyphoon/extensions/servers/gin/domains/discovery"
 )
 
 func main()  {
@@ -9,5 +9,5 @@ func main()  {
 	_ = discovery.Constructor(12735,
 		nil,
 		nil,
-		nil).Init().InitLogger().Run()
+		nil).Run()
 }

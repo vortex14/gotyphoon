@@ -39,13 +39,13 @@ func (u *Utils) GoRunTemplate(goTemplate *interfaces.GoTemplate) bool {
 	tmpl, _ := template.New("new").Parse(goTemplate.Source)
 	status := true
 	f, err := os.Create(goTemplate.ExportPath)
-	if err != nil {
+	if NotNill(err) {
 		log.Println("create file: ", err)
 		status = false
 	}
 
 	err = tmpl.Execute(f, &goTemplate.Data)
-	if err != nil {
+	if NotNill(err) {
 		log.Print("execute: ", err)
 		status = false
 	}

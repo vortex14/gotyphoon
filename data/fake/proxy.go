@@ -3,6 +3,7 @@ package fake
 import (
 	"fmt"
 	browser "github.com/EDDYCJY/fake-useragent"
+	"github.com/vortex14/gotyphoon/utils"
 	"math/rand"
 	"reflect"
 
@@ -27,7 +28,7 @@ func init()  {
 			inet := faker.Internet{}
 
 			data, err := inet.IPv4(reflect.Value{})
-			if err != nil {
+			if utils.NotNill(err) {
 				return nil, err
 			}
 

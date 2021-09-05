@@ -2,6 +2,7 @@ package fake
 
 import (
 	"encoding/base64"
+	typhoonTask "github.com/vortex14/gotyphoon/elements/models/task"
 	"math/rand"
 
 	browser "github.com/EDDYCJY/fake-useragent"
@@ -10,7 +11,6 @@ import (
 	"github.com/fatih/color"
 
 	"github.com/vortex14/gotyphoon/interfaces"
-	typhoonTask "github.com/vortex14/gotyphoon/task"
 	"github.com/vortex14/gotyphoon/utils"
 )
 
@@ -39,7 +39,7 @@ func CreateFakeTask(options interfaces.FakeTaskOptions)  (*typhoonTask.TyphoonTa
 	// TODO: task.yaml
 	var task typhoonTask.TyphoonTask
 	err := gofakeit.Struct(&task)
-	if err != nil {
+	if utils.NotNill(err) {
 		color.Red("%s", err.Error())
 		return nil, err
 	}

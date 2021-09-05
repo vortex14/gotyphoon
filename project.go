@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	tyLog "github.com/vortex14/gotyphoon/log"
 	"io"
 	"log"
 	"os"
@@ -27,7 +28,6 @@ import (
 
 	"github.com/vortex14/gotyphoon/data"
 	"github.com/vortex14/gotyphoon/environment"
-	tyLog "github.com/vortex14/gotyphoon/extensions/logger"
 	"github.com/vortex14/gotyphoon/integrations/mongo"
 	"github.com/vortex14/gotyphoon/integrations/redis"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -71,12 +71,10 @@ type Project struct {
 	ConfigFile        string
 	Version           string
 	SelectedComponent []string
-	//loggerOnce        sync.Once
 	components        components
 	repo              *git.Repository
 	Watcher           fsnotify.Watcher
 	Services          *services.Services
-	//logger            *logger.TyphoonLogger
 	EnvSettings       *environment.Settings
 	Archon            ghosts.ArchonInterface
 	Config            *interfaces.ConfigProject
@@ -306,7 +304,7 @@ func (p *Project) CreateProject() {
 	err := u.CopyDir(p.Name, fileObject)
 
 
-	if err != nil {
+	if utils.NotNill(err) {
 
 		color.Red("Error %s", err)
 		os.Exit(0)

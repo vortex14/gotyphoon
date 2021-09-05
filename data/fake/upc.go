@@ -2,6 +2,7 @@ package fake
 
 import (
 	"fmt"
+	"github.com/vortex14/gotyphoon/utils"
 	"math/rand"
 	"strconv"
 	"time"
@@ -34,7 +35,7 @@ func init()  {
 			p := checkdigit.NewUPC()
 			seed := randSeq(11)
 			cd, err := p.Generate(seed)
-			if err != nil {
+			if utils.NotNill(err) {
 				color.Red("failed to generate check digit")
 				return nil, nil
 			}

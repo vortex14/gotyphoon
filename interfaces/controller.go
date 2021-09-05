@@ -1,10 +1,7 @@
 package interfaces
 
 import (
-	"github.com/gin-gonic/gin"
+	"context"
 )
 
-type Controller func(ctx *gin.Context, logger LoggerInterface)
-
-
-
+type Controller func(context context.Context, logger LoggerInterface)

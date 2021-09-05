@@ -60,7 +60,7 @@ func (c *Cluster) Create()  {
 	} else {
 		color.Yellow("Create a new %s cluster. Cluster dir: %s", c.Name, settings.Clusters + "/" + c.Name)
 		errClusterDir := os.MkdirAll(c.clusterPath, os.ModePerm)
-		if errClusterDir != nil {
+		if utils.NotNill(errClusterDir) {
 			color.Red("%s", errClusterDir)
 			os.Exit(1)
 		}
@@ -179,13 +179,13 @@ func (c *Cluster) LoadConfig(settings *environment.Settings) *Cluster {
 	configCluster := settings.Clusters + "/" + c.Name + "/" + c.Config
 	c.clusterPath = settings.Clusters + "/" + c.Name
 	dat, err := ioutil.ReadFile(configCluster)
-	if err != nil && len(dat) > 0 {
+	if utils.NotNill(err) && len(dat) > 0 {
 		color.Red("%s", err)
 		os.Exit(1)
 	}
 	var configClusterLoad Cluster
 	errDecode := yaml.Unmarshal(dat, &configClusterLoad)
-	if errDecode != nil {
+	if utils.NotNill(errDecode) {
 		color.Red("%s", errDecode)
 		os.Exit(1)
 	}

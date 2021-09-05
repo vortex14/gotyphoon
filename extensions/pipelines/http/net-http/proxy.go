@@ -4,12 +4,13 @@ import (
 	"context"
 	"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/elements/forms"
+	"github.com/vortex14/gotyphoon/elements/models/label"
+	"github.com/vortex14/gotyphoon/elements/models/task"
 	"net/http"
 	"net/url"
 
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/task"
 )
 
 const (
@@ -20,9 +21,11 @@ const (
 func ConstructorProxyRequestSettingsMiddleware(required bool) interfaces.MiddlewareInterface {
 	return &HttpMiddleware{
 		Middleware: &forms.Middleware{
-			Required:    required,
-			Name:        InstallingProxyMiddleware,
-			Description: DescriptionDProxyMiddleware,
+			MetaInfo: &label.MetaInfo{
+				Required:    required,
+				Name:        InstallingProxyMiddleware,
+				Description: DescriptionDProxyMiddleware,
+			},
 		},
 		Fn: func(context context.Context, task *task.TyphoonTask, request *http.Request, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
 			ok, transport := GetTransportCtx(context)

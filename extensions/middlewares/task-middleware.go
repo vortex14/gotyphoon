@@ -2,11 +2,11 @@ package middlewares
 
 import (
 	"context"
+	"github.com/vortex14/gotyphoon/elements/models/task"
 
 	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/task"
 )
 
 type MiddlewareTaskCallback func(
