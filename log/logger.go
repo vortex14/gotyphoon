@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/uber/jaeger-client-go"
 
+	. "github.com/vortex14/gotyphoon/elements/models/singleton"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
@@ -35,6 +36,8 @@ func (o *Options) InitFormatter()  {
 }
 
 type TyphoonLogger struct {
+	Singleton
+
 	Name string
 	Options
 	closer io.Closer
@@ -74,9 +77,15 @@ func (l *TyphoonLogger) GetTracerHeader() string {
 	return fmt.Sprintf("api-request-%s-",l.Name)
 }
 
-func (l *TyphoonLogger) Init() *TyphoonLogger {
+func (l *TyphoonLogger) init()  {
 	l.InitFormatter()
 	l.InitTracer()
+}
+
+func (l *TyphoonLogger) Init() *TyphoonLogger {
+	l.Construct(func() {
+		l.init()
+	})
 	return l
 }
 
