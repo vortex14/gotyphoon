@@ -14,6 +14,10 @@ import (
 
 var letters = []rune("0123456789")
 
+type Upc struct {
+	Upc string `fake:"{upc}" json:"upc"`
+}
+
 func randSeq(n int) string {
 	b := make([]rune, n)
 	for i := range b {
@@ -22,6 +26,15 @@ func randSeq(n int) string {
 	return string(b)
 }
 
+func CreateUpc() *Upc {
+	var u *Upc
+	err := gofakeit.Struct(&u)
+	if utils.NotNill(err) {
+		color.Red("%s", err.Error())
+		return nil
+	}
+	return u
+}
 
 func init()  {
 	gofakeit.AddFuncLookup("upc", gofakeit.Info{

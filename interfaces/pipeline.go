@@ -34,24 +34,6 @@ type PipelineGroupInterface interface {
 	Run(ctx context.Context)
 }
 
-type BaseLabel struct {
-	Name        string
-	Description string
-	Required    bool
-}
-
-func (p *BaseLabel) IsRequired() bool {
-	return p.Required
-}
-
-func (p *BaseLabel) GetName() string {
-	return p.Name
-}
-
-func (p *BaseLabel) GetDescription() string {
-	return p.Description
-}
-
 
 type CallbackPipelineInterface interface {
 	Call(ctx context.Context, data interface{})

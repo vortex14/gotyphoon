@@ -71,8 +71,6 @@ func CreateFakeTask(options interfaces.FakeTaskOptions)  (*typhoonTask.TyphoonTa
 		}
 	}
 
-
-
 	return &task, nil
 }
 

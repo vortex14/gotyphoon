@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/extensions/data/fake"
 	"image"
 	"image/color"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 	Gin "github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
-	"github.com/vortex14/gotyphoon/data/fake"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/elements/models/task"

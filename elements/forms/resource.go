@@ -3,14 +3,14 @@ package forms
 import (
 	"context"
 	"fmt"
-	"github.com/vortex14/gotyphoon/elements/models/label"
-	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 
 	"github.com/fatih/color"
 	"github.com/sirupsen/logrus"
 
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
+	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 
@@ -56,7 +56,6 @@ func (r *Resource) HasAction(path string) (bool, interfaces.ActionInterface) {
 	if a, ok := r.Actions[path]; ok { found = true; action = a }
 	return found, action
 }
-
 
 func (r *Resource) RunMiddlewareStack(
 	ctx context.Context,

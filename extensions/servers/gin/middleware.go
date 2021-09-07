@@ -3,6 +3,7 @@ package gin
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	
 	"github.com/vortex14/gotyphoon/elements/forms"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -10,7 +11,7 @@ import (
 
 type RequestMiddlewareCallback func(
 	context context.Context,
-    gitCtx *gin.Context,
+	gitCtx *gin.Context,
 
 	logger interfaces.LoggerInterface,
 	reject func(err error),

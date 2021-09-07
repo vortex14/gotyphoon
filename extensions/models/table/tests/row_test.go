@@ -2,7 +2,7 @@ package tests
 
 import (
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/vortex14/gotyphoon/elements/models/table"
+	"github.com/vortex14/gotyphoon/extensions/models/table"
 	"testing"
 )
 

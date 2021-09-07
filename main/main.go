@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/vortex14/gotyphoon/data/fake"
+	"github.com/vortex14/gotyphoon/extensions/data/fake"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"

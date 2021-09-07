@@ -2,11 +2,11 @@ package net_http
 
 import (
 	"context"
-	"github.com/vortex14/gotyphoon/elements/models/label"
-	"github.com/vortex14/gotyphoon/elements/models/task"
 	"net/http"
 	"strings"
 
+	"github.com/vortex14/gotyphoon/elements/models/label"
+	"github.com/vortex14/gotyphoon/elements/models/task"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
@@ -37,8 +37,8 @@ func (m *HTTPResponseDefaultMiddleware) Pass(
 	loggerInterface interfaces.LoggerInterface,
 	catch func(err error),
 	next func(ctx context.Context),
-
 	) {
+
 	taskInstance, _ := context.Value(TASK).(*task.TyphoonTask)
 	response, _ := context.Value(RESPONSE).(*http.Response)
 	if err := m.Run(taskInstance, response); err != nil {

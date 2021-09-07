@@ -1,17 +1,21 @@
 package net_http
 
 import (
+	"context"
+	"net/http"
+
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/elements/models/task"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"net/http"
-
-	"context"
 )
 
-func Request(client *http.Client, request *http.Request, logger interfaces.LoggerInterface) (error, *http.Response, *string) {
+func Request(
+	client *http.Client,
+	request *http.Request,
+	logger interfaces.LoggerInterface,
+	) (error, *http.Response, *string) {
 
 	err, body, response := GetBody(client, request)
 
@@ -41,7 +45,12 @@ func CreateRequestPipeline() *HttpRequestPipeline {
 				Name: "http-request",
 			},
 		},
-		Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface, client *http.Client, request *http.Request, transport *http.Transport) (error, context.Context) {
+		Fn: func(context context.Context,
+			task interfaces.TaskInterface,
+			logger interfaces.LoggerInterface,
+			client *http.Client,
+			request *http.Request,
+			transport *http.Transport) (error, context.Context) {
 
 			err, response, data := Request(client, request, logger)
 			if err != nil { return err, nil }
@@ -51,7 +60,11 @@ func CreateRequestPipeline() *HttpRequestPipeline {
 			return nil, context
 
 		},
-		Cn: func(err error, context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) {
+		Cn: func(err error,
+			context context.Context,
+			task interfaces.TaskInterface,
+			logger interfaces.LoggerInterface) {
+
 			logger.Error("TEST --- ",err.Error())
 		},
 	}

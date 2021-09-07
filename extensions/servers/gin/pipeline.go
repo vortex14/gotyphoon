@@ -2,12 +2,13 @@ package gin
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
-	"github.com/vortex14/gotyphoon/elements/forms"
-	"github.com/vortex14/gotyphoon/log"
 
+	"github.com/gin-gonic/gin"
+
+	"github.com/vortex14/gotyphoon/elements/forms"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 type RequestPipeline struct {

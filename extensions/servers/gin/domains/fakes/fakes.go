@@ -10,15 +10,25 @@ import (
 )
 
 const (
-	NAME = "Fakes"
-	DESCRIPTION = "Server for data fakes"
+	NAME               = "Fakes"
+	PATH               = "/"
+	WATERMARK          = "image.typhoon.dev"
+	DESCRIPTION        = "Server for data fakes"
 
-	FakeProductPath = "product"
-	FakeTaskPath = "task"
-	FakeProxyPath = "proxy"
-	FakeImagePath = "image"
+	ResourceName       = "fakers resource"
 
-	WATERMARK = "image.typhoon.dev"
+	FakeUPCPath        = "upc"
+	FakeTaskPath       = "task"
+	FakeProxyPath      = "proxy"
+	FakeImagePath      = "image"
+	FakeChargePath     = "charge"
+	FakeProductPath    = "product"
+	FakePaymentPath    = "payment"
+	FakeShippingPath   = "shipping"
+	FakeCustomerPath   = "customer"
+	FakeCategoryPath   = "category"
+	FakeCategoriesPath = "categories"
+
 )
 
 func Constructor(
@@ -35,12 +45,12 @@ func Constructor(
 				Port: port,
 				Level: interfaces.INFO,
 				MetaInfo: &label.MetaInfo{
-					Name:        NAME,
-					Description: DESCRIPTION,
+					Name        : NAME,
+					Description : DESCRIPTION,
 				},
-				TracingOptions: tracingOptions,
-				LoggerOptions: loggerOptions,
-				SwaggerOptions: swaggerOptions,
+				TracingOptions  : tracingOptions,
+				LoggerOptions   : loggerOptions,
+				SwaggerOptions  : swaggerOptions,
 			},
 		}).
 		Init().
@@ -48,16 +58,23 @@ func Constructor(
 		AddResource(
 			&forms.Resource{
 				MetaInfo: &label.MetaInfo{
-					Path: "/fake",
-					Name: "Main faker",
-					Description: "Main Resource",
+					Path: PATH,
+					Name: ResourceName,
+					Description: DESCRIPTION,
 				},
 				Actions: map[string]interfaces.ActionInterface{
-					ping.PATH:       ping.Controller,
-					FakeProductPath: CrateProductAction(),
-					FakeTaskPath:    CreateTaskAction(),
-					FakeProxyPath:   CreateProxyAction(),
-					FakeImagePath:   CreateImageAction(),
+					ping.PATH          : ping.Controller,
+					FakeUPCPath        : CreateUpcAction(),
+					FakeTaskPath       : CreateTaskAction(),
+					FakeProxyPath      : CreateProxyAction(),
+					FakeImagePath      : CreateImageAction(),
+					FakeChargePath     : CreateChargeAction(),
+					FakeProductPath    : CrateProductAction(),
+					FakePaymentPath    : CreatePaymentAction(),
+					FakeCategoryPath   : CreateCategoryAction(),
+					FakeCustomerPath   : CreateCustomerAction(),
+					FakeShippingPath   : CreateShippingAction(),
+					FakeCategoriesPath : CreateCategoriesAction(),
 				},
 			},
 		)

@@ -2,19 +2,20 @@ package net_http
 
 import (
 	"context"
-	"github.com/vortex14/gotyphoon/elements/forms"
-	"github.com/vortex14/gotyphoon/elements/models/task"
-	"github.com/vortex14/gotyphoon/extensions/pipelines"
-	"github.com/vortex14/gotyphoon/log"
 	"net/http"
 
+	"github.com/vortex14/gotyphoon/elements/forms"
+	"github.com/vortex14/gotyphoon/elements/models/task"
 	Errors "github.com/vortex14/gotyphoon/errors"
+	"github.com/vortex14/gotyphoon/extensions/pipelines"
 	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 type HttpRequestPipeline struct {
 	*forms.BasePipeline
 	*pipelines.TaskPipeline
+
 	Fn func(
 		context context.Context,
 		task interfaces.TaskInterface,
@@ -25,10 +26,18 @@ type HttpRequestPipeline struct {
 		transport *http.Transport,
 
 	)  (error, context.Context)
-	Cn func(err error, context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface)
+
+	Cn func(
+		err error,
+		context context.Context,
+		task interfaces.TaskInterface,
+		logger interfaces.LoggerInterface,
+	)
 }
 
-func (t *HttpRequestPipeline) UnpackRequestCtx(ctx context.Context) (bool, interfaces.TaskInterface, interfaces.LoggerInterface, *http.Client, *http.Request, *http.Transport) {
+func (t *HttpRequestPipeline) UnpackRequestCtx(
+	ctx context.Context,
+	) (bool, interfaces.TaskInterface, interfaces.LoggerInterface, *http.Client, *http.Request, *http.Transport) {
 	okT, taskInstance := task.Get(ctx)
 	okL, logger := log.Get(ctx)
 

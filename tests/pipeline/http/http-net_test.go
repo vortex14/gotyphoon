@@ -2,7 +2,7 @@ package http
 
 import (
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/vortex14/gotyphoon/data/fake"
+	"github.com/vortex14/gotyphoon/extensions/data/fake"
 	net_http "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
 	"testing"
 )

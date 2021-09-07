@@ -2,8 +2,8 @@ package tests
 
 import (
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/vortex14/gotyphoon/elements/models/table"
 	Errors "github.com/vortex14/gotyphoon/errors"
+	"github.com/vortex14/gotyphoon/extensions/models/table"
 	"testing"
 )
 
@@ -19,7 +19,7 @@ func TestCreateTable(t *testing.T) {
 
 
 		Convey("add a new row with exception TableHeadersNotFound", func() {
-			So(newTable.Append("",table.H{}), ShouldEqual, Errors.TableHeadersNotFound)
+			So(newTable.Append("", table.H{}), ShouldEqual, Errors.TableHeadersNotFound)
 		})
 
 

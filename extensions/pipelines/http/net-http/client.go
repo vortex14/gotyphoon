@@ -1,9 +1,10 @@
 package net_http
 
 import (
-	"github.com/vortex14/gotyphoon/interfaces"
 	"net/http"
 	"time"
+
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 func GetHttpClient(task interfaces.TaskInterface) *http.Client {
