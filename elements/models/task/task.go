@@ -29,8 +29,12 @@ func (t *TyphoonTask) GetFetcherTimeout() int {
 }
 
 func (t *TyphoonTask) GetFetcherUrl() string {
-	return t.URL
+	var url string
+	if len(t.URL) > 0 { url = t.URL } else
+	if len(t.Fetcher.Url) > 0 { url = t.Fetcher.Url }
+	return url
 }
+
 
 func (t *TyphoonTask) SetFetcherUrl(url string)  {
 	t.URL = url

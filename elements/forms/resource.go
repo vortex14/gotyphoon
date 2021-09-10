@@ -7,20 +7,23 @@ import (
 	"github.com/fatih/color"
 	"github.com/sirupsen/logrus"
 
+	"github.com/vortex14/gotyphoon/utils"
+
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 )
 
-
 type Resource struct {
 	*label.MetaInfo
 
-	LOG         *logrus.Entry
+	LOG         interfaces.LoggerInterface
 	Actions     map[string] interfaces.ActionInterface
 	Resources   map[string] interfaces.ResourceInterface
 	Middlewares [] interfaces.MiddlewareInterface
+
+	subGraph    interfaces.GraphInterface
 }
 
 func (r *Resource) GetActions() map[string] interfaces.ActionInterface {
@@ -91,4 +94,27 @@ func (r *Resource) AddResource(resource interfaces.ResourceInterface) interfaces
 	return r
 }
 
+func (r *Resource) UpdateGraphLabel() {
 
+}
+
+func (r *Resource) SetGraph(graph interfaces.GraphInterface) interfaces.ResourceInterface {
+	r.subGraph = graph
+	return r
+}
+
+func (r *Resource) AddGraphActionNode(action interfaces.ActionInterface)  {
+	if utils.IsNill(r.subGraph) { r.LOG.Error(Errors.GraphResourceNotFound.Error()); return }
+	r.LOG.Debug(
+		fmt.Sprintf("adding new graph node for Action - %s, %s",
+			action.GetName(),
+			action.GetHandlerPath()),
+	)
+
+	action.SetGraph(r.subGraph)
+}
+
+func (r *Resource) SetLogger(logger interfaces.LoggerInterface) interfaces.ResourceInterface {
+	r.LOG = logger
+	return r
+}

@@ -1,9 +1,13 @@
 package graphviz
 
 import (
+	"fmt"
 	"github.com/fatih/color"
 	"github.com/goccy/go-graphviz/cgraph"
 	"github.com/sirupsen/logrus"
+	"github.com/vortex14/gotyphoon/interfaces"
+	"strings"
+
 	. "github.com/vortex14/gotyphoon/elements/models/label"
 	. "github.com/vortex14/gotyphoon/elements/models/singleton"
 	Errors "github.com/vortex14/gotyphoon/errors"
@@ -11,16 +15,11 @@ import (
 )
 
 
-type NodeOptions struct {
-	*EdgeOptions
-	Name string
-	Shape string
-}
 
 type Node struct {
 	Singleton
 	*MetaInfo
-	*NodeOptions
+	*interfaces.NodeOptions
 
 	LOG      *logrus.Entry
 	node     *cgraph.Node
@@ -35,6 +34,18 @@ func (n *Node) Init() *Node {
 		node, _ := n.parent.CreateNode(n.GetName())
 		n.node = node
 		node.SetShape(cgraph.Shape(n.Shape))
+
+		//remove ... need transform before
+		if strings.Contains(strings.ToLower(n.GetName()), "pipeline") {
+			n.node.SetLabel(
+				fmt.Sprintf(`
+					        \n
+							%s
+							\n
+				`,n.GetName()),
+			)
+		}
+
 	})
 	return n
 }

@@ -11,7 +11,7 @@ import (
 
 type RequestMiddlewareCallback func(
 	context context.Context,
-	gitCtx *gin.Context,
+	ginCtx *gin.Context,
 
 	logger interfaces.LoggerInterface,
 	reject func(err error),

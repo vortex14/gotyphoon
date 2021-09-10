@@ -1,15 +1,16 @@
 package task
 
 type FetcherTask struct {
-	Proxy string `json:"proxy"`
-	ProxyServer string `json:"proxy_server"`
+	Url string `json:"url,omitempty" yaml:"url"`
+	Proxy string `json:"proxy" yaml:"proxy"`
+	ProxyServer string `json:"proxy_server" yaml:"proxy_server"`
 	Method  string `json:"method" default:"GET" fake:"{randomstring:[GET]}"`
 	Timeout int    `json:"timeout" default:"30" fake:"{number:30,60}"`
 	MaxRetries int `json:"max_retries" default:"15" fake:"{number:5,30}"`
 	MaxFailed int `json:"max_failed" default:"5" fake:"{number:2,60}"`
 	Headers  map[string]string `json:"headers"`
 	Cookies interface{} `json:"cookies"`
-	Auth    map[string]string `json:"auth"`
+	Auth    map[string]string `json:"auth" yaml:"auth"`
 	IsProxyRequired bool   `json:"is_proxy_required"`
 	IsResponseCache bool   `json:"is_response_cache"`
 	Strategy        string `json:"strategy" fake:"{randomstring:[http]}"`

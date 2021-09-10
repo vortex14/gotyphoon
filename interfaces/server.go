@@ -28,12 +28,15 @@ type BuilderInterface interface {
 type ServerOptionsInterface interface {
 	Init() ServerInterface
 	InitDocs() ServerInterface
+	InitGraph() ServerInterface
 	InitTracer() ServerInterface
 	InitLogger() ServerInterface
 }
 
 type ServerInterface interface {
 	AddResource(resource ResourceInterface) ServerInterface
+
+	GetGraph() GraphInterface
 
 	ServerExtensionInterface
 	ServerOptionsInterface

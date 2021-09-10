@@ -1,0 +1,19 @@
+typhoon:
+  kind: Task
+  component: fetcher
+  version: v0.0
+
+task:
+  fetcher:
+    url: http://media.x5.ru/rest/x5/esom?plu={plu_id}
+    auth:
+      login: Esom
+      password: sUwF}r#LXcly8%U5
+
+output:
+  type: table
+  params:
+    headers:
+      - Url
+      - PLU_ID
+      - Status

@@ -2,11 +2,14 @@ package graphviz
 
 import (
 	"fmt"
+	"github.com/vortex14/gotyphoon/interfaces"
+
 	"github.com/fatih/color"
 	"github.com/goccy/go-graphviz/cgraph"
 
 	. "github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 type SubGraph struct {
@@ -15,7 +18,7 @@ type SubGraph struct {
 	parent  *cgraph.Graph
 	graph   *cgraph.Graph
 
-	Options *GraphOptions
+	Options *interfaces.GraphOptions
 }
 
 func (s *SubGraph) SetParent(parent *cgraph.Graph) *SubGraph {
@@ -23,7 +26,23 @@ func (s *SubGraph) SetParent(parent *cgraph.Graph) *SubGraph {
 	return s
 }
 
-func (s *SubGraph) AddNode(options *NodeOptions ) *SubGraph {
+func (s *SubGraph) AddSubGraph(options *interfaces.GraphOptions) interfaces.GraphInterface {
+	s.LOG.Error("not implement")
+	return s
+}
+
+func (s *SubGraph) Render(format string) []byte {
+	s.LOG.Error("not implement")
+	return nil
+}
+
+func (s *SubGraph) UpdateEdge(options *interfaces.EdgeOptions) interfaces.GraphInterface {
+	if options == nil { s.LOG.Error(Errors.GraphEdgeOptionsNotFound.Error()); return nil}
+
+	return s
+}
+
+func (s *SubGraph) AddNode(options *interfaces.NodeOptions ) interfaces.GraphInterface {
 	if options == nil { s.LOG.Error(Errors.GraphNodeOptionsNotFound.Error()); return nil}
 
 	node := (&Node{
@@ -41,18 +60,29 @@ func (s *SubGraph) AddNode(options *NodeOptions ) *SubGraph {
 			edgeName := fmt.Sprintf("%s->%s", options.EdgeOptions.NodeA, options.Name)
 			s.LOG.Debug("init edge %s", edgeName)
 			s.edges[edgeName] = (&Edge{
-				LOG: s.LOG,
-				EdgeOptions: options.EdgeOptions,
-				NodeA: nodeA.node,
 				NodeB: node.node,
+				NodeA: nodeA.node,
+				EdgeOptions: options.EdgeOptions,
+				LOG: log.Patch(s.LOG, log.D{"edge": edgeName}),
 			}).SetGraph(s.parent).Init()
+		} else if nodeB, ok := s.nodes[options.EdgeOptions.NodeB]; ok {
+			edgeName := fmt.Sprintf("%s->%s", options.EdgeOptions.NodeB, options.Name)
+			s.LOG.Debug("init edge %s", edgeName)
+			s.edges[edgeName] = (&Edge{
+				NodeB: nodeB.node,
+				NodeA: node.node,
+				EdgeOptions: options.EdgeOptions,
+				LOG: log.Patch(s.LOG, log.D{"edge": edgeName}),
+			}).SetGraph(s.parent).Init()
+		} else {
+			s.LOG.Warning("not found node A and B")
 		}
 	}
 
 	return s
 }
 
-func (s *SubGraph) Init() *SubGraph {
+func (s *SubGraph) Init() interfaces.GraphInterface {
 	if s.parent == nil { color.Red(Errors.GraphMainGraphNotFound.Error()) }
 	s.Construct(func() {
 

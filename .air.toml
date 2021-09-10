@@ -7,7 +7,7 @@ tmp_dir = "tmp"
 
 [build]
 # Just plain old shell command. You could use `make` as well.
-cmd = "go build -o ./tmp/graph -i main/graph.go"
+cmd = "go build -o ./tmp/graph -i main/graph/graph.go"
 # Binary file yields from `cmd`.
 bin = "/Users/vortex/go/bin"
 

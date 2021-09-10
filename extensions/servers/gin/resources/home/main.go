@@ -3,6 +3,7 @@ package home
 import (
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
+	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/graph"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/ping"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
@@ -17,6 +18,7 @@ const (
 	PING    = "ping"
 	STATS   = "stats"
 	METRICS = "metrics"
+	GRAPH   = "server-graph"
 )
 
 func Constructor(path string) interfaces.ResourceInterface {
@@ -27,7 +29,8 @@ func Constructor(path string) interfaces.ResourceInterface {
 			Description: DESCRIPTIONDefault,
 		},
 		Actions: map[string]interfaces.ActionInterface{
-			PING: ping.Controller,
+			PING  : ping.Controller,
+			GRAPH : graph.Controller,
 		},
 	}
 }

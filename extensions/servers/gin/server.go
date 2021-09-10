@@ -48,31 +48,30 @@ func (s *TyphoonGinServer) InitTracer() interfaces.ServerInterface {
 
 // requestHandler handle all HTTP request in here
 func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context)  {
+
 	requestContext := NewRequestCtx(ctx.New(), ginCtx)
 	requestLogger := ginlogrus.GetCtxLogger(ginCtx)
 
 	reservedRequestPath := ginCtx.Request.URL.Path
+
 	requestContext = s.InitRequestPath(requestContext, reservedRequestPath)
 
 	action := s.GetAction(reservedRequestPath, requestLogger, ginCtx)
-
+	action.UpdateGraphLabel(ginCtx.Request.Method, reservedRequestPath)
 	if action == nil { s.LOG.Error(Errors.ActionPathNotFound.Error())
-		ginCtx.JSON(404, Gin.H{
-			"message": "Not Found",
-			"status": false,
-		}); return
+		ginCtx.JSON(404, Gin.H{ "message": "Not Found", "status": false}); return
 	}
 
 	requestLogger = log.Patch(requestLogger, log.D{"controller": action.GetName()})
+	requestContext = NewServerCtx(requestContext, s)
 
 	requestContext = log.NewCtx(requestContext, requestLogger)
 
 	requestLogger.Debug(fmt.Sprintf("found action %s", action.GetName()))
 	errStack, statusMiddlewareStack, _ := s.RunMiddlewareStack(requestContext, action)
 	requestLogger.Debug(fmt.Sprintf("status middleware stack: %t", statusMiddlewareStack))
-	if statusMiddlewareStack {
-		action.Run(requestContext, requestLogger)
-	} else {
+
+	if statusMiddlewareStack { action.Run(requestContext, requestLogger) } else {
 		requestLogger.Debug(fmt.Sprintf("error middleware stack: %t", errStack.Error()))
 	}
 
@@ -82,16 +81,11 @@ func (s *TyphoonGinServer) onServeHandler(method string, path string)  {
 
 	s.LOG.Debug(fmt.Sprintf("gin serve %s %s ",method, path))
 	switch method {
-	case interfaces.GET:
-		s.server.GET(path, s.onRequestHandler)
-	case interfaces.POST:
-		s.server.POST(path, s.onRequestHandler)
-	case interfaces.PUT:
-		s.server.PUT(path, s.onRequestHandler)
-	case interfaces.PATCH:
-		s.server.PATCH(path, s.onRequestHandler)
-	case interfaces.DELETE:
-		s.server.DELETE(path, s.onRequestHandler)
+	case interfaces.GET    : s.server.GET(path, s.onRequestHandler)
+	case interfaces.PUT    : s.server.PUT(path, s.onRequestHandler)
+	case interfaces.POST   : s.server.POST(path, s.onRequestHandler)
+	case interfaces.PATCH  : s.server.PATCH(path, s.onRequestHandler)
+	case interfaces.DELETE : s.server.DELETE(path, s.onRequestHandler)
 	}
 }
 
@@ -106,6 +100,7 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 		s.InitLogger()
 		s.LOG.Debug("init Typhoon Gin Server")
 		s.InitResourcesMap()
+		s.InitGraph()
 
 		s.server = Gin.New()
 		s.server.Use(Gin.Recovery())

@@ -3,6 +3,7 @@ package graphviz
 import (
 	"bytes"
 	"fmt"
+	"github.com/vortex14/gotyphoon/interfaces"
 
 	"github.com/fatih/color"
 	"github.com/goccy/go-graphviz"
@@ -13,17 +14,6 @@ import (
 	"github.com/vortex14/gotyphoon/log"
 )
 
-type GraphOptions struct {
-	Name            string
-	IsCluster       bool
-	FontColor       string
-	Label           string
-	BackgroundColor string
-	PrefixNodeName  string
-	Style           string
-}
-
-
 type Graph struct {
 	*BaseGraph
 
@@ -31,9 +21,18 @@ type Graph struct {
 	graph       *graphviz.Graphviz
 }
 
-func (g *Graph) Init() *Graph {
+func (g *Graph) UpdateEdge(options *interfaces.EdgeOptions) interfaces.GraphInterface {
+	panic("implement me")
+}
+
+func (g *Graph) AddNode(options *interfaces.NodeOptions) interfaces.GraphInterface {
+	panic("implement me")
+}
+
+func (g *Graph) Init() interfaces.GraphInterface {
 	g.Construct(func() {
 		g.graph = graphviz.New()
+		g.graph.SetLayout(graphviz.Layout(g.Layout))
 		g.LOG = log.New(log.D{"graph": g.GetName()})
 		template, err := g.graph.Graph()
 		if err != nil {
@@ -48,10 +47,10 @@ func (g *Graph) Init() *Graph {
 
 
 
-func (g *Graph) AddSubGraph(options *GraphOptions) *SubGraph {
+func (g *Graph) AddSubGraph(options *interfaces.GraphOptions) interfaces.GraphInterface {
 	if options == nil { g.LOG.Error(Errors.GraphOptionsNotFound.Error()); return nil }
 	if len(options.Label) == 0 { g.LOG.Error(Errors.GraphOptionsLabelRequired.Error()); return nil }
-	if g.subGraphs == nil { g.subGraphs = make(map[string]*SubGraph) }
+	if g.subGraphs == nil { g.subGraphs = make(map[string]interfaces.GraphInterface) }
 
 	if len(options.Label) == 0 { g.LOG.Error(Errors.GraphNameNotFound.Error()); return nil}
 
