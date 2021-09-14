@@ -4,6 +4,26 @@ import (
 	"context"
 )
 
+
+type ResourceGraphInterface interface {
+	SetGraph(graph GraphInterface) ResourceGraphInterface
+	GetGraph() GraphInterface
+
+	CreateSubGraph(options *GraphOptions) GraphInterface
+	AddGraphActionNode(action ActionGraphInterface)
+
+	GetGraphNodes() map[string] NodeInterface
+	SetGraphNodes(nodes map[string] NodeInterface) ResourceGraphInterface
+
+	BuildEdges() ResourceGraphInterface
+	SetGraphEdges(edges map[string]EdgeInterface) ResourceGraphInterface
+	GetGraphEdges()map[string] EdgeInterface
+
+	HasParentGraph() bool
+
+	ResourceInterface
+}
+
 type ResourceInterface interface {
 	GetPath() string
 	GetCountActions()int
@@ -24,8 +44,6 @@ type ResourceInterface interface {
 	AddAction(action ActionInterface) ResourceInterface
 	AddResource(resource ResourceInterface) ResourceInterface
 
-	SetGraph(graph GraphInterface) ResourceInterface
-	AddGraphActionNode(action ActionInterface)
 
 	MetaDataInterface
 }

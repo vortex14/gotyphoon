@@ -22,10 +22,10 @@ func GetRequestCtx(context Context.Context) (bool, *gin.Context){
 }
 
 func GetServerCtx(context Context.Context) (bool, interfaces.ServerInterface){
-	request, ok := ctx.Get(context, TYPHOONServer).(*TyphoonGinServer)
+	request, ok := ctx.Get(context, TYPHOONServer).(interfaces.ServerInterface)
 	return ok, request
 }
 
-func NewServerCtx(context Context.Context, server *TyphoonGinServer) Context.Context{
+func NewServerCtx(context Context.Context, server interfaces.ServerInterface) Context.Context{
 	return ctx.Update(context, TYPHOONServer, server)
 }

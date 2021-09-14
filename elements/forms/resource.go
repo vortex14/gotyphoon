@@ -6,7 +6,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/sirupsen/logrus"
-
 	"github.com/vortex14/gotyphoon/utils"
 
 	"github.com/vortex14/gotyphoon/elements/models/label"
@@ -23,8 +22,10 @@ type Resource struct {
 	Resources   map[string] interfaces.ResourceInterface
 	Middlewares [] interfaces.MiddlewareInterface
 
-	subGraph    interfaces.GraphInterface
+	parentGraph    interfaces.GraphInterface
+
 }
+
 
 func (r *Resource) GetActions() map[string] interfaces.ActionInterface {
 	return r.Actions
@@ -94,27 +95,83 @@ func (r *Resource) AddResource(resource interfaces.ResourceInterface) interfaces
 	return r
 }
 
+func (r *Resource) SetLogger(logger interfaces.LoggerInterface) interfaces.ResourceInterface {
+	r.LOG = logger
+	return r
+}
+
 func (r *Resource) UpdateGraphLabel() {
 
 }
 
-func (r *Resource) SetGraph(graph interfaces.GraphInterface) interfaces.ResourceInterface {
-	r.subGraph = graph
+func (r *Resource) BuildEdges() interfaces.ResourceGraphInterface {
+	var handlerKeys []string
+	allowedMethods := make(map[string] string)
+	var allowedMethodsList []string
+	for _, action := range r.Actions {
+		handlerKeys = append(handlerKeys, action.GetHandlerPath())
+		for _, method := range action.GetMethods() {
+			allowedMethods[method] = method
+		}
+
+	}
+
+	for _, method := range allowedMethods{
+		allowedMethodsList = append(allowedMethodsList, method)
+	}
+
+
+	r.parentGraph.BuildEdges(allowedMethodsList, handlerKeys)
 	return r
 }
 
-func (r *Resource) AddGraphActionNode(action interfaces.ActionInterface)  {
-	if utils.IsNill(r.subGraph) { r.LOG.Error(Errors.GraphResourceNotFound.Error()); return }
+func (r *Resource) SetGraph(graph interfaces.GraphInterface) interfaces.ResourceGraphInterface {
+	r.LOG.Warning("SetGraph ------>> ", r.Name)
+	r.parentGraph = graph
+	return r
+}
+
+func (r *Resource) HasParentGraph() bool {
+	return r.parentGraph != nil
+}
+
+func (r *Resource) GetGraph() interfaces.GraphInterface {
+	return r.parentGraph
+}
+
+func (r *Resource) CreateSubGraph(options *interfaces.GraphOptions) interfaces.GraphInterface {
+
+	return r.parentGraph.AddSubGraph(options)
+}
+
+func (r *Resource) AddGraphActionNode(action interfaces.ActionGraphInterface)  {
+	if utils.IsNill(r.parentGraph) { r.LOG.Error(Errors.GraphResourceNotFound.Error()); return }
 	r.LOG.Debug(
 		fmt.Sprintf("adding new graph node for Action - %s, %s",
 			action.GetName(),
 			action.GetHandlerPath()),
 	)
 
-	action.SetGraph(r.subGraph)
+	action.SetGraph(r.parentGraph, true)
+
 }
 
-func (r *Resource) SetLogger(logger interfaces.LoggerInterface) interfaces.ResourceInterface {
-	r.LOG = logger
+func (r *Resource) GetGraphNodes() map[string]interfaces.NodeInterface  {
+	return r.parentGraph.GetNodes()
+}
+
+
+func (r *Resource) SetGraphNodes(nodes map[string]interfaces.NodeInterface) interfaces.ResourceGraphInterface {
+	r.parentGraph.SetNodes(nodes)
+
 	return r
+}
+
+func (r *Resource) SetGraphEdges(edges map[string]interfaces.EdgeInterface) interfaces.ResourceGraphInterface {
+	r.parentGraph.SetEdges(edges)
+	return r
+}
+
+func (r *Resource) GetGraphEdges() map[string]interfaces.EdgeInterface {
+	return r.parentGraph.GetEdges()
 }

@@ -19,14 +19,20 @@ func init()  {
 
 func main()  {
 
-	newG := (&ghvzExt.Graph{
-		BaseGraph: &ghvzExt.BaseGraph{
-			MetaInfo:  &label.MetaInfo{
-				Name: "Server Graph",
-			},
+	newG := (&ghvzExt.GraphModel{
+		Layout: ghvzExt.LAYOUTCirco,
+		MetaInfo:  &label.MetaInfo{
+			Name: "Server Graph",
 		},
 
 	}).Init()
+	//gLayer := newG.AddSubGraph(&interfaces.GraphOptions{
+	//	IsCluster: true,
+	//	Label: "all groups",
+	//	Name: "groups",
+	//})
+
+
 
 
 	_ = newG.AddSubGraph(&interfaces.GraphOptions{
@@ -123,7 +129,6 @@ func main()  {
 	server := &GinExtensions.TyphoonGinServer{
 
 		TyphoonServer: &forms.TyphoonServer{
-			BuildGraph: true,
 			MetaInfo: &label.MetaInfo{
 				Name:        "Graph Schema Generator",
 				Description: "Generator Server Schema",

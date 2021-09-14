@@ -16,6 +16,11 @@ type ManageServerInterface interface {
 	Restart() error
 }
 
+type ServerGraphInterface interface {
+	InitGraph() ServerInterface
+	GetGraph() GraphInterface
+}
+
 type ServerExtensionInterface interface {
 	RunServer(port int) error
 	InitResourcesMap()
@@ -28,15 +33,12 @@ type BuilderInterface interface {
 type ServerOptionsInterface interface {
 	Init() ServerInterface
 	InitDocs() ServerInterface
-	InitGraph() ServerInterface
 	InitTracer() ServerInterface
 	InitLogger() ServerInterface
 }
 
 type ServerInterface interface {
 	AddResource(resource ResourceInterface) ServerInterface
-
-	GetGraph() GraphInterface
 
 	ServerExtensionInterface
 	ServerOptionsInterface

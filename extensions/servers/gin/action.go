@@ -11,6 +11,7 @@ import (
 
 type Action struct {
 	*forms.Action
+
 	GinController  Controller
 	GinSController ServerController
 }

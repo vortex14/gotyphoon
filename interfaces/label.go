@@ -7,6 +7,9 @@ type MetaDataInterface interface {
 	GetName() string
 	SetName(name string)
 
+	GetLabel()string
+	SetLabel(label string)
+
 	GetDescription() string
 	SetDescription(description string)
 

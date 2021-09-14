@@ -30,8 +30,23 @@ type ProcessorPipelineInterface interface {
 	Switch()
 }
 
+type PipelineGroupGraph interface {
+	SetGraph(graph GraphInterface)
+	InitGraph(parentNode string)
+	SetGraphNodes(nodes map[string]NodeInterface)
+
+	PipelineGroupInterface
+}
+
 type PipelineGroupInterface interface {
 	Run(ctx context.Context)
+	GetName() string
+	GetFirstPipelineName() string
+	SetLogger(logger LoggerInterface)
+
+	SetGraph(graph GraphInterface)
+	InitGraph(parentNode string)
+	SetGraphNodes(nodes map[string]NodeInterface)
 }
 
 

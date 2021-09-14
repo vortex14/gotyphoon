@@ -7,14 +7,14 @@ tmp_dir = "tmp"
 
 [build]
 # Just plain old shell command. You could use `make` as well.
-cmd = "go build -o ./tmp/graph -i main/graph/graph.go"
+cmd = "go build -o ./tmp/fake-server-graph -i main/fake-server/fake-server.go"
 # Binary file yields from `cmd`.
 bin = "/Users/vortex/go/bin"
 
 
 # Customize binary.
 #full_bin = "APP_ENV=dev APP_USER=air ./tmp/main"
-full_bin = "APP_ENV=dev APP_USER=air ./tmp/graph"
+full_bin = "APP_ENV=dev APP_USER=air ./tmp/fake-server-graph"
 
 
 # Watch these filename extensions.

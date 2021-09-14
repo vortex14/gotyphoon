@@ -1,36 +1,50 @@
 package forms
 
 import (
+	"context"
+	"fmt"
 	"github.com/sirupsen/logrus"
+	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
+	"github.com/vortex14/gotyphoon/log"
 
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
-	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	"github.com/vortex14/gotyphoon/interfaces"
-
 )
 
 type Stats struct {
-	input int64
+	Input int64
 }
 
 type Action struct {
 	*label.MetaInfo
+	LOG            interfaces.LoggerInterface
 	Stats
 
 	Path           string
 	Methods        [] string  // just yet HTTP Methods
 	AllowedMethods [] string
 	handlerPath    string
-	graph          interfaces.GraphInterface
+
 	Controller     interfaces.Controller // Controller of Action
 	Pipeline       interfaces.PipelineGroupInterface
 	PyController   interfaces.Controller // Python Controller Bridge of Action
 	Middlewares    [] interfaces.MiddlewareInterface // Before a call to action we need to check this into middleware. May be client state isn't ready for serve
+
+	Graph          interfaces.GraphInterface
+
 }
 
 func (a *Action) AddMethod(name string) {
 	logrus.Error(Errors.ActionAddMethodNotImplemented.Error())
+}
+
+func (a *Action) IsPipeline() bool {
+	status := true
+	if a.Pipeline == nil {
+		status = false
+	}
+	return status
 }
 
 func (a *Action) GetMiddlewareStack() [] interfaces.MiddlewareInterface {
@@ -58,31 +72,90 @@ func (a *Action) GetHandlerPath() string {
 	return a.handlerPath
 }
 
-func (a *Action) UpdateGraphLabel(method string, path string)  {
-	a.input ++
-	println(a.input, method, path)
+
+
+func (a *Action) InitPipelineGraph()  {
+	pipelineLogger := log.Patch(a.LOG.(*logrus.Entry), log.D{"pipeline-group": a.GetPipeline().GetName()})
+	a.Pipeline.SetLogger(pipelineLogger)
+	a.Pipeline.SetGraph(a.Graph)
+	a.Pipeline.InitGraph(a.GetHandlerPath())
 }
 
-func (a *Action) AddMethodNodes()  {
+func (a *Action) UpdateGraphLabel(method string, path string)  {
+	a.Input ++
+
+		labelAction := fmt.Sprintf(`
+	
+	R: %d
+	
+	`, a.Input)
+
+	a.Graph.UpdateEdge(&interfaces.EdgeOptions{
+		NodeA: method,
+		NodeB: path,
+		LabelH: labelAction,
+		Color: graphvizExt.COLORNavy,
+
+	})
+}
+
+func (a *Action) AddMethodNodes() {
 	for _, method := range a.GetMethods() {
-		a.graph.AddNode(&interfaces.NodeOptions{
-			Name: graphvizExt.FormatBottomSpace(method),
+		a.Graph.AddNode(&interfaces.NodeOptions{
+			Name: method,
+			Label: graphvizExt.FormatBottomSpace(method),
 			Shape: graphvizExt.SHAPEAction,
 			EdgeOptions: &interfaces.EdgeOptions{
-				NodeB:  a.handlerPath,
+				NodeB:  a.GetHandlerPath(),
 				ArrowS: 0.5,
 			},
 		})
 	}
 }
 
-func (a *Action) SetGraph(parent interfaces.GraphInterface)  {
-	a.graph = parent
+func (a *Action) SetGraph(parent interfaces.GraphInterface, buildMethods bool)  {
+	a.Graph = parent
 
-	a.graph.AddNode(&interfaces.NodeOptions{
-		Name: a.handlerPath,
+	opts := &interfaces.NodeOptions{
+		Name: a.GetHandlerPath(),
+		Label: graphvizExt.FormatSpace(a.GetHandlerPath()),
 		Shape: graphvizExt.SHAPETab,
-	})
+		Style: graphvizExt.StyleFilled,
+		BackgroundColor: graphvizExt.COLORGray,
+		EdgeOptions: &interfaces.EdgeOptions{},
 
-	a.AddMethodNodes()
+	}
+
+	a.Graph.AddNode(opts)
+
+	if buildMethods {
+		a.AddMethodNodes()
+	}
+
+	if a.IsPipeline() {
+		a.InitPipelineGraph()
+	}
+}
+
+func (a *Action) SetGraphNodes(nodes map[string]interfaces.NodeInterface)  {
+	println(fmt.Sprintf("ACTION NAME :%s INIT GRAPH NODES ------ >>> %+v", a.GetPath(), nodes))
+	//a.Graph.SetNodes(nodes)
+
+	println(fmt.Sprintf("ACTION NAME :%s GET GRAPH NODES ------ >>> %+v", a.GetPath(), a.Graph.GetNodes()))
+}
+
+func (a *Action) GetGraph() interfaces.GraphInterface {
+	return a.Graph
+}
+
+func (a *Action) OnRequest(method string, path string)  {
+	a.UpdateGraphLabel(method, path)
+}
+
+func (a *Action) Run(ctx context.Context, logger interfaces.LoggerInterface)  {
+
+}
+
+func (a *Action) SetLogger(logger interfaces.LoggerInterface)  {
+	a.LOG = logger
 }

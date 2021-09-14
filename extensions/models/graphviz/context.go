@@ -22,6 +22,7 @@ const (
 	COLORCornflowerblue = "cornflowerblue"
 	COLORCoral          = "coral"
 	COLORGold           = "gold"
+	COLORGray           = "grey94"
 
  	SHAPEBox3D          = "box3d"
 	SHAPEFolder         = "folder"

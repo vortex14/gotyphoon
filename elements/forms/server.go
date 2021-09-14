@@ -3,7 +3,8 @@ package forms
 import (
 	"context"
 	"fmt"
-	"github.com/vortex14/gotyphoon/utils"
+	"github.com/vortex14/gotyphoon/elements/models/singleton"
+	ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	"net/http"
 	"strings"
 	"sync"
@@ -14,20 +15,24 @@ import (
 	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
-	ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 )
 
-type OnExit           func()
-type OnStart          func(port int) error
-type OnRequest        func(context context.Context)
-type OnResponse       func(status int, data interfaces.Response)
-type OnReject         func(status int, data interfaces.Response)
-type OnServeHandler   func(path string, method string)
+type OnExit              func()
+type OnStart             func(port int) error
+type OnRequest           func(context context.Context)
+type OnServeHandler      func(path string, method string)
+type OnResponse          func(status int, data interfaces.Response)
+type OnInitResource      func(newResource interfaces.ResourceInterface)
+type OnInitAction        func(resource interfaces.ResourceInterface, action interfaces.ActionInterface)
+type OnBuildSubResources func(subResource interfaces.ResourceInterface)
+type OnBuildSubAction    func(resource interfaces.ResourceInterface, action interfaces.ActionInterface)
+type OnAddResource       func(resource interfaces.ResourceInterface)
+type OnReject            func(status int, data interfaces.Response)
 
-type ArchonChIN       func(chan<- interface{} )
-type ArchonChOut      func(<-chan interface{} )
+type ArchonChIN          func(chan<- interface{} )
+type ArchonChOut         func(<-chan interface{} )
 
 const (
 	RoutePath      = "ROUTE_PATH"
@@ -35,14 +40,14 @@ const (
 )
 
 type TyphoonServer struct {
+	singleton.Singleton
 	*label.MetaInfo
 
 	Port            int
 	IsDebug         bool
 	IsRunning   	bool
-	BuildGraph      bool
+
 	Level           string
-	Instance        sync.Once
 
 	LOG             *logrus.Entry
 	logInstance     sync.Once
@@ -50,12 +55,17 @@ type TyphoonServer struct {
 
 	Resources   	map[string]interfaces.ResourceInterface
 
-	OnStart         OnStart
-	OnRequest       OnRequest
-	OnServeHandler  OnServeHandler
-	OnResponse      OnResponse
-	OnReject        OnReject
-	OnExit          OnExit
+	OnStart             OnStart
+	OnRequest           OnRequest
+	OnInitAction        OnInitAction
+	OnServeHandler      OnServeHandler
+	OnBuildSubResources OnBuildSubResources
+	OnBuildSubAction    OnBuildSubAction
+	OnInitResource      OnInitResource
+	OnAddResource       OnAddResource
+	OnResponse          OnResponse
+	OnReject            OnReject
+	OnExit              OnExit
 
 	LoggerOptions	*log.Options
 	SwaggerOptions  *interfaces.SwaggerOptions
@@ -64,7 +74,11 @@ type TyphoonServer struct {
 	ArchonChIN      ArchonChIN
 	ArchonChOut     ArchonChOut
 
+
+
+	BuildGraph      bool
 	Graph           interfaces.GraphInterface
+
 
 }
 
@@ -82,22 +96,6 @@ func (s *TyphoonServer) RunServer(port int) error {
 
 func (s *TyphoonServer) Init() interfaces.ServerInterface {
 	s.LOG.Error("Init() ",Errors.ServerMethodNotImplemented.Error()); return s
-}
-
-func (s *TyphoonServer) InitGraph() interfaces.ServerInterface {
-	s.Graph = (&ghvzExt.Graph{
-		BaseGraph: &ghvzExt.BaseGraph{
-			Layout: ghvzExt.LAYOUTCirco,
-			MetaInfo:  &label.MetaInfo{
-				Name: fmt.Sprintf("Graph of %s",s.Name),
-			},
-		},
-	}).Init()
-	return s
-}
-
-func (s *TyphoonServer) GetGraph() interfaces.GraphInterface {
-	return s.Graph
 }
 
 func (s *TyphoonServer) InitDocs() interfaces.ServerInterface {
@@ -275,34 +273,54 @@ func (s *TyphoonServer) initActions(resource interfaces.ResourceInterface)  {
 				handlerPath = fmt.Sprintf("/%s", action.GetPath())
 			}
 			action.SetHandlerPath(handlerPath)
+
+			actionLogger := log.Patch(s.LOG, log.D{"resource": resource.GetName(), "action": action.GetName()})
+			action.SetLogger(actionLogger)
 			s.LOG.Debug(fmt.Sprintf("need serve path: %s", handlerPath))
 
 			s.initHandler(method, handlerPath)
-
-			if utils.NotNill(s.Graph) { resource.AddGraphActionNode(action) }
+			if s.OnInitAction != nil { s.OnInitAction(resource, action) }
 		}
 	}
 }
+
 
 func (s *TyphoonServer) buildSubResources(parentPath string, newResource interfaces.ResourceInterface)  {
-	for resourceName, subResource := range newResource.GetResources() {
-		resourcePath := fmt.Sprintf("%s/%s", parentPath, resourceName)
+	if newResource.GetCountSubResources() > 0 {
+		for resourceName, subResource := range newResource.GetResources() {
+			var resourcePath string
+			if parentPath != "/" {
+				resourcePath = fmt.Sprintf("%s/%s", parentPath, resourceName)
+			} else {
+				resourcePath = fmt.Sprintf("/%s", resourceName)
+			}
 
-		if subResource.GetCountActions() > 0 {
+			s.LOG.Debug("init subresource ", resourcePath, newResource.GetName(), newResource)
+
+			subResource.SetLogger(s.LOG)
+
+			subResource.SetPath(resourcePath)
+
+			if s.OnBuildSubResources != nil { s.OnBuildSubResources(subResource) }
+
 			s.buildSubActions(resourcePath, subResource)
-		}
-
-		if subResource.GetCountSubResources() > 0 {
 			s.buildSubResources(resourcePath, subResource)
+
 		}
 	}
 }
 
+
 func (s *TyphoonServer) buildSubActions(parentPath string, newResource interfaces.ResourceInterface)  {
-	for name, action := range newResource.GetActions() {
-		for _, method := range action.GetMethods() {
-			handlerPath := fmt.Sprintf("%s/%s", parentPath, name)
-			s.initHandler(method, handlerPath)
+	if newResource.GetCountActions() > 0 {
+		for name, action := range newResource.GetActions() {
+			for _, method := range action.GetMethods() {
+				handlerPath := fmt.Sprintf("%s/%s", parentPath, name)
+				s.LOG.Debug("init sub action ", handlerPath)
+				action.SetHandlerPath(handlerPath)
+				if s.OnBuildSubAction != nil { s.OnBuildSubAction(newResource, action) }
+				s.initHandler(method, handlerPath)
+			}
 		}
 	}
 }
@@ -319,25 +337,16 @@ func (s *TyphoonServer) initResource(newResource interfaces.ResourceInterface) e
 	if _, ok := s.Resources[newResource.GetPath()]; ok {
 		return Errors.ResourceAlreadyExist
 	} else {
-		if s.Graph != nil {
-			s.LOG.Debug(fmt.Sprintf("init subGraph for %s", newResource.GetName()))
-			subGraph := s.Graph.AddSubGraph(&interfaces.GraphOptions{
-				Name:            newResource.GetName(),
-				Label:           newResource.GetName(),
-				IsCluster:       true,
-			})
-			newResource.SetGraph(subGraph)
-		}
+		if s.OnInitResource != nil { s.OnInitResource(newResource) }
 		s.Resources[newResource.GetPath()] = newResource
 		s.initActions(newResource)
 
 		// build resource fractal
-		if newResource.GetCountSubResources() > 0 {
-			s.buildSubResources(newResource.GetPath(), newResource)
-		}
+		s.buildSubResources(newResource.GetPath(), newResource)
 	}
 	return nil
 }
+
 
 func (s *TyphoonServer) initHandler(method string, path string)  {
 	if s.OnServeHandler == nil { s.LOG.Error(Errors.ServerOnHandlerMethodNotImplemented.Error()) } else {
@@ -359,10 +368,11 @@ func (s *TyphoonServer) CreateResource(path string, opts label.MetaInfo) (error,
 	return err, newResource
 }
 
+
 func (s *TyphoonServer) AddResource(resource interfaces.ResourceInterface) interfaces.ServerInterface {
-	if s.BuildGraph && s.Graph == nil { s.InitGraph() }
 	logger := log.Patch(s.LOG, log.D{"resource": resource.GetName()})
 	resource.SetLogger(logger)
+	if s.OnAddResource != nil { s.OnAddResource(resource) }
 	err := s.initResource(resource)
 	if err != nil { color.Red("%s", err.Error()) }
 	return s
@@ -377,4 +387,38 @@ type ServerBuilder struct {
 func (s *ServerBuilder) Run(project interfaces.Project) interfaces.ServerInterface {
 	s.once.Do(func() { s.server = s.Constructor(project) })
 	return s.server
+}
+
+
+
+
+func (s *TyphoonServer) InitGraph() interfaces.ServerInterface {
+	s.Graph = (&ghvzExt.Graph{
+		Options: &interfaces.GraphOptions{
+			IsCluster: true,
+		},
+		MetaInfo: &label.MetaInfo{
+			Name: fmt.Sprintf("Graph of %s",s.Name),
+		},
+		Layout: ghvzExt.LAYOUTCirco,
+	}).Init()
+	return s
+}
+
+func (s *TyphoonServer) GetGraph() interfaces.GraphInterface {
+	return s.Graph
+}
+
+func (s *TyphoonServer) AddNewGraphResource(newResource interfaces.ResourceGraphInterface)  {
+	if s.Graph != nil {
+		subGraph := s.Graph.AddSubGraph(&interfaces.GraphOptions{
+			Name:      newResource.GetName(),
+			Label:     newResource.GetName(),
+			IsCluster: true,
+		})
+		s.LOG.Debug(fmt.Sprintf("init subGraph for %s", newResource.GetName()), subGraph)
+		newResource.SetGraph(subGraph)
+	} else {
+		s.LOG.Error("not found server graph. ",newResource.GetPath(), newResource.GetName())
+	}
 }

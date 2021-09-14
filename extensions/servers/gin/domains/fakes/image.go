@@ -31,7 +31,7 @@ func CreateImageAction() interfaces.ActionInterface {
 	return &GinExtension.Action{
 		Action: &forms.Action{
 			MetaInfo: &label.MetaInfo{
-				Name:        NAME,
+				Name:        "Fake image controller",
 				Path:        FakeImagePath,
 				Description: "Fake Image",
 			},
@@ -39,7 +39,7 @@ func CreateImageAction() interfaces.ActionInterface {
 
 			Pipeline: &forms.PipelineGroup{
 				MetaInfo: &label.MetaInfo{
-					Name:        "Fake Image Server",
+					Name:        "Fake image pipeline group",
 					Description: "Creating fake image on request",
 				},
 				Stages: []interfaces.BasePipelineInterface{

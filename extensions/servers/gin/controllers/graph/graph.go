@@ -21,9 +21,10 @@ const (
 // @Tags main
 // @Router /graph [get]
 func handler (ctx *gin.Context, server interfaces.ServerInterface, logger interfaces.LoggerInterface ) {
-	serverGraph := server.GetGraph()
+	graphS := server.(interfaces.ServerGraphInterface)
+	serverGraph := graphS.GetGraph()
 	exportFormat := ctx.Request.URL.Query().Get("format")
-	logger.Debug("get server graph")
+
 	switch exportFormat {
 	case "dot", "jpg", "svg": _, _ = ctx.Writer.Write(serverGraph.Render(exportFormat))
 	case "all": ctx.JSON(200, gin.H{"formats": [...]string{"dot", "jpg", "svg"}})

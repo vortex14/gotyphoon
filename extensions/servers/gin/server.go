@@ -57,7 +57,9 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context)  {
 	requestContext = s.InitRequestPath(requestContext, reservedRequestPath)
 
 	action := s.GetAction(reservedRequestPath, requestLogger, ginCtx)
-	action.UpdateGraphLabel(ginCtx.Request.Method, reservedRequestPath)
+
+	action.OnRequest(ginCtx.Request.Method, reservedRequestPath)
+	s.LOG.Error("!!!!!!!!!!!!!!!!!!! requests ",reservedRequestPath )
 	if action == nil { s.LOG.Error(Errors.ActionPathNotFound.Error())
 		ginCtx.JSON(404, Gin.H{ "message": "Not Found", "status": false}); return
 	}
@@ -80,33 +82,32 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context)  {
 func (s *TyphoonGinServer) onServeHandler(method string, path string)  {
 
 	s.LOG.Debug(fmt.Sprintf("gin serve %s %s ",method, path))
-	switch method {
-	case interfaces.GET    : s.server.GET(path, s.onRequestHandler)
-	case interfaces.PUT    : s.server.PUT(path, s.onRequestHandler)
-	case interfaces.POST   : s.server.POST(path, s.onRequestHandler)
-	case interfaces.PATCH  : s.server.PATCH(path, s.onRequestHandler)
-	case interfaces.DELETE : s.server.DELETE(path, s.onRequestHandler)
-	}
+	SetServeHandler(method, path, s.server, s.onRequestHandler)
 }
 
-func (s *TyphoonGinServer) onStart(port int) error {
+func (s *TyphoonGinServer) OnStartGin(port int) error {
 	s.LOG.Info(fmt.Sprintf("running server: %s : %d", s.GetName(), port))
 	return s.server.Run(fmt.Sprintf(":%d", port))
 }
 
 func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 
-	s.Instance.Do(func () {
+	s.Construct(func () {
 		s.InitLogger()
 		s.LOG.Debug("init Typhoon Gin Server")
 		s.InitResourcesMap()
-		s.InitGraph()
 
 		s.server = Gin.New()
 		s.server.Use(Gin.Recovery())
+		s.InitGraph()
 
-		s.OnStart = s.onStart
+		s.OnStart = s.OnStartGin
 		s.OnServeHandler = s.onServeHandler
+		s.OnBuildSubAction = s.onBuildSubAction
+		s.OnBuildSubResources = s.onBuildSubResources
+		s.OnInitResource = s.onInitResource
+		s.OnAddResource = s.onAddResource
+		s.OnInitAction = s.onInitAction
 	})
 	return s
 }
@@ -117,4 +118,56 @@ func (s *TyphoonGinServer) Stop() error  {
 
 func (s *TyphoonGinServer) Restart() error {
 	return nil
+}
+
+func (s *TyphoonGinServer) onInitAction(resource interfaces.ResourceInterface, action interfaces.ActionInterface) {
+	r, ro := resource.(interfaces.ResourceGraphInterface)
+	a, ao := action.(interfaces.ActionGraphInterface)
+	s.LOG.Error(r, a, ro ,ao)
+
+	if graphAction, ok := action.(interfaces.ActionGraphInterface); ok {
+
+		if graphResource, okR := resource.(interfaces.ResourceGraphInterface); okR {
+			graphResource.AddGraphActionNode(graphAction)
+		} else {
+			s.LOG.Error(Errors.GraphActionContextInvalid.Error())
+		}
+
+	} else {
+		s.LOG.Error(Errors.GraphActionContextInvalid.Error())
+	}
+
+}
+
+func (s *TyphoonGinServer) onInitResource(newResource interfaces.ResourceInterface)  {
+	if graphResource, ok := newResource.(interfaces.ResourceGraphInterface); ok {
+		s.LOG.Info("onInitResource, hasGraph: ", graphResource.HasParentGraph())
+	}
+}
+
+func (s *TyphoonGinServer) onBuildSubResources(subResource interfaces.ResourceInterface)  {
+	s.LOG.Warning("OnBuildSubResources")
+
+	//subGraph := newResource.CreateSubGraph(&interfaces.GraphOptions{
+	//	Name:      subResource.GetName(),
+	//	Label:     subResource.GetName(),
+	//	IsCluster: true,
+	//})
+	//subResource.SetGraph(subGraph)
+	//
+	//subResource.SetGraphNodes(newResource.GetGraphNodes())
+	//subResource.SetGraphEdges(newResource.GetGraphEdges())
+}
+
+func (s *TyphoonGinServer) onBuildSubAction(resource interfaces.ResourceInterface, action interfaces.ActionInterface)  {
+	s.LOG.Info("onBuildSubAction")
+}
+
+func (s *TyphoonGinServer) onAddResource(resource interfaces.ResourceInterface)  {
+	s.LOG.Info("onAddResource", resource)
+	if graphResource, ok := resource.(interfaces.ResourceGraphInterface); ok {
+		s.AddNewGraphResource(graphResource)
+	} else {
+		s.LOG.Error(Errors.GraphResourceContextInvalid.Error())
+	}
 }
