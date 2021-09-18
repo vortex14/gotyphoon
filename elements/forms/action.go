@@ -90,13 +90,16 @@ func (a *Action) UpdateGraphLabel(method string, path string)  {
 	
 	`, a.Input)
 
-	a.Graph.UpdateEdge(&interfaces.EdgeOptions{
-		NodeA: method,
-		NodeB: path,
-		LabelH: labelAction,
-		Color: graphvizExt.COLORNavy,
+	if a.Graph != nil {
+		a.Graph.UpdateEdge(&interfaces.EdgeOptions{
+			NodeA: method,
+			NodeB: path,
+			LabelH: labelAction,
+			Color: graphvizExt.COLORNavy,
 
-	})
+		})
+	}
+
 }
 
 func (a *Action) AddMethodNodes() {

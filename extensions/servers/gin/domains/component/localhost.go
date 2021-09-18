@@ -8,14 +8,17 @@ import (
 func ConstructorLocalhostOptions(
 	componentName string,
 
-	) (*log.BaseOptions, *interfaces.TracingOptions, *interfaces.SwaggerOptions) {
+	) (*log.Options, *interfaces.TracingOptions, *interfaces.SwaggerOptions) {
 
-		return &log.BaseOptions{
-			ShowLine: true,
-			ShowFile: true,
-			FullTimestamp: true,
-			Name: componentName,
-			Level: interfaces.DEBUG,
+		return &log.Options{
+			BaseOptions:&log.BaseOptions{
+				ShowLine: true,
+				ShowFile: true,
+				FullTimestamp: true,
+				Name: componentName,
+				Level: interfaces.DEBUG,
+			},
+
 		},
 		&interfaces.TracingOptions{
 			UseUTC:        true,

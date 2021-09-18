@@ -59,7 +59,6 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context)  {
 	action := s.GetAction(reservedRequestPath, requestLogger, ginCtx)
 
 	action.OnRequest(ginCtx.Request.Method, reservedRequestPath)
-	s.LOG.Error("!!!!!!!!!!!!!!!!!!! requests ",reservedRequestPath )
 	if action == nil { s.LOG.Error(Errors.ActionPathNotFound.Error())
 		ginCtx.JSON(404, Gin.H{ "message": "Not Found", "status": false}); return
 	}

@@ -6,11 +6,89 @@ import (
 	"github.com/fatih/color"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/olekukonko/tablewriter"
+	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/xanzy/go-gitlab"
 	"os"
 	"strconv"
 )
+
+type Gitlab struct {
+	singleton.Singleton
+	client *gitlab.Client
+	Token  string
+	Url    string
+
+}
+
+func (g *Gitlab) GetClient() (error, *gitlab.Client) {
+	var errC error
+	if g.client == nil {
+		g.Construct(func() {
+			gitlabClient, err := gitlab.NewClient(g.Token, gitlab.WithBaseURL(g.Url))
+			g.client = gitlabClient
+			errC = err
+		})
+	}
+	return errC, g.client
+}
+
+
+//https://docs.gitlab.com/ee/api/container_registry.html#list-registry-repositories
+func (g *Gitlab) ListRegistryRepositories(projectId int)  {
+	_, client := g.GetClient()
+	reps, resp, err := client.ContainerRegistry.ListRegistryRepositories(projectId, nil, nil)
+	color.Yellow(fmt.Sprintf("%+v", reps))
+	color.Yellow(fmt.Sprintf("Response %+v", resp))
+	color.Red(err.Error())
+
+}
+
+func (s *Gitlab) GetAllProjectsList() []*interfaces.GitlabProject {
+
+	color.Green("Sync gitlab projects. waiting for %s", s.Url)
+	var scrapedProjects []*interfaces.GitlabProject
+	err, gitlabClient := s.GetClient()
+	if err != nil { color.Red(err.Error()); return nil}
+	count := 10
+	bar := pb.StartNew(count)
+	bar.SetMaxWidth(100)
+	for i := 1; i <= count; i++ {
+
+		description := fmt.Sprintf("scan gitlab page: %d", i)
+
+		tmpl := `{{string . "title"}} - {{ bar . "<" "-" (cycle . "↖" "↗" "↘" "↙" ) "." ">"}}  {{percent .}} {{etime .}}`
+
+		bar.SetTemplateString(tmpl)
+
+		bar.Set("title", description)
+
+		projects := s.getGitlabProjects(gitlabClient, i)
+		for _, project := range projects {
+			scrapedProjects = append(scrapedProjects, &interfaces.GitlabProject{
+				Name: project.Name,
+				Git: project.WebURL + ".git",
+				Id: project.ID,
+			})
+		}
+
+		bar.Increment()
+	}
+	bar.Finish()
+
+	return scrapedProjects
+}
+
+func (s *Gitlab) getGitlabProjects(gitlabClient *gitlab.Client, page int) []*gitlab.Project {
+	projects, _, _ := gitlabClient.Projects.ListProjects(&gitlab.ListProjectsOptions{
+		ListOptions:              gitlab.ListOptions{
+			PerPage: 100,
+			Page: page,
+		},
+	})
+	return projects
+
+}
 
 type Server struct {
 	Cluster interfaces.Cluster
