@@ -165,17 +165,23 @@ type ConfigProject struct {
 		Donor DonorSettings `yaml:"donor"`
 	} `yaml:"ty_components"`
 	Services Services `yaml:"services"`
+
+
+	Concurrent int    `yaml:"concurrent,omitempty"`
+	Channel    string `yaml:"channel,omitempty"`
+	Topic      string `yaml:"topic,omitempty"`
+
 }
 
 type Queue struct {
-	priority   int
-	component  string
-	group 	   string
-	Concurrent int    `yaml:"concurrent"`
-	MsgTimeout int    `yaml:"msg_timeout"`
-	Channel    string `yaml:"channel"`
-	Topic      string `yaml:"topic"`
-	Share      bool   `yaml:"share"`
-	Writable   bool   `yaml:"writable"`
-	Readable   bool   `yaml:"readable"`
+	priority   int    `yaml:"priority,omitempty"`
+	component  string `yaml:"component,omitempty"`
+	group 	   string `yaml:"group,omitempty"`
+	Concurrent int    `yaml:"concurrent,omitempty"`
+	MsgTimeout int    `yaml:"msg_timeout,omitempty"`
+	Channel    string `yaml:"channel,omitempty"`
+	Topic      string `yaml:"topic,omitempty"`
+	Share      bool   `yaml:"share,omitempty"`
+	Writable   bool   `yaml:"writable,omitempty"`
+	Readable   bool   `yaml:"readable,omitempty"`
 }

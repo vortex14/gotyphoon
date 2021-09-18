@@ -6,20 +6,20 @@ import (
 
 
 type ResourceGraphInterface interface {
-	SetGraph(graph GraphInterface) ResourceGraphInterface
-	GetGraph() GraphInterface
-
-	CreateSubGraph(options *GraphOptions) GraphInterface
-	AddGraphActionNode(action ActionGraphInterface)
-
-	GetGraphNodes() map[string] NodeInterface
-	SetGraphNodes(nodes map[string] NodeInterface) ResourceGraphInterface
-
-	BuildEdges() ResourceGraphInterface
-	SetGraphEdges(edges map[string]EdgeInterface) ResourceGraphInterface
-	GetGraphEdges()map[string] EdgeInterface
-
-	HasParentGraph() bool
+	//SetGraph(graph GraphInterface) ResourceGraphInterface
+	//GetGraph() GraphInterface
+	//
+	//CreateSubGraph(options *GraphOptions) GraphInterface
+	//AddGraphActionNode(action ActionGraphInterface)
+	//
+	//GetGraphNodes() map[string] NodeInterface
+	//SetGraphNodes(nodes map[string] NodeInterface) ResourceGraphInterface
+	//
+	//BuildEdges() ResourceGraphInterface
+	//SetGraphEdges(edges map[string]EdgeInterface) ResourceGraphInterface
+	//GetGraphEdges()map[string] EdgeInterface
+	//
+	//HasParentGraph() bool
 
 	ResourceInterface
 }

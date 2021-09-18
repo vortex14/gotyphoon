@@ -18,7 +18,7 @@ type ManageServerInterface interface {
 
 type ServerGraphInterface interface {
 	InitGraph() ServerInterface
-	GetGraph() GraphInterface
+	//GetGraph() GraphInterface
 }
 
 type ServerExtensionInterface interface {

@@ -98,7 +98,7 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 
 		s.server = Gin.New()
 		s.server.Use(Gin.Recovery())
-		s.InitGraph()
+		//s.InitGraph()
 
 		s.OnStart = s.OnStartGin
 		s.OnServeHandler = s.onServeHandler
@@ -124,10 +124,10 @@ func (s *TyphoonGinServer) onInitAction(resource interfaces.ResourceInterface, a
 	a, ao := action.(interfaces.ActionGraphInterface)
 	s.LOG.Error(r, a, ro ,ao)
 
-	if graphAction, ok := action.(interfaces.ActionGraphInterface); ok {
+	if _, ok := action.(interfaces.ActionGraphInterface); ok {
 
-		if graphResource, okR := resource.(interfaces.ResourceGraphInterface); okR {
-			graphResource.AddGraphActionNode(graphAction)
+		if _, okR := resource.(interfaces.ResourceGraphInterface); okR {
+			//graphResource.AddGraphActionNode(graphAction)
 		} else {
 			s.LOG.Error(Errors.GraphActionContextInvalid.Error())
 		}
@@ -139,8 +139,8 @@ func (s *TyphoonGinServer) onInitAction(resource interfaces.ResourceInterface, a
 }
 
 func (s *TyphoonGinServer) onInitResource(newResource interfaces.ResourceInterface)  {
-	if graphResource, ok := newResource.(interfaces.ResourceGraphInterface); ok {
-		s.LOG.Info("onInitResource, hasGraph: ", graphResource.HasParentGraph())
+	if _, ok := newResource.(interfaces.ResourceGraphInterface); ok {
+		//s.LOG.Info("onInitResource, hasGraph: ", graphResource.HasParentGraph())
 	}
 }
 
@@ -164,8 +164,8 @@ func (s *TyphoonGinServer) onBuildSubAction(resource interfaces.ResourceInterfac
 
 func (s *TyphoonGinServer) onAddResource(resource interfaces.ResourceInterface)  {
 	s.LOG.Info("onAddResource", resource)
-	if graphResource, ok := resource.(interfaces.ResourceGraphInterface); ok {
-		s.AddNewGraphResource(graphResource)
+	if _, ok := resource.(interfaces.ResourceGraphInterface); ok {
+		//s.AddNewGraphResource(graphResource)
 	} else {
 		s.LOG.Error(Errors.GraphResourceContextInvalid.Error())
 	}

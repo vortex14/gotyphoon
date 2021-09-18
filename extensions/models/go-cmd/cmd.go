@@ -39,6 +39,7 @@ func (c *Command) init()  {
 }
 
 func (c *Command) checkingOutput()  {
+	if c.Refresh == 0 { c.Refresh = 0.5 }
 	ticker := time.NewTicker(time.Duration(c.Refresh * 1000) * time.Millisecond)
 	for range ticker.C {
 		status := c.cmd.Status()

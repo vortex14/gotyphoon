@@ -31,9 +31,9 @@ type ProcessorPipelineInterface interface {
 }
 
 type PipelineGroupGraph interface {
-	SetGraph(graph GraphInterface)
-	InitGraph(parentNode string)
-	SetGraphNodes(nodes map[string]NodeInterface)
+	//SetGraph(graph GraphInterface)
+	//InitGraph(parentNode string)
+	//SetGraphNodes(nodes map[string]NodeInterface)
 
 	PipelineGroupInterface
 }
@@ -44,9 +44,9 @@ type PipelineGroupInterface interface {
 	GetFirstPipelineName() string
 	SetLogger(logger LoggerInterface)
 
-	SetGraph(graph GraphInterface)
+	//SetGraph(graph GraphInterface)
 	InitGraph(parentNode string)
-	SetGraphNodes(nodes map[string]NodeInterface)
+	//SetGraphNodes(nodes map[string]NodeInterface)
 }
 
 

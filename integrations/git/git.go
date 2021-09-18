@@ -14,6 +14,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/vortex14/gotyphoon/environment"
 	"github.com/vortex14/gotyphoon/interfaces"
+
+	. "github.com/vortex14/gotyphoon/extensions/models/go-cmd"
 )
 
 type Git struct {
@@ -226,16 +228,18 @@ func (g *Git) LocalResetLikeRemote(remote string, branch string, backup bool) {
 	if backup {
 		g.SaveLocalChanging()
 	}
-	fetchCommand := cmd.NewCmd("git", "fetch", remote)
-	fetchCommand.Dir = g.Path
-	<-fetchCommand.Start()
+	fetchCmd := Command{Cmd: "git", Args: []string{"fetch", remote}}
+	fetchCmd.Run()
+
+
 	resetOpt := fmt.Sprintf("%s/%s", remote, branch)
-	color.Yellow(resetOpt)
-	resetCommand := cmd.NewCmd("git", "reset", "--hard", resetOpt)
-	resetCommand.Dir = g.Path
-	out := <-resetCommand.Start()
-	for _, l := range out.Stdout {
-		color.Yellow("%s", l)
+	color.Yellow(fmt.Sprintf("reset to %s ...",resetOpt))
+
+	resetCmd := Command{Cmd: "git", Args: []string{"reset", "--hard", resetOpt}}
+	resetCmd.Run()
+
+	for line := range resetCmd.Output {
+		color.Yellow(line)
 	}
 }
 
@@ -269,10 +273,6 @@ func (g *Git) LocalResetLikeRemoteByCommitHash(hash string, backup bool) {
 	for _, l := range out.Stdout {
 		color.Yellow("%s", l)
 	}
-
-	//git reset --hard 0559d045b5a07d931673c9f84cb14c6781024a63
-
-
 }
 
 func (g *Git) LoadRepo() {
