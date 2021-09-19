@@ -133,7 +133,7 @@ func (s *TyphoonGraphGinServer) onInitResource(newResource interfaces.ResourceIn
 
 func (s *TyphoonGraphGinServer) onBuildSubResources(subResource interfaces.ResourceInterface)  {
 	s.LOG.Warning("OnBuildSubResources")
-	// * /
+	// */
 
 	//subGraph := newResource.CreateSubGraph(&interfaces.GraphOptions{
 	//	Name:      subResource.GetName(),
