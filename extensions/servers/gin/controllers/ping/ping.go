@@ -4,9 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
+	// /* ignore for building amd64-linux
 	GraphExtension "github.com/vortex14/gotyphoon/extensions/forms/graph"
 	GinExtension "github.com/vortex14/gotyphoon/extensions/servers/gin"
 	GinGraphExt "github.com/vortex14/gotyphoon/extensions/servers/gin/graph"
+	// */
+
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
