@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
-	ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 
-	//ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
+	// /* ignore for building amd64-linux
+	ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
+	// */
+
 	"net/http"
 	"strings"
 	"sync"
