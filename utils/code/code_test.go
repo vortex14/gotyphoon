@@ -13,7 +13,7 @@ func TestCommentCode(t *testing.T) {
 	Convey("init test code", t, func() {
 			testCode := `
 package interfaces
-
+//myapp
 import (
     "os"
 ///* ignore for building amd64-linux
@@ -102,7 +102,7 @@ type PipelineGroupInterface interface {
 `
 			testcommented := `
 package interfaces
-
+//myapp
 import (
     "os"
 ///* ignore for building amd64-linux
