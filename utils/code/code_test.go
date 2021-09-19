@@ -95,7 +95,7 @@ type PipelineGroupInterface interface {
 	SetGraphNodes(nodes map[string]NodeInterface)
 
 	// */
-
+// comment
 }
 
 
@@ -184,7 +184,7 @@ type PipelineGroupInterface interface {
 //	SetGraphNodes(nodes map[string]NodeInterface)
 //
 	// */
-
+// comment
 }
 
 
