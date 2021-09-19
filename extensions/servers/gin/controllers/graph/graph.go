@@ -24,7 +24,7 @@ func handler (ctx *gin.Context, server interfaces.ServerInterface, logger interf
 	// /* ignore for building amd64-linux
 	graphS := server.(interfaces.ServerGraphInterface)
 	serverGraph := graphS.GetGraph()
-	// */
+
 	exportFormat := ctx.Request.URL.Query().Get("format")
 
 	switch exportFormat {
@@ -32,6 +32,8 @@ func handler (ctx *gin.Context, server interfaces.ServerInterface, logger interf
 	case "all": ctx.JSON(200, gin.H{"formats": [...]string{"dot", "jpg", "svg"}})
 	default   : ctx.JSON(400, gin.H{"error": Errors.GraphNotFoundFormat.Error()})
 	}
+
+	// */
 }
 
 var Controller = &GinExtension.Action{
