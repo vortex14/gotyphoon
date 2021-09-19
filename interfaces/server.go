@@ -16,10 +16,14 @@ type ManageServerInterface interface {
 	Restart() error
 }
 
+// /* ignore for building amd64-linux
+
 type ServerGraphInterface interface {
 	InitGraph() ServerInterface
 	GetGraph() GraphInterface
 }
+
+// */
 
 type ServerExtensionInterface interface {
 	RunServer(port int) error
