@@ -99,8 +99,8 @@ func main()  {
 	//fmt.Println(path)
 	startDir := "../../../"
 	excludeDirs := map[string]bool{"vendor": true, ".git": true, "tmp": true, ".idea": true}
-	code.UncommentDir(startDir, matchCode, excludeDirs)
-	//utils.CommentDir(startDir, matchCode, excludeDirs)
+	//code.UncommentDir(startDir, matchCode, excludeDirs)
+	code.CommentDir(startDir, matchCode, excludeDirs)
 	return
 
 	agent := Agent{
