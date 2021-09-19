@@ -88,6 +88,7 @@ func UncommentDir(startDir string, matchCode string, excludeDirs map[string]bool
 			firstDir := utils.GetFirstDir(path)
 			if _, ok := excludeDirs[firstDir]; ok { return nil }
 			if info.IsDir() { return nil}
+			if strings.Contains(path, "_test.go") { return nil}
 			contentFileCode := utils.ReadFile(path)
 			marker := fmt.Sprintf("/* %s", matchCode)
 			if strings.Contains(contentFileCode, marker) {
@@ -107,6 +108,7 @@ func CommentDir(startDir string, matchCode string, excludeDirs map[string]bool) 
 			firstDir := utils.GetFirstDir(path)
 			if _, ok := excludeDirs[firstDir]; ok { return nil }
 			if info.IsDir() { return nil}
+			if strings.Contains(path, "_test.go") { return nil}
 			contentFileCode := utils.ReadFile(path)
 			marker := fmt.Sprintf("/* %s", matchCode)
 			if strings.Contains(contentFileCode, marker) {
