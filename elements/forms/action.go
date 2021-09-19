@@ -1,12 +1,11 @@
 package forms
 
-
 import (
 	"context"
-	"fmt"
 	"github.com/sirupsen/logrus"
 
 	// /* ignore for building amd64-linux
+	"fmt"
 	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	// */
 	"github.com/vortex14/gotyphoon/log"
@@ -83,8 +82,10 @@ func (a *Action) GetHandlerPath() string {
 func (a *Action) InitPipelineGraph()  {
 	pipelineLogger := log.Patch(a.LOG.(*logrus.Entry), log.D{"pipeline-group": a.GetPipeline().GetName()})
 	a.Pipeline.SetLogger(pipelineLogger)
+	// /* ignore for building amd64-linux
 	a.Pipeline.SetGraph(a.Graph)
 	a.Pipeline.InitGraph(a.GetHandlerPath())
+	// */
 }
 
 func (a *Action) UpdateGraphLabel(method string, path string)  {
@@ -172,7 +173,9 @@ func (a *Action) GetGraph() interfaces.GraphInterface {
 // */
 
 func (a *Action) OnRequest(method string, path string)  {
+	// /* ignore for building amd64-linux
 	a.UpdateGraphLabel(method, path)
+	//*/
 }
 
 func (a *Action) Run(ctx context.Context, logger interfaces.LoggerInterface)  {

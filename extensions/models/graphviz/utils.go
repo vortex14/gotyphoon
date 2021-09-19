@@ -1,5 +1,5 @@
 package graphviz
-//
+
 // /* ignore for building amd64-linux
 import (
 	"github.com/goccy/go-graphviz"

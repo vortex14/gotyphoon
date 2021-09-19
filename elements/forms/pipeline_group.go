@@ -2,10 +2,13 @@ package forms
 
 import (
 	Context "context"
+	"github.com/vortex14/gotyphoon/elements/models/label"
+
+	// /* ignore for building amd64-linux
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"github.com/vortex14/gotyphoon/elements/models/label"
 	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
+	//*/
 	"github.com/vortex14/gotyphoon/interfaces"
 
 	"github.com/vortex14/gotyphoon/log"
@@ -19,8 +22,9 @@ type PipelineGroup struct {
 
 	Stages        []interfaces.BasePipelineInterface
 	Consumers     map[string]interfaces.ConsumerInterface
-
+	// /* ignore for building amd64-linux
 	graph         interfaces.GraphInterface
+	//*/
 	LOG           interfaces.LoggerInterface
 
 }

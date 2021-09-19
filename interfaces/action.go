@@ -4,13 +4,13 @@ import "context"
 
 type ActionGraphInterface interface {
 
-	/* ignore for building amd64-linux
+	///* ignore for building amd64-linux
 
 	SetGraph(graph GraphInterface, buildMethods bool)
 	SetGraphNodes(nodes map[string] NodeInterface)
 	UpdateGraphLabel(method string, path string)
 
-	*/
+	//*/
 
 	InitPipelineGraph()
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fatih/color"
+	"github.com/vortex14/gotyphoon/utils/code"
 	"os"
 
 	"github.com/vortex14/gotyphoon"
@@ -93,12 +94,12 @@ func CommentedCode(marker string, path string)  {
 func main()  {
 	println("start agent ")
 
-	//matchCode := "ignore for building amd64-linux"
+	matchCode := "ignore for building amd64-linux"
 
 	//fmt.Println(path)
-	//startDir := "../../../"
-	//excludeDirs := map[string]bool{"vendor": true, ".git": true, "tmp": true, ".idea": true}
-	//UncommentDir(startDir, matchCode, excludeDirs)
+	startDir := "../../../"
+	excludeDirs := map[string]bool{"vendor": true, ".git": true, "tmp": true, ".idea": true}
+	code.UncommentDir(startDir, matchCode, excludeDirs)
 	//utils.CommentDir(startDir, matchCode, excludeDirs)
 	return
 

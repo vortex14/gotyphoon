@@ -1,5 +1,5 @@
 package interfaces
-//
+
 import (
 	"context"
 )

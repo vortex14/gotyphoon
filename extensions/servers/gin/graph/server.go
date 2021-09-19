@@ -135,7 +135,7 @@ func (s *TyphoonGraphGinServer) onBuildSubResources(subResource interfaces.Resou
 	//	IsCluster: true,
 	//})
 	//subResource.SetGraph(subGraph)
-	//
+	////
 	//subResource.SetGraphNodes(newResource.GetGraphNodes())
 	//subResource.SetGraphEdges(newResource.GetGraphEdges())
 }
