@@ -1,5 +1,6 @@
 package graphviz
 
+//https:www.graphviz.org/pdf/dotguide.pdf
 
 // /* ignore for building amd64-linux
 
@@ -17,8 +18,6 @@ import (
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 )
-
-//https:www.graphviz.org/pdf/dotguide.pdf
 
 type Graph struct {
 	mu sync.Mutex

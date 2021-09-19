@@ -10,9 +10,11 @@ type PythonFunction struct {
 	Function *Python3.PyObject
 }
 
-
+// */
 
 //https:pyo3.rs/v0.14.1/ecosystem/async-await.html
+
+// /* ignore for building amd64-linux
 func (f *PythonFunction) await(object *Python3.PyObject) *Python3.PyObject {
 	aNext := object.GetAttrString("__await__")
 	defer aNext.DecRef()
