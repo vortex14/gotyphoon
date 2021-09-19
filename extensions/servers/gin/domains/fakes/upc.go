@@ -15,6 +15,8 @@ func handler(ctx *Gin.Context, logger interfaces.LoggerInterface)  {
 	ctx.JSON(200, fake.CreateUpc())
 }
 
+// /* ignore for building amd64-linux
+
 var GraphController = &GinGraphExt.Action{
 	Action: &GraphExtension.Action{
 		Action: &forms.Action{
@@ -29,6 +31,8 @@ var GraphController = &GinGraphExt.Action{
 	GinController: handler,
 
 }
+
+// */
 
 func CreateUpcAction() interfaces.ActionInterface {
 	return &GinExtension.Action{

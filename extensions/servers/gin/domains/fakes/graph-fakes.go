@@ -1,5 +1,7 @@
 package fakes
 
+// /* ignore for building amd64-linux
+
 import (
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
@@ -66,3 +68,6 @@ func GraphConstructor(
 			},
 		)
 }
+
+
+// */
