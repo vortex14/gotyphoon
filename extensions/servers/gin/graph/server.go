@@ -129,6 +129,8 @@ func (s *TyphoonGraphGinServer) onInitResource(newResource interfaces.ResourceIn
 	}
 }
 
+// */
+
 func (s *TyphoonGraphGinServer) onBuildSubResources(subResource interfaces.ResourceInterface)  {
 	s.LOG.Warning("OnBuildSubResources")
 
@@ -146,6 +148,8 @@ func (s *TyphoonGraphGinServer) onBuildSubResources(subResource interfaces.Resou
 func (s *TyphoonGraphGinServer) onBuildSubAction(resource interfaces.ResourceInterface, action interfaces.ActionInterface)  {
 	s.LOG.Info("onBuildSubAction")
 }
+
+// /* ignore for building amd64-linux
 
 func (s *TyphoonGraphGinServer) onAddResource(resource interfaces.ResourceInterface)  {
 	s.LOG.Info("onAddResource", resource)
