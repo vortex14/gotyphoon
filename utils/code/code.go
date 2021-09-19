@@ -33,7 +33,7 @@ func UnCommentCode(marker string, code string) string {
 			unCommentedLineList = append(unCommentedLineList, line)
 			isUncomment = false
 			continue
-		} else if strings.Contains(line[:5], "//") {
+		} else if strings.Contains(line, "//") {
 			uncommentLine := strings.Replace(line, "//", "", 1)
 			unCommentedLineList = append(unCommentedLineList, uncommentLine)
 		}

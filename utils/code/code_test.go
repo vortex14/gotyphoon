@@ -1,6 +1,7 @@
 package code
 
 import (
+	"fmt"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
@@ -191,18 +192,18 @@ type PipelineGroupInterface interface {
 
 		Convey("Run comment code",func() {
 
-			matchCode := "/* ignore for building amd64-linux"
+			matchCode := "ignore for building amd64-linux"
 
-			data := CommentCode(matchCode, testCode)
+			data := CommentCode(fmt.Sprintf("/* %s", matchCode), testCode)
 			So(testcommented, ShouldContainSubstring, data)
 
 		})
 
 		Convey("Run uncomment code",func() {
 
-			matchCode := "/* ignore for building amd64-linux"
+			matchCode := "ignore for building amd64-linux"
 
-			data := UnCommentCode(matchCode, testcommented)
+			data := UnCommentCode(fmt.Sprintf("/* %s", matchCode), testcommented)
 			So(data, ShouldContainSubstring, testCode)
 		})
 
