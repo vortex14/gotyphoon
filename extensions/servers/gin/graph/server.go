@@ -77,8 +77,11 @@ func (s *TyphoonGraphGinServer) InitTracer() interfaces.ServerInterface {
 
 	return s
 }
+//*/
 
 // requestHandler handle all HTTP request in here
+
+// /* ignore for building amd64-linux
 func (s *TyphoonGraphGinServer) onRequestHandler(ginCtx *Gin.Context)  {
 
 	requestContext := gin.NewRequestCtx(ctx.New(), ginCtx)
