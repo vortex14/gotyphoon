@@ -70,11 +70,10 @@ func (r *Resource) AddGraphActionNode(action interfaces.ActionGraphInterface)  {
 			action.GetHandlerPath()),
 	)
 
-	// /* ignore for building amd64-linux
 	action.SetGraph(r.parentGraph, true)
-	// */
 
 }
+
 
 func (r *Resource) GetGraphNodes() map[string]interfaces.NodeInterface  {
 	return r.parentGraph.GetNodes()
