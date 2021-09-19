@@ -42,7 +42,7 @@ func (m *PythonModule) SetImport()  {
 }
 
 func (m *PythonModule) CreatePythonCallback()  {
-	//Python3
+
 }
 
 

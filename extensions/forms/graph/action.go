@@ -77,7 +77,6 @@ func (a *Action) SetGraph(parent interfaces.GraphInterface, buildMethods bool)  
 
 		println(fmt.Sprintf("+%v ", a.Graph.GetNodes()), "======== !!!!!!!!!! ***********")
 		println(fmt.Sprintf("!!!!!!!!!!!!!!!!!!!!!!!!!! =========== = = == == %+v", parent.GetNodes()))
-		//a.Graph.
 		opts.EdgeOptions.NodeB = a.Pipeline.GetFirstPipelineName()
 		println(opts, "++++++++++++++++++++++++", a.Pipeline.GetName(), a.IsPipeline())
 	}
