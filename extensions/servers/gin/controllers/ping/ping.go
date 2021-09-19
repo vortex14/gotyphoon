@@ -60,6 +60,9 @@ var Controller = &GinExtension.Action{
 	GinController: handler,
 }
 
+
+// /* ignore for building amd64-linux
+
 var GraphController = &GinGraphExt.Action{
 	Action: &GraphExtension.Action{
 		Action: &forms.Action{
@@ -73,3 +76,5 @@ var GraphController = &GinGraphExt.Action{
 	},
 	GinController: handler,
 }
+
+// /*
