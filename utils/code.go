@@ -31,12 +31,12 @@ func CommentCode(marker string, code string) string {
 
 	for _, line := range lines {
 		if IsStrContain(line, "package") { CommentedLineList = append(CommentedLineList, line); continue }
-
+		//println(line)
 		firstSliceStr := ""
 
 		if len(line) >= 5 { firstSliceStr = line[:5] }
 
-		if strings.Contains(line, " */") {
+		if strings.Contains(line, "*/") {
 			isComment = false
 			CommentedLineList = append(CommentedLineList, line)
 		} else if strings. Contains(line, marker) {
@@ -48,7 +48,7 @@ func CommentCode(marker string, code string) string {
 		} else if strings.Contains(firstSliceStr, "//") {
 			CommentedLineList = append(CommentedLineList, line)
 
-		} else if isComment || strings.Contains(line, "//") {
+		} else if isComment {
 			commentLine := fmt.Sprintf("//%s", line)
 			CommentedLineList = append(CommentedLineList, commentLine)
 		} else {
@@ -77,10 +77,11 @@ func CommentCode(marker string, code string) string {
 		//println(line)
 		//firstLine = false
 
-
+		//println(isComment)
 
 
 	}
+
 	CommentedLines := strings.Join(CommentedLineList, "\n")
 	return CommentedLines
 }
