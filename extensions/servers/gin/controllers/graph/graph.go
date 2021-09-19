@@ -21,8 +21,10 @@ const (
 // @Tags main
 // @Router /graph [get]
 func handler (ctx *gin.Context, server interfaces.ServerInterface, logger interfaces.LoggerInterface ) {
+	// /* ignore for building amd64-linux
 	graphS := server.(interfaces.ServerGraphInterface)
 	serverGraph := graphS.GetGraph()
+	// */
 	exportFormat := ctx.Request.URL.Query().Get("format")
 
 	switch exportFormat {
