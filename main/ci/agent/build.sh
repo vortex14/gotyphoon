@@ -9,4 +9,4 @@ done
 
 
 cp agent_amd64 /Users/vortex/ci-agent/agent
-sh /Users/vortex/ci-agent/build.sh
+#sh /Users/vortex/ci-agent/build.sh

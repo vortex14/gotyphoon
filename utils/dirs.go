@@ -3,6 +3,7 @@ package utils
 import (
 	"log"
 	"os"
+	"strings"
 )
 
 func GetCurrentDir() string {
@@ -11,4 +12,13 @@ func GetCurrentDir() string {
 		log.Println(err)
 	}
 	return path
+}
+
+func GetFirstDir(path string) string {
+	paths := strings.Split(path, "/")
+	for _, route := range paths {
+		if strings.Contains(route, "..") { continue }
+		return route
+	}
+	return ""
 }

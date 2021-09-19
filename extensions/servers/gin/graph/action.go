@@ -1,5 +1,7 @@
 package graph
 
+// /* ignore for building amd64-linux
+
 import (
 	"context"
 
@@ -17,6 +19,7 @@ type ServerGraphController func(
 	server interfaces.ServerGraphInterface,
 	logger interfaces.LoggerInterface,
 )
+
 
 
 type Action struct {
@@ -48,5 +51,7 @@ func (a *Action) Run(context context.Context, logger interfaces.LoggerInterface)
 		a.GinSController(requestCtx, server.(interfaces.ServerGraphInterface), logger )
 	}
 }
+
+// */
 
 

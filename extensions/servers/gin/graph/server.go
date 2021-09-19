@@ -1,5 +1,7 @@
 package graph
 
+// /* ignore for building amd64-linux
+
 import (
 	"fmt"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin"
@@ -175,3 +177,6 @@ func (s *TyphoonGraphGinServer) Init() interfaces.ServerInterface {
 	})
 	return s
 }
+
+
+// */

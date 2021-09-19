@@ -1,5 +1,5 @@
 package interfaces
-
+//
 import (
 	"context"
 )
@@ -31,9 +31,15 @@ type ProcessorPipelineInterface interface {
 }
 
 type PipelineGroupGraph interface {
-	//SetGraph(graph GraphInterface)
-	//InitGraph(parentNode string)
-	//SetGraphNodes(nodes map[string]NodeInterface)
+
+
+	// /* ignore for building amd64-linux
+
+	SetGraph(graph GraphInterface)
+	InitGraph(parentNode string)
+	SetGraphNodes(nodes map[string]NodeInterface)
+
+	// */
 
 	PipelineGroupInterface
 }
@@ -44,9 +50,15 @@ type PipelineGroupInterface interface {
 	GetFirstPipelineName() string
 	SetLogger(logger LoggerInterface)
 
-	//SetGraph(graph GraphInterface)
+	// /* ignore for building amd64-linux
+	SetGraph(graph GraphInterface)
+
 	InitGraph(parentNode string)
-	//SetGraphNodes(nodes map[string]NodeInterface)
+
+	SetGraphNodes(nodes map[string]NodeInterface)
+//
+	// */
+
 }
 
 
