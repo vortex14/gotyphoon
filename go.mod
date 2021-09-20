@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/Bose/go-gin-logrus v1.0.3
 	github.com/Bose/go-gin-opentracing v1.0.5
-	github.com/DataDog/go-python3 v0.0.0-20210805105248-03d93fb21b67 // indirect
+	github.com/DataDog/go-python3 v0.0.0-20210805105248-03d93fb21b67
 	github.com/EDDYCJY/fake-useragent v0.2.0
 	github.com/Microsoft/hcsshim v0.8.20 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210707164159-52430bf6b52c // indirect
