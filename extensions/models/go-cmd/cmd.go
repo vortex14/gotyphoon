@@ -15,15 +15,14 @@ type Command struct {
 	singleton.Singleton
 	awaitable.Object
 	mu sync.Mutex
+	cmd *cmd.Cmd
 
 	Cmd string
 	isDone bool
-	Refresh float32 // sec
-	cmd *cmd.Cmd
 	Args []string
 	countRead int
+	Refresh float32   // sec
 	Output chan string
-
 }
 
 func (c *Command) init()  {
@@ -34,7 +33,6 @@ func (c *Command) init()  {
 		c.cmd = useCmd
 		c.Add()
 		go c.checkingOutput()
-
 	})
 }
 

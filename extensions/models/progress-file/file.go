@@ -2,23 +2,37 @@ package progress_file
 
 import (
 	"fmt"
-	"github.com/vortex14/gotyphoon/extensions/bar"
+	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 	"io"
 	"os"
 	"sync"
+
+	"github.com/vortex14/gotyphoon/extensions/bar"
 )
 
 type File struct {
 	io.Reader
 	bar *bar.Bar
 	File *os.File
+	Path string
 
 	closeOnce sync.Once
+	LOG       interfaces.LoggerInterface
 
 	total int64
 	fileSize int64
 	OnFinish func(f *os.File)
 
+}
+
+func (f *File) Init()  {
+	if len(f.Path) > 0 {
+		file, err := os.Open(f.Path)
+		if err != nil { return }
+		f.File = file
+		f.Reader = file
+	}
 }
 
 func (f *File) getFileSize() int64 {
@@ -34,15 +48,16 @@ func (f *File) finish()  {
 }
 
 func (f *File) Read(p []byte) (int, error) {
+	if f.Reader == nil && len(f.Path) > 0 { f.Init() }
 	n, err := f.Reader.Read(p)
 
 	if  f.total == 0 {
 		f.fileSize = f.getFileSize()
-
+		if f.LOG == nil { f.LOG = log.New(log.D{"file": f.File.Name()}) }
+		f.LOG.Debug("init")
 		f.bar = &bar.Bar{
 			Description: fmt.Sprintf("Reading %s ... ", f.File.Name()),
 		}
-
 		f.bar.NewOption(int64(n), f.fileSize)
 	}
 

@@ -3,18 +3,21 @@ package ssh
 import (
 	"bytes"
 	"fmt"
+	"net"
+	"os"
+
 	"github.com/fatih/color"
 	"github.com/pkg/sftp"
-	"github.com/vortex14/gotyphoon/elements/models/awaitable"
-	"github.com/vortex14/gotyphoon/elements/models/singleton"
-	Errors "github.com/vortex14/gotyphoon/errors"
-	progress_file "github.com/vortex14/gotyphoon/extensions/models/progress-file"
+	"golang.org/x/crypto/ssh"
+
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"
-	"golang.org/x/crypto/ssh"
-	"net"
-	"os"
+
+	"github.com/vortex14/gotyphoon/elements/models/awaitable"
+	"github.com/vortex14/gotyphoon/elements/models/singleton"
+	Errors "github.com/vortex14/gotyphoon/errors"
+	progressFile "github.com/vortex14/gotyphoon/extensions/models/progress-file"
 )
 
 func init()  {
@@ -36,65 +39,19 @@ type SSH struct {
 	LOG interfaces.LoggerInterface
 
 }
-//
-//type SFTPUploader struct {
-//	io.Reader
-//	File *os.File
-//	fileSize int64
-//	total int64 // Total # of bytes transferred
-//	bar *bar.Bar
-//}
-//
-//func (u *SFTPUploader) getFileSize() int64 {
-//	stat, _ := u.File.Stat()
-//	return stat.Size()
-//}
-//
-//func (u *SFTPUploader) Read(p []byte) (int, error) {
-//	n, err := u.Reader.Read(p)
-//
-//
-//
-//	if  u.total == 0 {
-//		u.fileSize = u.getFileSize()
-//
-//		u.bar = &bar.Bar{
-//			Description: fmt.Sprintf("uploading %s ... ", u.File.Name()),
-//		}
-//
-//		u.bar.NewOption(int64(n), u.fileSize)
-//	}
-//
-//
-//	if err == nil {
-//		u.total += int64(n)
-//		u.bar.IncCur(u.total)
-//	}
-//
-//	return n, err
-//}
 
 func (s *SSH) CopyFileFromHost(srcPath string, pathTarget string) error {
 	if utils.NotNill(s.client, s.sftpClient) { err, _ := s.CreateNewSFTPClient(); if err != nil { return err} }
-	// Open the source file
-	srcFile, errO := os.Open(srcPath)
-	if errO != nil {
-		return errO
-	}
 
 	logger := log.New(log.D{"name": "uploaderFile"})
-	
-	defer srcFile.Close()
 
-	sftpUploadFile := &progress_file.File{
-		Reader: srcFile,
-		File: srcFile,
+	sftpUploadFile := &progressFile.File{
+		Path: srcPath,
 		OnFinish: func(f *os.File) {
-			logger.Debug("test done !")
+			logger.Debug("test done !", f.Name())
 		},
 	}
 
-	// Create the destination file
 
 	dstFile, err := s.sftpClient.Create(pathTarget)
 	if err != nil {
@@ -102,32 +59,10 @@ func (s *SSH) CopyFileFromHost(srcPath string, pathTarget string) error {
 	}
 	defer dstFile.Close()
 
-
-	//fI, _ := srcFile.Stat()
-
-	//
-	//bar := progressbar.DefaultBytes(
-	//	fI.Size(),
-	//	"uploading",
-	//)
-
-
-
-	//proxyReader := progressbar.NewReader(srcFile, bar)
-	//io.Copy(srcFile, proxyReader.Reader)
-
-	//bar.Reset()
-	//bar.Add(10000)
-	// write to file
-	//println("Start ", bar.IsFinished())
-
 	if  _, err := dstFile.ReadFrom(sftpUploadFile); err!= nil {
 		return err
 	}
 
-	//bar.Close()
-	//bar.Finish()
-	//println("End !")
 	return nil
 }
 
@@ -217,10 +152,13 @@ func (s *SSH) TestConnection() {
 	}
 	defer session.Close()
 
+
+
 	// Once a Session is created, you can execute a single command on
 	// the remote side using the Run method.
 	var b bytes.Buffer
 	session.Stdout = &b
+
 	if err := session.Run("df -h"); err != nil {
 		color.Red("Failed to run: " + err.Error())
 	}
