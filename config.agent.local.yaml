@@ -1,0 +1,7 @@
+project_name: ci-agent
+debug: true
+port: 10000
+topic: agent-x5
+channel: tasks
+nsqd_nodes:
+  - ip: phonetoria.ru:80

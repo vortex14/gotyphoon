@@ -1,12 +1,11 @@
 package utils
 
 func NotNill (args ...interface{}) bool {
-	status := false
+	status := true
 
 	for _, it := range args {
-		if it != nil { status = true; break }
+		if it == nil { status = false; break }
 	}
-
 	return status
 }
 

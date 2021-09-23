@@ -7,14 +7,14 @@ tmp_dir = "tmp"
 
 [build]
 # Just plain old shell command. You could use `make` as well.
-cmd = "go build -o ./tmp/ssh -i ./main/ssh/ssh.go"
+cmd = "go build -o ./tmp/chromedp -i ./main/chromedp/chromedp.go"
 # Binary file yields from `cmd`.
 bin = "/Users/vortex/go/bin"
 
 
 # Customize binary.
 #full_bin = "APP_ENV=dev APP_USER=air ./tmp/main"
-full_bin = "APP_ENV=dev APP_USER=air ./tmp/ssh"
+full_bin = "APP_ENV=dev APP_USER=air ./tmp/chromedp"
 
 
 # Watch these filename extensions.

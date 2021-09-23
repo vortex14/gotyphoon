@@ -3,6 +3,7 @@ package ssh
 import (
 	"bytes"
 	"fmt"
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	"net"
 	"os"
 
@@ -24,13 +25,16 @@ func init()  {
 	log.InitD()
 }
 
-type SSH struct {
-	singleton.Singleton
-	awaitable.Object
-
+type Options struct {
 	Ip string
 	Login string
 	Password string
+}
+
+type SSH struct {
+	singleton.Singleton
+	awaitable.Object
+	Options
 
 	client *ssh.Client
 	session *ssh.Session
@@ -46,6 +50,9 @@ func (s *SSH) CopyFileFromHost(srcPath string, pathTarget string) error {
 	logger := log.New(log.D{"name": "uploaderFile"})
 
 	sftpUploadFile := &progressFile.File{
+		MetaInfo: &label.MetaInfo{
+			Description: fmt.Sprintf("copying %s", srcPath),
+		},
 		Path: srcPath,
 		OnFinish: func(f *os.File) {
 			logger.Debug("test done !", f.Name())
@@ -129,7 +136,8 @@ func (s *SSH) Close()  {
 	}
 }
 
-func (s *SSH) TestConnection() {
+func (s *SSH) TestConnection() bool {
+	var status bool
 	config := &ssh.ClientConfig{
 		User: s.Login,
 		Auth: []ssh.AuthMethod{
@@ -141,14 +149,14 @@ func (s *SSH) TestConnection() {
 	client, err := ssh.Dial("tcp", address, config)
 	if err != nil {
 		color.Red("%s", err.Error())
-		os.Exit(1)
+		return status
 	}
 
 	defer client.Close()
 	session, err := client.NewSession()
 	if err != nil {
 		color.Red("Failed to create session: ", err.Error())
-		os.Exit(1)
+		return status
 	}
 	defer session.Close()
 
@@ -161,7 +169,10 @@ func (s *SSH) TestConnection() {
 
 	if err := session.Run("df -h"); err != nil {
 		color.Red("Failed to run: " + err.Error())
+		return status
 	}
-	fmt.Println(b.String())
+	//fmt.Println(b.String())
+	status = true
+	return status
 
 }

@@ -10,11 +10,14 @@ require (
 	github.com/Microsoft/hcsshim v0.8.20 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210707164159-52430bf6b52c // indirect
 	github.com/PuerkitoBio/goquery v1.7.1 // indirect
+	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/banzaicloud/logrus-runtime-formatter v0.0.0-20190729070250-5ae5475bae5e
 	github.com/brianvoe/gofakeit/v6 v6.5.0
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheggaaa/pb/v3 v3.0.8
+	github.com/chromedp/cdproto v0.0.0-20210921215903-b0b4414ddbe0
+	github.com/chromedp/chromedp v0.7.4
 	github.com/containerd/containerd v1.5.4 // indirect
 	github.com/datadog/go-python3 v0.0.0-20210805105248-03d93fb21b67 // indirect
 	github.com/deliveryhero/pipeline v0.4.0
@@ -26,9 +29,11 @@ require (
 	github.com/fogleman/gg v1.3.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
+	github.com/geziyor/geziyor v0.0.0-20210830182932-110394a75314
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-cmd/cmd v1.3.0
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/go-kit/kit v0.11.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.1
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
 	github.com/go-python/gopy v0.3.4 // indirect
@@ -64,13 +69,14 @@ require (
 	github.com/rivo/tview v0.0.0-20210909154944-f7430b878d17
 	github.com/sbunce/bson v0.0.0-20181119052045-2aa5ebe749b2 // indirect
 	github.com/schollz/progressbar v1.0.0 // indirect
-	github.com/schollz/progressbar/v3 v3.8.3
+	github.com/schollz/progressbar/v3 v3.8.3 // indirect
 	github.com/segmentio/nsq-go v1.2.4
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2 // indirect
 	github.com/swaggo/gin-swagger v1.3.1 // indirect
+	github.com/temoto/robotstxt v1.1.2 // indirect
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/ugorji/go v1.2.6 // indirect
@@ -85,7 +91,7 @@ require (
 	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678 // indirect
+	golang.org/x/sys v0.0.0-20210921065528-437939a70204 // indirect
 	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect

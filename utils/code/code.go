@@ -2,11 +2,13 @@ package code
 
 import (
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/vortex14/gotyphoon/utils"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/fatih/color"
+
+	"github.com/vortex14/gotyphoon/utils"
 )
 
 func UnCommentCode(marker string, code string) string {
@@ -19,13 +21,10 @@ func UnCommentCode(marker string, code string) string {
 			unCommentedLineList = append(unCommentedLineList, line)
 			isUncomment = true
 			continue
-		} else if !isUncomment {
+		} else if !isUncomment ||  len(line) <= 1 {
 			unCommentedLineList = append(unCommentedLineList, line)
 			continue
-		} else if len(line) <= 1 {
-			unCommentedLineList = append(unCommentedLineList, line)
-			continue
-		} else if len(line) <= 3 && strings.Contains(line, "//") && isUncomment{
+		} else if len(line) <= 3 && strings.Contains(line, "//") && isUncomment {
 			nline := strings.ReplaceAll(line, "//", "")
 			unCommentedLineList = append(unCommentedLineList, nline)
 			continue

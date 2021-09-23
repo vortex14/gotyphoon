@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/vortex14/gotyphoon/utils/code"
 	"os"
 
 	"github.com/vortex14/gotyphoon"
@@ -87,21 +86,8 @@ func (a *Agent) Init()  {
 	})
 }
 
-func CommentedCode(marker string, path string)  {
-
-}
 
 func main()  {
-	println("start agent ")
-
-	matchCode := "ignore for building amd64-linux"
-
-	//fmt.Println(path)
-	startDir := "../../../"
-	excludeDirs := map[string]bool{"vendor": true, ".git": true, "tmp": true, ".idea": true}
-	//code.UncommentDir(startDir, matchCode, excludeDirs)
-	code.CommentDir(startDir, matchCode, excludeDirs)
-	return
 
 	agent := Agent{
 		ConfigFile: "config.agent.local.yaml",
