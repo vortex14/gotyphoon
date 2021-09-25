@@ -4,7 +4,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	. "github.com/vortex14/gotyphoon/extensions/models/watcher"
 
-	"github.com/vortex14/gotyphoon/elements/models/awaitable"
+	"github.com/vortex14/gotyphoon/elements/models/awaitabler"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	. "github.com/vortex14/gotyphoon/elements/models/singleton"
 	Errors "github.com/vortex14/gotyphoon/errors"
@@ -20,7 +20,7 @@ type Mirror struct {
 }
 
 type Agent struct {
-	awaitable.Object
+	awaitabler.Object
 	*label.MetaInfo
 	Singleton
 

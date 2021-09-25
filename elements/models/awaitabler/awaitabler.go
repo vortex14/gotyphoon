@@ -1,23 +1,23 @@
-package awaitable
+package awaitabler
 
 import "sync"
 
 type Object struct {
-	await sync.WaitGroup
+	awaitable sync.WaitGroup
 }
 
 func (o *Object) Init()  {
-	o.await = sync.WaitGroup{}
+	o.awaitable = sync.WaitGroup{}
 }
 
 func (o *Object) Add()  {
-	o.await.Add(1)
+	o.awaitable.Add(1)
 }
 
 func (o *Object) Done()  {
-	o.await.Done()
+	o.awaitable.Done()
 }
 
 func (o *Object) Await()  {
-	o.await.Wait()
+	o.awaitable.Wait()
 }

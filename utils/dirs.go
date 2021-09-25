@@ -22,3 +22,10 @@ func GetFirstDir(path string) string {
 	}
 	return ""
 }
+
+
+// Walker. ignoreDirs, ignoreFiles, matchFileExtensions,
+// return: file, content,
+func Walker()  {
+	
+}

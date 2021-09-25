@@ -6,19 +6,20 @@ import (
 
 	"github.com/go-cmd/cmd"
 
-	"github.com/vortex14/gotyphoon/elements/models/awaitable"
+	"github.com/vortex14/gotyphoon/elements/models/awaitabler"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	Errors "github.com/vortex14/gotyphoon/errors"
 )
 
 type Command struct {
 	singleton.Singleton
-	awaitable.Object
+	awaitabler.Object
 	mu sync.Mutex
 	cmd *cmd.Cmd
 
 	Cmd string
 	isDone bool
+	Dir  string
 	Args []string
 	countRead int
 	Refresh float32   // sec
@@ -30,6 +31,7 @@ func (c *Command) init()  {
 		c.Output = make(chan string)
 		useCmd := cmd.NewCmd(c.Cmd, c.Args...)
 		useCmd.Start()
+		if len(c.Dir) > 0 { useCmd.Dir = c.Dir }
 		c.cmd = useCmd
 		c.Add()
 		go c.checkingOutput()

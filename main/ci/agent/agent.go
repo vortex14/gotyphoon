@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/vortex14/gotyphoon"
-	"github.com/vortex14/gotyphoon/elements/models/awaitable"
+	"github.com/vortex14/gotyphoon/elements/models/awaitabler"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	"github.com/vortex14/gotyphoon/integrations/nsq"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -32,7 +32,7 @@ type Task struct {
 
 type Agent struct {
 	singleton.Singleton
-	awaitable.Object
+	awaitabler.Object
 
 	ConfigFile string
 	project    *typhoon.Project

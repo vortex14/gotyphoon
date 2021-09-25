@@ -15,7 +15,7 @@ import (
 	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"
 
-	"github.com/vortex14/gotyphoon/elements/models/awaitable"
+	"github.com/vortex14/gotyphoon/elements/models/awaitabler"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	progressFile "github.com/vortex14/gotyphoon/extensions/models/progress-file"
@@ -33,7 +33,7 @@ type Options struct {
 
 type SSH struct {
 	singleton.Singleton
-	awaitable.Object
+	awaitabler.Object
 	Options
 
 	client *ssh.Client

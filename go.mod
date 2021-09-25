@@ -22,6 +22,7 @@ require (
 	github.com/datadog/go-python3 v0.0.0-20210805105248-03d93fb21b67 // indirect
 	github.com/deliveryhero/pipeline v0.4.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/disintegration/imaging v1.6.2
 	github.com/docker/docker v20.10.7+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/fatih/color v1.12.0
@@ -51,8 +52,10 @@ require (
 	github.com/grafana-tools/sdk v0.0.0-20210714133701-11b1efc100c9
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0
+	github.com/icza/mjpeg v0.0.0-20210726201846-5ff75d3c479f // indirect
 	github.com/jaswdr/faker v1.4.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/kbinani/screenshot v0.0.0-20210720154843-7d3a670d8329
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kevinburke/ssh_config v1.1.0 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
@@ -63,6 +66,7 @@ require (
 	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/osamingo/checkdigit v1.0.0
+	github.com/pixiv/go-libjpeg v0.0.0-20190822045933-3da21a74767d // indirect
 	github.com/pkg/sftp v1.13.3
 	github.com/prometheus/common v0.30.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
@@ -81,6 +85,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/urfave/cli/v2 v2.3.0 // indirect
+	github.com/vova616/screenshot v0.0.0-20191005130345-da36db2560ab // indirect
 	github.com/xanzy/go-gitlab v0.50.4
 	github.com/xanzy/ssh-agent v0.3.1 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
