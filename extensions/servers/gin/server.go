@@ -83,11 +83,11 @@ func (s *TyphoonGinServer) onServeHandler(method string, path string, resource i
 	if group := resource.GetRouterGroup(); group != nil {
 		routerGroup = GetGinGroup(group)
 	} else {
-		routerGroup = s.server.Group(path)
+		routerGroup = s.server.Group(resource.GetPath())
 	}
 	s.LOG.Debug(fmt.Sprintf("gin serve %s %s, routerGroup: %+v",method, path, routerGroup))
 
-	SetServeHandler(method, path, s.server, s.onRequestHandler)
+	SetServeHandler(method, path, routerGroup, s.onRequestHandler)
 }
 
 func (s *TyphoonGinServer) SetRouterGroup(resource interfaces.ResourceInterface, group interface{})  {

@@ -63,7 +63,7 @@ func main() {
 				Auth: []interfaces.ResourceAuthInterface{
 					&auth.BasicAuth{
 						Users: map[string]string{
-							"vortex": "-=-=",
+							"vortex": "-=-=00+",
 						},
 					},
 				},
@@ -84,6 +84,7 @@ func main() {
 							Methods: []string{interfaces.POST, interfaces.OPTIONS, interfaces.GET},
 						},
 						GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
+							logger.Warning("111", )
 							ctx.JSON(200, Gin.H{"ping": mongoService.Ping()})
 						},
 					},

@@ -120,7 +120,7 @@ func (s *TyphoonGraphGinServer) onServeHandler(method string, path string, resou
 
 	s.LOG.Error(">>>>",resource.GetRouterGroup())
 
-	gin.SetServeHandler(method, path, s.server, s.onRequestHandler)
+	gin.SetServeHandler(method, path, s.server.Group(resource.GetPath()), s.onRequestHandler)
 }
 
 func (s *TyphoonGraphGinServer) OnStartGin(port int) error {

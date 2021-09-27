@@ -8,7 +8,7 @@ import (
 func SetServeHandler(
 	method string,
 	path string,
-	group *gin.Engine,
+	group *gin.RouterGroup,
 	handler func(ctx *gin.Context),
 ) {
 

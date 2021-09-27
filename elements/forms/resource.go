@@ -116,8 +116,8 @@ func (r *Resource) IsAuth() bool {
 func (r *Resource) InitAuth(server interfaces.ServerInterface)  {
 	for _, auth := range r.Auth {
 		auth.SetLogger(r.LOG)
-		//auth.SetServerEngine(server)
-		//auth.Allow(server, r)
+		auth.SetServerEngine(server)
+		auth.Allow(server, r)
 	}
 }
 
