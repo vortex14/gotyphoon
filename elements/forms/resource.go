@@ -17,10 +17,13 @@ import (
 type Resource struct {
 	*label.MetaInfo
 
+	Auth        [] interfaces.ResourceAuthInterface
 	LOG         interfaces.LoggerInterface
 	Actions     map[string] interfaces.ActionInterface
 	Resources   map[string] interfaces.ResourceInterface
 	Middlewares [] interfaces.MiddlewareInterface
+	OnSetRouteGroup func(group interface{})
+	routerGroup interface{}
 
 	// /* ignore for building amd64-linux
 	parentGraph    interfaces.GraphInterface
@@ -28,6 +31,15 @@ type Resource struct {
 
 }
 
+func (r *Resource) SetRouterGroup(group interface{}) {
+	r.routerGroup = group
+}
+
+func (r *Resource) SetRouteGroup(group interface{}) {
+	if r.OnSetRouteGroup == nil { r.LOG.Error(Errors.ServerMethodNotImplemented.Error()); return }
+
+	r.OnSetRouteGroup(group)
+}
 
 func (r *Resource) GetActions() map[string] interfaces.ActionInterface {
 	return r.Actions
@@ -69,17 +81,43 @@ func (r *Resource) RunMiddlewareStack(
 
 	) {
 	var failed bool
-
+	var forceSkip bool
+	var baseException error
 	for _, middleware := range r.Middlewares {
-		if failed { break }
+		if failed || forceSkip { break }
 		logger :=  log.New(log.D{"middleware": middleware.GetName(), "resource": r.GetName()})
 		middleware.Pass(ctx, logger, func(err error) {
-			if middleware.IsRequired() { failed = true; reject(err) } else {
-				logrus.Warning(err.Error())
+
+			if middleware.IsRequired() {baseException = err; err = Errors.MiddlewareRequired}
+			switch err {
+			case Errors.ForceSkipMiddlewares:
+				forceSkip = true
+				logger.Warning(Errors.ForceSkipMiddlewares.Error())
+			case Errors.MiddlewareRequired:
+				reject(baseException)
+				failed = true
+			case Errors.ForceSkipRequest:
+				reject(Errors.ForceSkipRequest)
+				forceSkip = true
+			default:
+				logger.Warning(err.Error())
 			}
+
 		}, func(context context.Context) {
 
 		})
+	}
+}
+
+func (r *Resource) IsAuth() bool {
+	return len(r.Auth) > 0
+}
+
+func (r *Resource) InitAuth(server interfaces.ServerInterface)  {
+	for _, auth := range r.Auth {
+		auth.SetLogger(r.LOG)
+		//auth.SetServerEngine(server)
+		//auth.Allow(server, r)
 	}
 }
 
@@ -169,6 +207,10 @@ func (r *Resource) SetGraphNodes(nodes map[string]interfaces.NodeInterface) inte
 	r.parentGraph.SetNodes(nodes)
 
 	return r
+}
+
+func (r *Resource) GetRouterGroup() interface{} {
+	return r.routerGroup
 }
 
 func (r *Resource) SetGraphEdges(edges map[string]interfaces.EdgeInterface) interfaces.ResourceGraphInterface {

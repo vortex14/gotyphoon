@@ -72,16 +72,31 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context)  {
 	errStack, statusMiddlewareStack, _ := s.RunMiddlewareStack(requestContext, action)
 	requestLogger.Debug(fmt.Sprintf("status middleware stack: %t", statusMiddlewareStack))
 
-	if statusMiddlewareStack { action.Run(requestContext, requestLogger) } else {
+	if statusMiddlewareStack && errStack == nil { action.Run(requestContext, requestLogger) } else {
 		requestLogger.Debug(fmt.Sprintf("error middleware stack: %t", errStack.Error()))
 	}
 
 }
 
-func (s *TyphoonGinServer) onServeHandler(method string, path string)  {
+func (s *TyphoonGinServer) onServeHandler(method string, path string, resource interfaces.ResourceInterface)  {
+	var routerGroup *Gin.RouterGroup
+	if group := resource.GetRouterGroup(); group != nil {
+		routerGroup = GetGinGroup(group)
+	} else {
+		routerGroup = s.server.Group(path)
+	}
+	s.LOG.Debug(fmt.Sprintf("gin serve %s %s, routerGroup: %+v",method, path, routerGroup))
 
-	s.LOG.Debug(fmt.Sprintf("gin serve %s %s ",method, path))
 	SetServeHandler(method, path, s.server, s.onRequestHandler)
+}
+
+func (s *TyphoonGinServer) SetRouterGroup(resource interfaces.ResourceInterface, group interface{})  {
+	ginGroup := GetGinGroup(group)
+	resource.SetRouterGroup(ginGroup)
+}
+
+func (s *TyphoonGinServer) onCors()  {
+
 }
 
 func (s *TyphoonGinServer) OnStartGin(port int) error {
@@ -103,10 +118,11 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 		s.InitGraph()
 		// */
 
+		s.OnCors = s.onCors
 		s.OnStart = s.OnStartGin
 		s.OnServeHandler = s.onServeHandler
-		s.OnBuildSubAction = s.onBuildSubAction
 		s.OnBuildSubResources = s.onBuildSubResources
+		s.OnBuildSubAction = s.onBuildSubAction
 		s.OnInitResource = s.onInitResource
 		s.OnAddResource = s.onAddResource
 		s.OnInitAction = s.onInitAction
@@ -144,6 +160,7 @@ func (s *TyphoonGinServer) onInitAction(resource interfaces.ResourceInterface, a
 }
 
 func (s *TyphoonGinServer) onInitResource(newResource interfaces.ResourceInterface)  {
+
 	if _, ok := newResource.(interfaces.ResourceGraphInterface); ok {
 		//s.LOG.Info("onInitResource, hasGraph: ", graphResource.HasParentGraph())
 	}
@@ -169,6 +186,7 @@ func (s *TyphoonGinServer) onBuildSubAction(resource interfaces.ResourceInterfac
 
 func (s *TyphoonGinServer) onAddResource(resource interfaces.ResourceInterface)  {
 	s.LOG.Info("onAddResource", resource)
+	if resource.IsAuth() { resource.InitAuth(s) }
 
 	// /* ignore for building amd64-linux
 
@@ -180,4 +198,8 @@ func (s *TyphoonGinServer) onAddResource(resource interfaces.ResourceInterface) 
 
    // */
 
+}
+
+func (s *TyphoonGinServer) GetServerEngine() interface{} {
+	return s.server
 }

@@ -29,14 +29,24 @@ type ResourceGraphInterface interface {
 	ResourceInterface
 }
 
+type ResourceAuthInterface interface {
+	Allow(server ServerInterface, resource ResourceInterface) interface{}
+	SetServerEngine(server ServerInterface)
+	SetLogger(logger LoggerInterface)
+}
+
 type ResourceInterface interface {
 	GetPath() string
 	GetCountActions()int
 	Get() ResourceInterface
+	SetRouterGroup(group interface{})
+	GetRouterGroup() interface{}
 	GetCountSubResources() int
 	SetDescription(description string)
 	GetActions() map[string] ActionInterface
 	GetResources() map[string] ResourceInterface
+	IsAuth() bool
+	InitAuth(server ServerInterface)
 
 	SetLogger(logger LoggerInterface) ResourceInterface
 

@@ -24,18 +24,18 @@ type Agent struct {
 	*label.MetaInfo
 	Singleton
 
-	ssh *ssh.SSH
+	ssh        *ssh.SSH
 	SSHOptions ssh.Options
-	LOG interfaces.LoggerInterface
+	LOG        interfaces.LoggerInterface
 }
 
 func (a *Agent) init() {
 	a.Construct(func() {
 		a.ssh = &ssh.SSH{
 			Options: ssh.Options{
-				Ip: a.SSHOptions.Ip,
+				Ip:       a.SSHOptions.Ip,
 				Password: a.SSHOptions.Password,
-				Login:a.SSHOptions.Login,
+				Login:    a.SSHOptions.Login,
 			},
 		}
 		a.LOG = log.New(log.D{"agent": "SFTP-AGENT"})
@@ -49,19 +49,22 @@ func (a *Agent) PingSSH() bool {
 	return a.ssh.TestConnection()
 }
 
-func (a *Agent) Watch(options Mirror)  {
+func (a *Agent) Watch(options Mirror) {
 	a.init()
-	if !a.PingSSH() { a.LOG.Error(Errors.ErrorSshConnection.Error()); return }
+	if !a.PingSSH() {
+		a.LOG.Error(Errors.ErrorSshConnection.Error())
+		return
+	}
 
 	w := Watcher{
 		ExcludeMatch: options.ExcludeMatch,
-		Path: options.HostPath,
+		Path:         options.HostPath,
 		Callback: func(logger interfaces.LoggerInterface, event *fsnotify.Event) {
 			logger.Debug(event.Name)
 
 			err := a.CopyFileFromHost(Mirror{HostPath: event.Name, DestinationPath: "/var/test00000100101010.txt"})
 			if err != nil {
-				return 
+				return
 			}
 		},
 	}

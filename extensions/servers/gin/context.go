@@ -12,6 +12,24 @@ const (
 	TYPHOONServer = "TYPHOON_SERVER"
 )
 
+
+func GetTyphoonGinServer(server interfaces.ServerInterface) (bool, *TyphoonGinServer){
+	ginServer, ok := server.(*TyphoonGinServer)
+	return ok, ginServer
+}
+
+func GetGinEngine(server *TyphoonGinServer) *gin.Engine {
+	return server.GetServerEngine().(*gin.Engine)
+}
+
+func GetGinEngineI(server interface{}) *gin.Engine {
+	return server.(*gin.Engine)
+}
+
+func GetGinGroup(server interface{}) *gin.RouterGroup {
+	return server.(*gin.RouterGroup)
+}
+
 func NewRequestCtx(context Context.Context, ginCtx *gin.Context) Context.Context{
 	return ctx.Update(context, CTX, ginCtx)
 }

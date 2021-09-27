@@ -8,15 +8,16 @@ import (
 func SetServeHandler(
 	method string,
 	path string,
-	server *gin.Engine,
+	group *gin.Engine,
 	handler func(ctx *gin.Context),
 ) {
 
 	switch method {
-	case interfaces.GET    : server.GET(path, handler)
-	case interfaces.PUT    : server.PUT(path, handler)
-	case interfaces.POST   : server.POST(path, handler)
-	case interfaces.PATCH  : server.PATCH(path, handler)
-	case interfaces.DELETE : server.DELETE(path, handler)
+	case interfaces.GET     : group.GET(path, handler)
+	case interfaces.PUT     : group.PUT(path, handler)
+	case interfaces.POST    : group.POST(path, handler)
+	case interfaces.PATCH   : group.PATCH(path, handler)
+	case interfaces.DELETE  : group.DELETE(path, handler)
+	case interfaces.OPTIONS : group.OPTIONS(path, handler)
 	}
 }

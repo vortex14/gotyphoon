@@ -26,7 +26,7 @@ import (
 type OnExit              func()
 type OnStart             func(port int) error
 type OnRequest           func(context context.Context)
-type OnServeHandler      func(path string, method string)
+type OnServeHandler      func(path string, method string, resource interfaces.ResourceInterface)
 type OnResponse          func(status int, data interfaces.Response)
 type OnInitResource      func(newResource interfaces.ResourceInterface)
 type OnInitAction        func(resource interfaces.ResourceInterface, action interfaces.ActionInterface)
@@ -34,6 +34,7 @@ type OnBuildSubResources func(subResource interfaces.ResourceInterface)
 type OnBuildSubAction    func(resource interfaces.ResourceInterface, action interfaces.ActionInterface)
 type OnAddResource       func(resource interfaces.ResourceInterface)
 type OnReject            func(status int, data interfaces.Response)
+type OnCors              func()
 
 type ArchonChIN          func(chan<- interface{} )
 type ArchonChOut         func(<-chan interface{} )
@@ -57,7 +58,7 @@ type TyphoonServer struct {
 	logInstance     sync.Once
 	Logger          *log.TyphoonLogger
 
-	Resources   	map[string]interfaces.ResourceInterface
+	Resources       map[string]interfaces.ResourceInterface
 
 	OnStart             OnStart
 	OnRequest           OnRequest
@@ -69,6 +70,7 @@ type TyphoonServer struct {
 	OnAddResource       OnAddResource
 	OnResponse          OnResponse
 	OnReject            OnReject
+	OnCors              OnCors
 	OnExit              OnExit
 
 	LoggerOptions	*log.Options
@@ -89,6 +91,10 @@ type TyphoonServer struct {
 	// */
 
 
+}
+
+func (s *TyphoonServer) SetRouterGroup(resource interfaces.ResourceInterface, group interface{}) {
+	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
 }
 
 func (s *TyphoonServer) Stop() error  {
@@ -116,14 +122,13 @@ func (s *TyphoonServer) InitTracer() interfaces.ServerInterface {
 }
 
 func (s *TyphoonServer) InitLogger() interfaces.ServerInterface {
-	if s.IsDebug { log.InitD() }
 	s.LOG = log.New(log.D{"server": s.Name})
 	s.logInstance.Do(func() {
 		if s.LoggerOptions == nil { return }
 		s.Logger = (&log.TyphoonLogger{
 			TracingOptions: s.TracingOptions,
 			Name: s.LoggerOptions.Name,
-			Options: log.Options{ BaseOptions: &log.BaseOptions{} },
+			Options: *s.LoggerOptions,
 		}).Init()
 	})
 	return s
@@ -132,6 +137,10 @@ func (s *TyphoonServer) InitLogger() interfaces.ServerInterface {
 func (s *TyphoonServer) Run() error {
 	if !s.IsRunning && len(s.Resources) > 0 {
 		if s.OnStart == nil { s.LOG.Error(Errors.ServerOnStartError.Error()); return Errors.ServerOnStartError }
+		if s.OnCors != nil  {
+			s.OnCors()
+		}
+
 		err := s.OnStart(s.Port)
 		if err != nil {
 			s.LOG.Error(fmt.Sprintf("Server %s, Error: %s", s.Name, err.Error()))
@@ -237,22 +246,33 @@ func (s *TyphoonServer) RunMiddlewareStack(
 	) (error, bool, context.Context)  {
 
 	statusMiddlewareStack := true
+	var skipRequest bool
 	var LastErrorMiddleware error
 	{
 		for _, middleware := range action.GetMiddlewareStack() {
-			if !statusMiddlewareStack { break }
-			middlewareLogger := log.New(log.D{ "middleware": middleware.GetName()})
+			if !statusMiddlewareStack || skipRequest { break }
+			middlewareLogger := log.Patch(s.LOG, log.D{"middleware": middleware.GetName()})
+			//middlewareLogger := log.New(log.D{ "middleware": middleware.GetName()})
 
 			// Refect client request
 			middleware.Pass(requestContext, middlewareLogger, func(err error) {
 				LastErrorMiddleware = err
 				if middleware.IsRequired() {
-					middlewareLogger.Error(err.Error())
-					s.OnResponse(http.StatusBadRequest, interfaces.Response{
-						"message": err.Error(),
-						"status": false,
-					})
-					statusMiddlewareStack = false
+
+					switch err {
+					case Errors.ForceSkipRequest:
+						skipRequest = true
+					default:
+						middlewareLogger.Error(err.Error())
+						s.OnResponse(http.StatusBadRequest, interfaces.Response{
+							"message": err.Error(),
+							"status": false,
+						})
+						statusMiddlewareStack = false
+
+					}
+
+
 					return
 				} else {
 					middlewareLogger.Warning(err.Error())
@@ -285,9 +305,9 @@ func (s *TyphoonServer) initActions(resource interfaces.ResourceInterface)  {
 
 			actionLogger := log.Patch(s.LOG, log.D{"resource": resource.GetName(), "action": action.GetName()})
 			action.SetLogger(actionLogger)
-			s.LOG.Debug(fmt.Sprintf("need serve path: %s", handlerPath))
+			s.LOG.Debug(fmt.Sprintf("need serve path: %s method: %s", handlerPath, method))
 
-			s.initHandler(method, handlerPath)
+			s.initHandler(method, handlerPath, resource)
 			if s.OnInitAction != nil { s.OnInitAction(resource, action) }
 		}
 	}
@@ -328,7 +348,7 @@ func (s *TyphoonServer) buildSubActions(parentPath string, newResource interface
 				s.LOG.Debug("init sub action ", handlerPath)
 				action.SetHandlerPath(handlerPath)
 				if s.OnBuildSubAction != nil { s.OnBuildSubAction(newResource, action) }
-				s.initHandler(method, handlerPath)
+				s.initHandler(method, handlerPath, newResource)
 			}
 		}
 	}
@@ -357,9 +377,9 @@ func (s *TyphoonServer) initResource(newResource interfaces.ResourceInterface) e
 }
 
 
-func (s *TyphoonServer) initHandler(method string, path string)  {
+func (s *TyphoonServer) initHandler(method string, path string, resource interfaces.ResourceInterface)  {
 	if s.OnServeHandler == nil { s.LOG.Error(Errors.ServerOnHandlerMethodNotImplemented.Error()) } else {
-		s.OnServeHandler(method, path)
+		s.OnServeHandler(method, path, resource)
 	}
 }
 
@@ -381,6 +401,7 @@ func (s *TyphoonServer) CreateResource(path string, opts label.MetaInfo) (error,
 func (s *TyphoonServer) AddResource(resource interfaces.ResourceInterface) interfaces.ServerInterface {
 	logger := log.Patch(s.LOG, log.D{"resource": resource.GetName()})
 	resource.SetLogger(logger)
+
 	if s.OnAddResource != nil { s.OnAddResource(resource) }
 	err := s.initResource(resource)
 	if err != nil { color.Red("%s", err.Error()) }
@@ -434,3 +455,11 @@ func (s *TyphoonServer) AddNewGraphResource(newResource interfaces.ResourceGraph
 }
 
 // */
+
+func (s *TyphoonServer) GetServerEngine() interface{} {
+	s.LOG.Error(Errors.ServerMethodNotImplemented.Error()); return Errors.ServerMethodNotImplemented
+}
+
+func (s *TyphoonServer) SetServerEngine(server interface{})  {
+	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
+}
