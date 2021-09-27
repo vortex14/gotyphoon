@@ -9,31 +9,34 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	MongoOptions "go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+
+	"github.com/vortex14/gotyphoon/elements/models/singleton"
+	Errors "github.com/vortex14/gotyphoon/errors"
+	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 
 	"github.com/mongodb/mongo-tools/common/db"
 	mongoTools "github.com/mongodb/mongo-tools/common/options"
 	exportOptions "github.com/mongodb/mongo-tools/mongoexport"
 	importOptions "github.com/mongodb/mongo-tools/mongoimport"
 
-	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 type Service struct {
-	Project interfaces.Project
+	singleton.Singleton
+
+	LOG interfaces.LoggerInterface
 	client *mongo.Client
+	Project interfaces.Project
 	Settings interfaces.ServiceMongo
 	dbs map[string] *mongo.Database
 }
 
-type Collection struct {
-	Name string
-	Db string
-}
 
 func (s *Service) GetPort() int {
 	return s.Settings.GetPort()
@@ -44,19 +47,19 @@ func (s *Service) GetHost() string {
 }
 
 func (s *Service) initClient()  {
-	if s.client == nil {
-		//color.Yellow("init Mongo Service %s. Connect to %s:%d", s.Settings.Name, s.Settings.GetHost(), s.Settings.GetPort())
+	s.Construct(func() {
 		connectionString := fmt.Sprintf("mongodb://%s:%d", s.Settings.GetHost(), s.Settings.GetPort())
 		ctx := context.Background()
 		client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionString))
 		if err == nil {
 			s.client = client
 			s.initDbs()
+			s.LOG = log.New(log.D{"service": "mongo"})
 			//color.Green("Mongo client success %s", connectionString)
 		} else {
-			color.Red("Mongo client error: %s ", connectionString)
+			s.LOG.Error("Mongo client error: %s ", connectionString)
 		}
-	}
+	})
 }
 
 func (s *Service) initDbs()  {
@@ -64,6 +67,38 @@ func (s *Service) initDbs()  {
 	for _, dbName := range s.Settings.DbNames {
 		s.dbs[dbName] = s.client.Database(dbName)
 	}
+}
+
+
+
+func (s *Service) GetMongoCollection(dbName, collectionName string) *mongo.Collection  {
+	if s.client == nil { s.initClient() }
+	if s.dbs == nil { s.LOG.Error(Errors.MongoNotFoundDBMap.Error()); return nil }
+
+	if mongoDB, ok := s.dbs[dbName]; !ok { s.LOG.Error(Errors.MongoNotFoundDB.Error()); return nil } else {
+		return mongoDB.Collection(collectionName)
+	}
+}
+
+func (s *Service) GetFilterOptions(_id string, value interface{}) bson.M {
+	return bson.M{_id: value}
+}
+
+func (s *Service) GetUpdateOptions(values bson.D) bson.D {
+	return bson.D{{"$set", values}}
+}
+
+func (s *Service) GetIncOptions(values bson.D) bson.D {
+	return bson.D{{"$inc", values}}
+}
+
+func (s *Service) GetIncUpdateOptions(incValues bson.D, updateValues bson.D) bson.D {
+	return bson.D{{"$inc", incValues}, {"$set", updateValues}}
+}
+
+func (s *Service) GetUpsertOptions() *MongoOptions.UpdateOptions  {
+	upsert := true
+	return &MongoOptions.UpdateOptions{Upsert: &upsert}
 }
 
 func (s *Service) GetCollections() []*Collection {

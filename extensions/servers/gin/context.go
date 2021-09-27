@@ -26,8 +26,8 @@ func GetGinEngineI(server interface{}) *gin.Engine {
 	return server.(*gin.Engine)
 }
 
-func GetGinGroup(server interface{}) *gin.RouterGroup {
-	return server.(*gin.RouterGroup)
+func GetGinGroup(group interface{}) *gin.RouterGroup {
+	return group.(*gin.RouterGroup)
 }
 
 func NewRequestCtx(context Context.Context, ginCtx *gin.Context) Context.Context{

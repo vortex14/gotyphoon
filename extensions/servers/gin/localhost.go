@@ -1,8 +1,14 @@
-package component
+package gin
 
 import (
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
+)
+
+const (
+	LocalhostSwaggerEndpointDefinition = "http://localhost:8000/swagger/doc.json"
+	LocalhostJaegerPort = 5775
+	LocalhostJaegerHost = "localhost"
 )
 
 func ConstructorLocalhostOptions(
