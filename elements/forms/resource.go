@@ -140,6 +140,10 @@ func (r *Resource) SetLogger(logger interfaces.LoggerInterface) interfaces.Resou
 	return r
 }
 
+func (r *Resource) GetRouterGroup() interface{} {
+	return r.routerGroup
+}
+
 // /* ignore for building amd64-linux
 
 func (r *Resource) UpdateGraphLabel() {
@@ -207,10 +211,6 @@ func (r *Resource) SetGraphNodes(nodes map[string]interfaces.NodeInterface) inte
 	r.parentGraph.SetNodes(nodes)
 
 	return r
-}
-
-func (r *Resource) GetRouterGroup() interface{} {
-	return r.routerGroup
 }
 
 func (r *Resource) SetGraphEdges(edges map[string]interfaces.EdgeInterface) interfaces.ResourceGraphInterface {

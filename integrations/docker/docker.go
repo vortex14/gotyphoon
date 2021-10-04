@@ -33,6 +33,11 @@ type Docker struct {
 	env         *environment.Settings
 	Project     interfaces.Project
 	client      *client.Client
+
+	RemoteSSHUrl string
+	remoteDockerClient *client.Client
+
+
 }
 
 var dockerRegistryUserID = ""

@@ -1,6 +1,7 @@
 package net_http
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 
@@ -27,7 +28,7 @@ func Request(
 }
 
 func NewRequest(task *task.TyphoonTask) (*http.Request, error)  {
-	return http.NewRequest(task.GetFetcherMethod(), task.GetFetcherUrl(), nil)
+	return http.NewRequest(task.GetFetcherMethod(), task.GetFetcherUrl(), bytes.NewBuffer(task.GetFetcherRequestJson()))
 }
 
 func FetchData(task *task.TyphoonTask) (error, *string) {

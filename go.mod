@@ -5,12 +5,13 @@ go 1.14
 require (
 	github.com/Bose/go-gin-logrus v1.0.3
 	github.com/Bose/go-gin-opentracing v1.0.5
-	github.com/DataDog/go-python3 v0.0.0-20210805105248-03d93fb21b67
+	github.com/DataDog/go-python3 v0.0.0-20210805105248-03d93fb21b67 // indirect
 	github.com/EDDYCJY/fake-useragent v0.2.0
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/Microsoft/hcsshim v0.8.20 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210707164159-52430bf6b52c // indirect
 	github.com/PuerkitoBio/goquery v1.7.1 // indirect
+	github.com/ahmetalpbalkan/dexec v0.0.0-20160630173852-2538e5e2198f // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/banzaicloud/logrus-runtime-formatter v0.0.0-20190729070250-5ae5475bae5e
 	github.com/brianvoe/gofakeit/v6 v6.5.0
@@ -19,20 +20,21 @@ require (
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/chromedp/cdproto v0.0.0-20210921215903-b0b4414ddbe0
 	github.com/chromedp/chromedp v0.7.4
-	github.com/containerd/containerd v1.5.4 // indirect
 	github.com/datadog/go-python3 v0.0.0-20210805105248-03d93fb21b67 // indirect
 	github.com/deliveryhero/pipeline v0.4.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/disintegration/imaging v1.6.2 // indirect
-	github.com/docker/docker v20.10.7+incompatible
+	github.com/docker/cli v20.10.8+incompatible
+	github.com/docker/docker v20.10.8+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/fatih/color v1.12.0
 	github.com/fatih/structs v1.1.0
 	github.com/fogleman/gg v1.3.0
 	github.com/fsnotify/fsnotify v1.5.1
+	github.com/fsouza/go-dockerclient v1.7.4 // indirect
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/geziyor/geziyor v0.0.0-20210830182932-110394a75314
-	github.com/gin-contrib/cors v1.3.1
+	github.com/gin-contrib/cors v1.3.1 // indirect
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-cmd/cmd v1.3.0
 	github.com/go-git/go-git/v5 v5.4.2
@@ -59,6 +61,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/icza/mjpeg v0.0.0-20210726201846-5ff75d3c479f // indirect
+	github.com/itchyny/gojq v0.12.5
 	github.com/jaswdr/faker v1.4.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kbinani/screenshot v0.0.0-20210720154843-7d3a670d8329
@@ -68,6 +71,7 @@ require (
 	github.com/lazywei/go-opencv v0.0.0-20190115070742-a4fe8ec027cc // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-zglob v0.0.3 // indirect
+	github.com/moby/moby v20.10.8+incompatible
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/mongodb/mongo-tools v0.0.0-20210812195748-61dfd726fd82
 	github.com/morikuni/aec v1.0.0 // indirect
@@ -85,6 +89,7 @@ require (
 	github.com/schollz/progressbar/v3 v3.8.3 // indirect
 	github.com/segmentio/nsq-go v1.2.4
 	github.com/sergi/go-diff v1.2.0 // indirect
+	github.com/sf9v/solr-go v0.3.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2 // indirect
@@ -94,6 +99,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/urfave/cli/v2 v2.3.0 // indirect
+	github.com/vanng822/go-solr v0.10.0
 	github.com/vova616/screenshot v0.0.0-20191005130345-da36db2560ab // indirect
 	github.com/xanzy/go-gitlab v0.50.4
 	github.com/xanzy/ssh-agent v0.3.1 // indirect

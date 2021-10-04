@@ -114,8 +114,8 @@ func (s *TyphoonGraphGinServer) onRequestHandler(ginCtx *Gin.Context)  {
 
 func (s *TyphoonGraphGinServer) onServeHandler(method string, path string, resource interfaces.ResourceInterface)  {
 
-	//router := Gin.New()
-	//group := router.Group(path, func(c *Gin.Context) {})
+	router := Gin.New()
+	group := router.Group(path, func(c *Gin.Context) {})
 	s.LOG.Debug(fmt.Sprintf("gin serve %s %s ",method, path))
 
 	s.LOG.Error(">>>>",resource.GetRouterGroup())

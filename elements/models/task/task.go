@@ -3,6 +3,7 @@ package task
 import (
 	"context"
 	"github.com/vortex14/gotyphoon/ctx"
+	"github.com/vortex14/gotyphoon/utils"
 
 	"github.com/fatih/color"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -24,6 +25,17 @@ func (t *TyphoonTask) GetFetcherMethod() string {
 	return t.Fetcher.Method
 }
 
+func (t *TyphoonTask) SetJsonRequestData(values interface{})  {
+	t.Fetcher.JSON = values
+}
+
+func (t *TyphoonTask) GetFetcherRequestJson() []byte {
+
+	_, dump := utils.JsonDump(t.Fetcher.JSON)
+
+	return dump
+}
+
 func (t *TyphoonTask) GetFetcherTimeout() int {
 	return t.Fetcher.Timeout
 }
@@ -39,6 +51,7 @@ func (t *TyphoonTask) GetFetcherUrl() string {
 func (t *TyphoonTask) SetFetcherUrl(url string)  {
 	t.URL = url
 }
+
 
 func (t *TyphoonTask) SetProxyServerUrl(url string)  {
 	t.Fetcher.IsProxyRequired = true

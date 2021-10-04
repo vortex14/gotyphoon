@@ -3,7 +3,6 @@ package ssh
 import (
 	"bytes"
 	"fmt"
-	"github.com/vortex14/gotyphoon/elements/models/label"
 	"net"
 	"os"
 
@@ -15,10 +14,12 @@ import (
 	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"
 
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/elements/models/awaitabler"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	progressFile "github.com/vortex14/gotyphoon/extensions/models/progress-file"
+	"github.com/vortex14/gotyphoon/elements/models/file"
 )
 
 func init()  {
@@ -50,13 +51,16 @@ func (s *SSH) CopyFileFromHost(srcPath string, pathTarget string) error {
 	logger := log.New(log.D{"name": "uploaderFile"})
 
 	sftpUploadFile := &progressFile.File{
-		MetaInfo: &label.MetaInfo{
-			Description: fmt.Sprintf("copying %s", srcPath),
+		File: file.File{
+			MetaInfo: &label.MetaInfo{
+				Description: fmt.Sprintf("copying %s", srcPath),
+			},
+			Path: srcPath,
+			OnFinish: func(f *os.File) {
+				logger.Debug("test done !", f.Name())
+			},
 		},
-		Path: srcPath,
-		OnFinish: func(f *os.File) {
-			logger.Debug("test done !", f.Name())
-		},
+
 	}
 
 
