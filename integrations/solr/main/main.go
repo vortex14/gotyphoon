@@ -29,7 +29,7 @@ func main()  {
 
 
 	return
-	//_, res := utils.PrintPrettyJson(fields)
+	//_, res := utils.DumpPrettyJson(fields)
 
 	//err := client.RemoveSchema(fields)
 	//if err != nil {
@@ -46,7 +46,7 @@ func main()  {
 	}
 
 
-	_, s2P := utils.PrintPrettyJson(s2)
+	_, s2P := utils.DumpPrettyJson(s2)
 	color.Red("%s", s2P)
 	//return
 
@@ -177,7 +177,7 @@ func main()  {
 	//
 	//}
 
-	//_, prettyS := utils.PrintPrettyJson(status)
+	//_, prettyS := utils.DumpPrettyJson(status)
 	//color.Red("%s", prettyS)
 	//return
 	//
@@ -195,8 +195,8 @@ func main()  {
 
 	//_, r := utils.JsonDumpStr(update.Result)
 
-	//err, pretty := utils.PrintPrettyJson(update.Result)
-	//_, prettyProduct := utils.PrintPrettyJson(product)
+	//err, pretty := utils.DumpPrettyJson(update.Result)
+	//_, prettyProduct := utils.DumpPrettyJson(product)
 	//if err != nil {
 	//	return
 	//}

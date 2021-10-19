@@ -13,6 +13,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.7.1 // indirect
 	github.com/ahmetalpbalkan/dexec v0.0.0-20160630173852-2538e5e2198f // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
+	github.com/ansoni/termination v0.0.0-20190107171503-2ca8fc1115fc // indirect
 	github.com/banzaicloud/logrus-runtime-formatter v0.0.0-20190729070250-5ae5475bae5e
 	github.com/brianvoe/gofakeit/v6 v6.5.0
 	github.com/bxcodec/faker v2.0.1+incompatible
@@ -23,6 +24,7 @@ require (
 	github.com/datadog/go-python3 v0.0.0-20210805105248-03d93fb21b67 // indirect
 	github.com/deliveryhero/pipeline v0.4.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/dhconnelly/rtreego v1.1.0 // indirect
 	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/docker/cli v20.10.8+incompatible
 	github.com/docker/docker v20.10.8+incompatible
@@ -32,6 +34,7 @@ require (
 	github.com/fogleman/gg v1.3.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/fsouza/go-dockerclient v1.7.4 // indirect
+	github.com/gdamore/tcell v1.4.0
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/geziyor/geziyor v0.0.0-20210830182932-110394a75314
 	github.com/gin-contrib/cors v1.3.1 // indirect
@@ -59,6 +62,7 @@ require (
 	github.com/goware/modvendor v0.5.0 // indirect
 	github.com/grafana-tools/sdk v0.0.0-20210714133701-11b1efc100c9
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/icza/mjpeg v0.0.0-20210726201846-5ff75d3c479f // indirect
 	github.com/itchyny/gojq v0.12.5
@@ -71,10 +75,11 @@ require (
 	github.com/lazywei/go-opencv v0.0.0-20190115070742-a4fe8ec027cc // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-zglob v0.0.3 // indirect
-	github.com/moby/moby v20.10.8+incompatible
+	github.com/moby/moby v20.10.8+incompatible // indirect
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/mongodb/mongo-tools v0.0.0-20210812195748-61dfd726fd82
 	github.com/morikuni/aec v1.0.0 // indirect
+	github.com/nsf/termbox-go v0.0.0-20160718140619-0723e7c3d0a3 // indirect
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opencontainers/runc v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0

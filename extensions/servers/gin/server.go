@@ -83,9 +83,9 @@ func (s *TyphoonGinServer) onServeHandler(method string, path string, resource i
 	if group := resource.GetRouterGroup(); group != nil {
 		routerGroup = GetGinGroup(group)
 	} else {
-		routerGroup = s.server.Group(resource.GetPath())
+		routerGroup = s.server.Group("/")
 	}
-	s.LOG.Debug(fmt.Sprintf("gin serve %s %s, routerGroup: %+v",method, path, routerGroup))
+	s.LOG.Debug(fmt.Sprintf("gin serve %s %s, routerGroup: %+v. Path: %s",method, path, routerGroup, resource.GetPath()))
 
 	SetServeHandler(method, path, routerGroup, s.onRequestHandler)
 }
@@ -115,7 +115,7 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 		s.server.Use(Gin.Recovery())
 
 		// /* ignore for building amd64-linux
-		s.InitGraph()
+//		s.InitGraph()
 		// */
 
 		s.OnCors = s.onCors
@@ -141,20 +141,20 @@ func (s *TyphoonGinServer) Restart() error {
 func (s *TyphoonGinServer) onInitAction(resource interfaces.ResourceInterface, action interfaces.ActionInterface) {
 
 	// /* ignore for building amd64-linux
-
-	if graphAction, ok := action.(interfaces.ActionGraphInterface); ok {
-
-		if graphResource, okR := resource.(interfaces.ResourceGraphInterface); okR {
-
-			graphResource.AddGraphActionNode(graphAction)
-		} else {
-			s.LOG.Error(Errors.GraphActionContextInvalid.Error())
-		}
-
-	} else {
-		s.LOG.Error(Errors.GraphActionContextInvalid.Error())
-	}
-
+//
+//	if graphAction, ok := action.(interfaces.ActionGraphInterface); ok {
+//
+//		if graphResource, okR := resource.(interfaces.ResourceGraphInterface); okR {
+//
+//			graphResource.AddGraphActionNode(graphAction)
+//		} else {
+//			s.LOG.Error(Errors.GraphActionContextInvalid.Error())
+//		}
+//
+//	} else {
+//		s.LOG.Error(Errors.GraphActionContextInvalid.Error())
+//	}
+//
 	// */
 
 }
@@ -186,16 +186,16 @@ func (s *TyphoonGinServer) onBuildSubAction(resource interfaces.ResourceInterfac
 
 func (s *TyphoonGinServer) onAddResource(resource interfaces.ResourceInterface)  {
 	s.LOG.Info("onAddResource", resource)
-	if resource.IsAuth() { resource.InitAuth(s) }
+	//if resource.IsAuth() { resource.InitAuth(s) }
 
 	// /* ignore for building amd64-linux
-
-	if graphResource, ok := resource.(interfaces.ResourceGraphInterface); ok {
-		s.AddNewGraphResource(graphResource)
-	} else {
-		s.LOG.Error(Errors.GraphResourceContextInvalid.Error())
-	}
-
+//
+//	if graphResource, ok := resource.(interfaces.ResourceGraphInterface); ok {
+//		s.AddNewGraphResource(graphResource)
+//	} else {
+//		s.LOG.Error(Errors.GraphResourceContextInvalid.Error())
+//	}
+//
    // */
 
 }

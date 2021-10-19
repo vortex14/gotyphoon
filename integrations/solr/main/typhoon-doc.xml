@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<?asciidoc-toc?>
+<?asciidoc-numbered?>
+
+<book lang="en">
+<bookinfo>
+    <title>typhoon/integrations/solr/main</title>
+    <author>
+        <firstname>vortex</firstname>
+    </author>
+    <authorinitials>V</authorinitials>
+</bookinfo>
+<chapter id="_package_typhoon_integrations_solr_main">
+<title>Package typhoon/integrations/solr/main</title>
+<section id="_imports">
+<title>Imports</title>
+<programlisting language="go" linenumbering="unnumbered">import (
+    "context"
+    "github.com/fatih/color"
+    Solr "github.com/sf9v/solr-go"
+    "github.com/vortex14/gotyphoon/extensions/data/fake"
+    "github.com/vortex14/gotyphoon/integrations/solr"
+    "github.com/vortex14/gotyphoon/log"
+    "github.com/vortex14/gotyphoon/utils"
+    "path/filepath"
+)</programlisting>
+</section>
+</chapter>
+<chapter id="_structs">
+<title>Structs</title>
+<section id="_parseconfig">
+<title>ParseConfig</title>
+<programlisting language="go" linenumbering="unnumbered">type ParseConfig struct {
+    Test          bool
+    Internal      bool
+    UnderScore    bool
+}</programlisting>
+<simpara>ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
+ParseSinglePackageWalker.</simpara>
+<formalpara><title>ParserConfig</title><para>
+<programlisting language="go" linenumbering="unnumbered">package main
+
+import (
+        "context"
+        "path/filepath"
+
+        "github.com/fatih/color"
+        Solr "github.com/sf9v/solr-go"
+        "github.com/vortex14/gotyphoon/extensions/data/fake"
+        "github.com/vortex14/gotyphoon/integrations/solr"
+        "github.com/vortex14/gotyphoon/utils"
+
+        "github.com/vortex14/gotyphoon/log"
+)
+
+func init()  {
+        log.InitD()
+}
+
+func CreateSchema(client *solr.Client,schema []Solr.Field, collection string)  {
+        errI := client.AddSchemaFields(collection, schema)
+        color.Red("&gt;&gt;&gt;&gt;&gt;&gt; added: %+v", errI)
+        return
+
+}
+
+
+type CollectionSchema struct {
+        Collection string
+        Schema []Solr.Field
+}
+
+func GetFieldsFromTemplate(template *solr.TemplateConfig) chan CollectionSchema {
+        out := make(chan CollectionSchema)
+        go func(ch chan CollectionSchema) {
+                for _, collection := range template.Collections {
+                        var schema []Solr.Field
+                        for _, field := range collection.SchemaFields {
+                                schema = append(schema, Solr.Field{
+                                        Name:                 field.Name,
+                                        Type:                 field.Type,
+                                        Stored:               field.Stored,
+                                        Indexed:              field.Indexed,
+                                        Required:             field.Required,
+                                        DocValues:            field.DocValues,
+                                        MultiValued:          field.MultiValued,
+                                        UseDocValuesAsStored: field.UseDocValuesAsStored,
+                                })
+                        }; ch &lt;- CollectionSchema{Schema: schema, Collection: collection.Name}
+                }
+                close(ch)
+        }(out)
+        return out
+}
+
+
+func main()  {
+        options := &amp;solr.ConnectOptions{
+                Collection: "5520.products",
+                Endpoint:   "solr.typhoon-s1.ru",
+                RemoteSSHConnectionURL: "ssh://root@195.201.108.45:22",
+                //Endpoint: "localhost:8983",
+        }
+        client := (
+                &amp;solr.Client{Options: options, DOptions: &amp;solr.DockerOptions{
+                        MatchImageName: "bitnami/solr:8-debian-10",
+                        //MatchContainerName: "solr-typhoon-instance",
+                }}).
+                Init()
+
+        pathT := filepath.Join(utils.GetCurrentDir(), "templates", "collection.yaml")
+        data := utils.ReadFile(pathT)
+        //var collections solr.TemplateConfig
+
+        //println(data)
+        var o solr.TemplateConfig
+
+        err := utils.YamlLoad(&amp;o, []byte(data))
+        if err != nil {
+                color.Red(err.Error())
+                return
+        }
+
+        container := client.ConnectToDockerNode()
+        ping, err := container.Client.Ping(context.Background())
+        if err != nil {
+                color.Red("%s", err.Error())
+                return
+        }
+
+        color.Yellow("%+v", ping)
+        err, e := container.Exec(context.Background(), []string{"ls"})
+        if err != nil {
+                color.Red("%s", err.Error())
+                return
+        }
+        println(e.Stdout())
+        //for collectionData := range GetFieldsFromTemplate(&amp;o) {
+        //      color.Red("%+v", len(collectionData.Schema))
+        //      //_, _ = container.Exec(context.Background(), []string{"/opt/bitnami/solr/bin/solr", "delete", "-c", collectionData.Collection})
+        //      //_, _ = container.Exec(context.Background(), []string{"/opt/bitnami/solr/bin/solr", "create", "-c", collectionData.Collection})
+        //      //CreateSchema(client, collectionData.Schema, collectionData.Collection)
+        //}
+
+
+
+
+        return
+
+        //_, _ = client.GetCollectionSchemaFields()
+        //container := client.ConnectToDockerNode()
+
+        //err, e := container.Exec(context.Background(), []string{"/opt/bitnami/solr/bin/solr", "delete", "-c", "5520.products"})
+        //err, e := container.Exec(context.Background(), []string{"/opt/bitnami/solr/bin/solr", "create", "-c", "5520.products"})
+        //err, e := container.Exec(context.Background(), []string{"ls", "/opt/bitnami/solr/data/"})
+        //if err != nil {
+        //      return
+        //}
+
+        //CreateSchema(client)
+        //println(e.Stdout())
+
+        //return
+
+        //return
+        //_, res := utils.PrintPrettyJson(fields)
+
+        //err := client.RemoveSchema(fields)
+        //if err != nil {
+        //      color.Red("%s", err.Error())
+        //      return
+        //}
+        //color.Yellow("%s", res)
+
+
+        errR, s2 := client.RemoveAllDocs()
+        if errR != nil {
+                color.Red("%+v", errR)
+                return
+        }
+
+
+        _, s2P := utils.PrintPrettyJson(s2)
+        color.Red("%s", s2P)
+        //return
+
+        product := fake.CreateProductWithId()
+
+        product.Id = "947cb24a-53c0-4078-bbcd-3e4262dc8ae0"
+
+
+        product.Price.ListingPrice = 10.5
+
+        err, s := client.UpdateDocAndCommit(context.Background(), solr.Document{
+                "id":    product.Id,
+                "url":   product.Url,
+                "title": product.Title,
+                "description": product.Description,
+                "upc": product.Upc,
+                "listing_price": product.Price.ListingPrice,
+                "offer_price": product.Price.OfferPrice,
+        })
+
+
+
+        if err != nil {
+                color.Red("&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; : %+v", err.Error())
+                //return
+        }
+        color.Yellow("%+v", s.BaseResponse)
+
+
+
+
+
+
+
+
+        return
+        //fields := []Solr.Field{
+        //      {
+        //              Name: "url",
+        //              Type: "string",
+        //      },
+        //}
+        //status, _ := solrClient.CoreStatus(context.Background(), &amp;Solr.CoreParams{})
+        //
+        //err = solrClient.AddFields(context.Background(), "go_products", fields...)
+
+
+        //color.Red("%s", status, err)
+        //status, qtime, err := client.Ping()
+
+        //schema, err := client.Schema()
+        //if err != nil {
+        //      return
+        //}
+
+        //schema.SetCore("go_products")
+        //_, _ = schema.Fields("url", false, true)
+
+        //post, err := schema.Post("fields", schema)
+        //if err != nil {
+        //      return
+        //
+        //}
+
+        //_, prettyS := utils.PrintPrettyJson(status)
+        //color.Red("%s", prettyS)
+        //return
+        //
+        //product := fake.CreateProductWithId()
+        //
+        //
+        //
+        //product.Id = "947cb24a-53c0-4078-bbcd-3e4262dc8ae0"
+
+
+        //var docs []Solr.Document
+        //
+        //docs = append(docs, Solr.Document{"product": product})
+        //update, errUpdate:= client.Add(docs, 10, &amp;url.Values{})
+
+        //_, r := utils.JsonDumpStr(update.Result)
+
+        //err, pretty := utils.PrintPrettyJson(update.Result)
+        //_, prettyProduct := utils.PrintPrettyJson(product)
+        //if err != nil {
+        //      return
+        //}
+        //admin, errAdmin := client.CoreAdmin()
+        //admin.SetBasicAuth("vortex", "324252")
+
+        //err, data := utils.JsonDump(update.Result)
+        //color.Yellow("%s", prettyProduct)
+        //color.Red("%s", pretty)
+        //println(update.Result, update.Success, product.Id, errUpdate)
+}</programlisting>
+</para></formalpara>
+<calloutlist>
+<callout arearefs="">
+<para>
+These are usually excluded since many testcases is not documented anyhow
+</para>
+</callout>
+<callout arearefs="">
+<para>
+As of <emphasis>go 1.16</emphasis> it is recommended to <emphasis role="strong">only</emphasis> use module based parsing
+</para>
+</callout>
+</calloutlist>
+<section id="_test_bool">
+<title>Test bool</title>
+<simpara>Test denotes if test files (ending with _test.go) should be included or not
+(default not included)</simpara>
+</section>
+<section id="_internal_bool">
+<title>Internal bool</title>
+<simpara>Internal determines if internal folders are included or not (default not)</simpara>
+</section>
+<section id="_underscore_bool">
+<title>UnderScore bool</title>
+<simpara>UnderScore, when set to true it will include directories beginning with _</simpara>
+</section>
+</section>
+<section id="_collectionschema">
+<title>CollectionSchema</title>
+<programlisting language="go" linenumbering="unnumbered">type CollectionSchema struct {
+    Collection    string
+    Schema        []Solr.Field
+}</programlisting>
+<simpara>CollectionSchema to use when invoking ParseAny, ParseSingleFileWalker, and
+ParseSinglePackageWalker.
+.CollectionSchema
+&lt;1&gt; These are usually excluded since many testcases is not documented anyhow</simpara>
+<section id="_collection_string">
+<title>Collection string</title>
+</section>
+<section id="_schema_solr_field">
+<title>Schema []Solr.Field</title>
+</section>
+</section>
+</chapter>
+<chapter id="_functions">
+<title>Functions</title>
+<section id="_createschema">
+<title>CreateSchema</title>
+<programlisting language="go" linenumbering="unnumbered">func CreateSchema(client *solr.Client,schema []Solr.Field, collection string)</programlisting>
+</section>
+<section id="_getfieldsfromtemplate">
+<title>GetFieldsFromTemplate</title>
+<programlisting language="go" linenumbering="unnumbered">func GetFieldsFromTemplate(template *solr.TemplateConfig) chan CollectionSchema</programlisting>
+</section>
+</chapter>
+</book>

@@ -1,0 +1,6634 @@
+= github.com/vortex14/gotyphoon
+:author_name: vortex
+:author: {author_name}
+:source-highlighter: highlightjs
+:icons: font
+:kroki-default-format: svg
+:doctype: book
+
+== Package github.com/vortex14/gotyphoon
+
+
+=== Imports
+[source, go]
+----
+import (
+    "bufio"
+    "bytes"
+    "context"
+    "fmt"
+    "io"
+    "log"
+    "math"
+    "os"
+    "regexp"
+    "runtime"
+    "strconv"
+    "strings"
+    "sync"
+    "syscall"
+    "time"
+    "crypto/md5"
+    "encoding/hex"
+    "github.com/fatih/color"
+    "github.com/fsnotify/fsnotify"
+    "github.com/gdamore/tcell/v2"
+    "github.com/go-cmd/cmd"
+    "github.com/go-git/go-git/v5"
+    "github.com/go-logfmt/logfmt"
+    "github.com/olekukonko/tablewriter"
+    "github.com/rivo/tview"
+    "github.com/vortex14/gotyphoon/environment"
+    "github.com/vortex14/gotyphoon/extensions/data"
+    "github.com/vortex14/gotyphoon/integrations/mongo"
+    "github.com/vortex14/gotyphoon/integrations/redis"
+    "github.com/vortex14/gotyphoon/interfaces"
+    "github.com/vortex14/gotyphoon/interfaces/ghosts"
+    TyLog "github.com/vortex14/gotyphoon/log"
+    "github.com/vortex14/gotyphoon/migrates/v1.1"
+    "github.com/vortex14/gotyphoon/services"
+    "github.com/vortex14/gotyphoon/utils"
+    "github.com/xanzy/go-gitlab"
+    "go.mongodb.org/mongo-driver/bson"
+    "gopkg.in/yaml.v2"
+    "io/ioutil"
+    "os/exec"
+    "os/signal"
+    "path/filepath"
+    "runtime/pprof"
+)
+----
+
+== Interfaces
+
+=== K8sCloud
+[source, go]
+----
+type K8sCloud interface {
+}
+----
+        
+
+
+
+
+== Structs
+
+=== AwsCloud
+[source, go]
+----
+type AwsCloud struct {
+}
+----
+
+
+
+
+
+
+=== GoogleCloud
+[source, go]
+----
+type GoogleCloud struct {
+}
+----
+
+
+
+
+
+
+=== AzureCloud
+[source, go]
+----
+type AzureCloud struct {
+}
+----
+
+
+
+
+
+
+=== Cloud
+[source, go]
+----
+type Cloud struct {
+}
+----
+
+
+
+
+
+
+=== Cluster
+[source, go]
+----
+type Cluster struct {
+    Name           string
+    Config         string
+    Description    string
+    Typhoon        interfaces.ClusterLabel
+    Meta           interfaces.ClusterMeta
+    Projects       []*interfaces.ClusterProject
+}
+----
+
+
+
+==== Name string
+
+
+==== Config string
+
+
+==== Description string
+
+
+==== Typhoon interfaces.ClusterLabel
+
+
+==== Meta interfaces.ClusterMeta
+
+
+
+
+==== Projects []*interfaces.ClusterProject
+
+
+
+==== Receivers
+
+===== GetClusterConfigPath
+[source, go]
+----
+func (c *Cluster) GetClusterConfigPath() string
+----
+
+
+
+===== Create
+[source, go]
+----
+func (c *Cluster) Create()
+----
+
+
+
+===== ChangeClusterBranch
+[source, go]
+----
+func (c *Cluster) ChangeClusterBranch()
+----
+
+
+
+===== SaveConfig
+[source, go]
+----
+func (c *Cluster) SaveConfig()
+----
+
+
+
+===== LoadConfig
+[source, go]
+----
+func (c *Cluster) LoadConfig(settings *environment.Settings) *Cluster
+----
+
+
+
+===== GetConfigName
+[source, go]
+----
+func (c *Cluster) GetConfigName() string
+----
+
+
+
+===== GetProjects
+[source, go]
+----
+func (c *Cluster) GetProjects() []*interfaces.ClusterProject
+----
+
+
+
+===== GetEnvSettings
+[source, go]
+----
+func (c *Cluster) GetEnvSettings() *environment.Settings
+----
+
+
+
+===== GetName
+[source, go]
+----
+func (c *Cluster) GetName() string
+----
+
+
+
+===== Show
+[source, go]
+----
+func (c *Cluster) Show()
+----
+
+
+
+===== Deploy
+[source, go]
+----
+func (c *Cluster) Deploy()
+----
+
+
+
+===== GetMeta
+[source, go]
+----
+func (c *Cluster) GetMeta() *interfaces.ClusterMeta
+----
+
+
+
+===== Add
+[source, go]
+----
+func (c *Cluster) Add()
+----
+
+
+
+
+
+=== Directory
+[source, go]
+----
+type Directory struct {
+    Path    string
+}
+----
+
+
+
+==== Path string
+
+
+
+==== Receivers
+
+===== GetDataFromDirectory
+[source, go]
+----
+func (d *Directory) GetDataFromDirectory(path string) interfaces.MapFileObjects
+----
+
+
+
+===== IsExistDir
+[source, go]
+----
+func (d *Directory) IsExistDir(path string) bool
+----
+
+
+
+
+
+=== Worker
+[source, go]
+----
+type Worker struct {
+    Command    string
+    Args       []string
+    Cmd        *cmd.Cmd
+    Status     chan bool
+}
+----
+
+
+
+==== Command string
+
+
+==== Args []string
+
+
+==== Cmd *cmd.Cmd
+
+
+==== Status chan bool
+
+
+
+==== Receivers
+
+===== Run
+[source, go]
+----
+func (w *Worker) Run(project interfaces.Project)
+----
+
+
+
+
+
+
+=== Component
+[source, go]
+----
+type Component struct {
+    Path              string
+    Name              string
+    Active            bool
+    Worker            *Worker
+    Promise           sync.WaitGroup
+    Producers         interfaces.Producers
+    Pipelines         interfaces.Pipelines
+    Consumers         interfaces.Consumers
+    QueuesSettings    interfaces.Queue
+}
+----
+
+
+
+
+==== Path string
+
+
+==== Name string
+
+
+==== Active bool
+
+
+
+==== Worker *Worker
+
+
+
+==== Promise sync.WaitGroup
+
+
+==== Producers interfaces.Producers
+
+
+==== Pipelines interfaces.Pipelines
+
+
+==== Consumers interfaces.Consumers
+
+
+==== QueuesSettings interfaces.Queue
+
+
+
+==== Receivers
+
+===== AddPromise
+[source, go]
+----
+func (c *Component) AddPromise()
+----
+
+
+
+===== PromiseDone
+[source, go]
+----
+func (c *Component) PromiseDone()
+----
+
+
+
+===== WaitPromises
+[source, go]
+----
+func (c *Component) WaitPromises()
+----
+
+
+
+===== Start
+[source, go]
+----
+func (c *Component) Start(project interfaces.Project)
+----
+
+
+
+===== Close
+[source, go]
+----
+func (c *Component) Close(project interfaces.Project)
+----
+
+
+
+===== Stop
+[source, go]
+----
+func (c *Component) Stop(project interfaces.Project)
+----
+
+
+
+===== Restart
+[source, go]
+----
+func (c *Component) Restart(project *Project)
+----
+
+
+
+===== GetName
+[source, go]
+----
+func (c *Component) GetName() string
+----
+
+
+
+===== CheckDirectory
+[source, go]
+----
+func (c *Component) CheckDirectory(required []string, pathComponent string) bool
+----
+
+
+
+===== CheckComponent
+[source, go]
+----
+func (c *Component) CheckComponent() bool
+----
+
+
+
+===== InitConsumers
+[source, go]
+----
+func (c *Component) InitConsumers(project interfaces.Project)
+----
+
+
+
+===== InitProducers
+[source, go]
+----
+func (c *Component) InitProducers()
+----
+
+
+
+===== StopConsumers
+[source, go]
+----
+func (c *Component) StopConsumers()
+----
+
+
+
+===== StopProducers
+[source, go]
+----
+func (c *Component) StopProducers()
+----
+
+
+
+===== RunQueues
+[source, go]
+----
+func (c *Component) RunQueues()
+----
+
+
+
+===== Logging
+[source, go]
+----
+func (c *Component) Logging()
+----
+
+
+
+
+
+=== GroupLabel
+[source, go]
+----
+type GroupLabel struct {
+    Kind       string
+    Version    string
+}
+----
+
+
+
+==== Kind string
+
+
+==== Version string
+
+
+
+
+
+=== Group
+[source, go]
+----
+type Group struct {
+    Name           string
+    Description    string
+    Typhoon        GroupLabel
+    Servers        []*Server
+    Clouds         []*Cloud
+}
+----
+
+
+
+==== Name string
+
+
+==== Description string
+
+
+==== Typhoon GroupLabel
+
+
+==== Servers []*Server
+
+
+==== Clouds []*Cloud
+
+
+
+
+
+
+=== Task
+[source, go]
+----
+type Task struct {
+}
+----
+
+
+
+
+
+
+
+==== Receivers
+
+===== Run
+[source, go]
+----
+func (t *Task) Run()
+----
+
+
+
+===== Stop
+[source, go]
+----
+func (t *Task) Stop()
+----
+
+
+
+
+
+=== Services
+[source, go]
+----
+type Services struct {
+    Mongo    map[string] mongo.Service
+    Redis    map[string] redis.Service
+}
+----
+
+
+
+==== Mongo map[string] mongo.Service
+
+
+==== Redis map[string] redis.Service
+
+
+
+
+
+=== TestMongo
+[source, go]
+----
+type TestMongo struct {
+}
+----
+
+
+
+
+
+
+=== Project
+[source, go]
+----
+type Project struct {
+    AutoReload           bool
+    Path                 string
+    Name                 string
+    Tag                  string
+    LogLevel             string
+    DockerImageName      string
+    ConfigFile           string
+    Version              string
+    SelectedComponent    []string
+    Watcher              fsnotify.Watcher
+    Services             *services.Services
+    EnvSettings          *environment.Settings
+    Archon               ghosts.ArchonInterface
+    Config               *interfaces.ConfigProject
+    BuilderOptions       *interfaces.BuilderOptions
+    Labels               *interfaces.ClusterProjectLabels
+}
+----
+
+
+
+==== AutoReload bool
+
+
+
+==== Path string
+
+
+==== Name string
+
+
+==== Tag string
+
+
+==== LogLevel string
+
+
+==== DockerImageName string
+
+
+==== ConfigFile string
+
+
+==== Version string
+
+
+==== SelectedComponent []string
+
+
+
+
+==== Watcher fsnotify.Watcher
+
+
+==== Services *services.Services
+
+
+==== EnvSettings *environment.Settings
+
+
+==== Archon ghosts.ArchonInterface
+
+
+==== Config *interfaces.ConfigProject
+
+
+==== BuilderOptions *interfaces.BuilderOptions
+
+
+==== Labels *interfaces.ClusterProjectLabels
+
+
+
+==== Receivers
+
+===== GetDockerImageName
+[source, go]
+----
+func (p *Project) GetDockerImageName() string
+----
+
+
+
+===== GetLabels
+[source, go]
+----
+func (p *Project) GetLabels() *interfaces.ClusterProjectLabels
+----
+
+
+
+===== IsDebug
+[source, go]
+----
+func (p *Project) IsDebug() bool
+----
+
+
+
+===== RunFetcherQueues
+[source, go]
+----
+func (p *Project) RunFetcherQueues()
+----
+
+
+
+===== GetService
+[source, go]
+----
+func (p *Project) GetService(name string) interfaces.Service
+----
+
+
+
+===== GetRepo
+[source, go]
+----
+func (p *Project) GetRepo() (error, *git.Repository)
+----
+
+
+
+===== GetConfigs
+[source, go]
+----
+func (p *Project) GetConfigs() []string
+----
+
+
+
+===== GetBranch
+[source, go]
+----
+func (p *Project) GetBranch() (error, string)
+----
+
+
+
+===== GetRemotes
+[source, go]
+----
+func (p *Project) GetRemotes() ([]*git.Remote, error)
+----
+
+
+
+===== GetComponentPort
+[source, go]
+----
+func (p *Project) GetComponentPort(name string) int
+----
+
+
+
+===== WatchDir
+[source, go]
+----
+func (p *Project) WatchDir(path string, fi os.FileInfo, err error) error
+----
+
+
+
+===== RunTestServices
+[source, go]
+----
+func (p *Project) RunTestServices()
+----
+
+
+
+===== ImportExceptions
+[source, go]
+----
+func (p *Project) ImportExceptions(component string, sourceFileName string) error
+----
+
+
+
+===== ImportResponseData
+[source, go]
+----
+func (p *Project) ImportResponseData(url string, sourceFile string)
+----
+
+
+
+===== TestFunc
+[source, go]
+----
+func (p *Project) TestFunc()
+----
+
+
+
+===== CreateProject
+[source, go]
+----
+func (p *Project) CreateProject()
+----
+
+
+
+===== BuildCIResources
+[source, go]
+----
+func (p *Project) BuildCIResources()
+----
+
+
+
+===== GetEnvSettings
+[source, go]
+----
+func (p *Project) GetEnvSettings() *environment.Settings
+----
+
+
+
+===== AddPromise
+[source, go]
+----
+func (p *Project) AddPromise()
+----
+
+
+
+===== PromiseDone
+[source, go]
+----
+func (p *Project) PromiseDone()
+----
+
+
+
+===== WaitPromises
+[source, go]
+----
+func (p *Project) WaitPromises()
+----
+
+
+
+===== Run
+[source, go]
+----
+func (p *Project) Run()
+----
+
+
+
+===== Watch
+[source, go]
+----
+func (p *Project) Watch()
+----
+
+
+
+===== Close
+[source, go]
+----
+func (p *Project) Close()
+----
+
+
+
+===== Down
+[source, go]
+----
+func (p *Project) Down()
+----
+
+
+
+===== GetBuilderOptions
+[source, go]
+----
+func (p *Project) GetBuilderOptions() *interfaces.BuilderOptions
+----
+
+
+
+===== GetTag
+[source, go]
+----
+func (p *Project) GetTag() string
+----
+
+
+
+===== Migrate
+[source, go]
+----
+func (p *Project) Migrate()
+----
+
+
+
+===== Build
+[source, go]
+----
+func (p *Project) Build()
+----
+
+
+
+===== GetSelectedComponent
+[source, go]
+----
+func (p *Project) GetSelectedComponent() []string
+----
+
+
+
+===== RunQueues
+[source, go]
+----
+func (p *Project) RunQueues()
+----
+
+
+
+===== StartComponents
+[source, go]
+----
+func (p *Project) StartComponents(promise bool)
+----
+
+
+
+===== GetVersion
+[source, go]
+----
+func (p *Project) GetVersion() string
+----
+
+
+
+===== CreateSymbolicLink
+[source, go]
+----
+func (p *Project) CreateSymbolicLink() error
+----
+
+
+
+===== GetName
+[source, go]
+----
+func (p *Project) GetName() string
+----
+
+
+
+===== GetComponents
+[source, go]
+----
+func (p *Project) GetComponents() []string
+----
+
+
+
+===== GetConfigFile
+[source, go]
+----
+func (p *Project) GetConfigFile() string
+----
+
+
+
+===== GetProjectPath
+[source, go]
+----
+func (p *Project) GetProjectPath() string
+----
+
+
+
+===== GetLogLevel
+[source, go]
+----
+func (p *Project) GetLogLevel() string
+----
+
+
+
+===== LoadServices
+[source, go]
+----
+func (p *Project) LoadServices(opts interfaces.TyphoonIntegrationsOptions)
+----
+
+
+
+===== LoadConfig
+[source, go]
+----
+func (p *Project) LoadConfig() (configProject *interfaces.ConfigProject)
+----
+
+
+
+===== CheckProject
+[source, go]
+----
+func (p *Project) CheckProject()
+----
+
+
+
+===== RunArchon
+[source, go]
+----
+func (p *Project) RunArchon(promise bool)
+----
+
+
+
+
+
+=== ServerLabel
+[source, go]
+----
+type ServerLabel struct {
+    Kind       string
+    Version    string
+}
+----
+
+
+
+==== Kind string
+
+
+==== Version string
+
+
+
+
+
+=== Server
+[source, go]
+----
+type Server struct {
+    Name           string
+    Description    string
+    Clusters       []*Cluster
+    Typhoon        ServerLabel
+    Services       *services.Services
+}
+----
+
+
+
+==== Name string
+
+
+==== Description string
+
+
+==== Clusters []*Cluster
+
+
+==== Typhoon ServerLabel
+
+
+==== Services *services.Services
+
+
+
+
+
+
+== Variables
+
+
+== Functions
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=== IsClosed
+[source, go]
+----
+func IsClosed(ch <-chan bool) bool
+----
+
+
+
+
+
+
+
+=== N1
+[source, go]
+----
+func N1(n int) bool
+----
+
+
+
+
+=== N2
+[source, go]
+----
+func N2(n int) bool
+----
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=== CreateProject
+[source, go]
+----
+func CreateProject()
+----
+
+
+
+
+=== WatchTest
+[source, go]
+----
+func WatchTest()
+----
+
+
+
+
+=== ParseLogData
+[source, go]
+----
+func ParseLogData(fileObject *interfaces.FileObject) error
+----
+
+
+
+
+=== RunUI
+[source, go]
+----
+func RunUI()
+----
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/builders
+
+
+== Interfaces
+
+=== Builders
+[source, go]
+----
+type Builders interface {
+    BuilderV11()
+}
+----
+        
+
+
+==== BuilderV11()
+
+
+
+=== ProjectBuilder
+[source, go]
+----
+type ProjectBuilder interface {
+    Build()
+}
+----
+        
+
+
+==== Build()
+
+
+
+
+== Structs
+
+=== BuildOptions
+[source, go]
+----
+type BuildOptions struct {
+    Component    string
+    Type         string
+    Meta         interface{}
+}
+----
+
+
+
+==== Component string
+
+
+==== Type string
+
+
+==== Meta interface{}
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/ctx
+
+
+=== Imports
+[source, go]
+----
+import "context"
+----
+
+== Variable Typedefinitions
+
+=== ContextKey
+[source, go]
+----
+type ContextKey string
+----
+
+
+
+==== Receivers
+
+===== String
+[source, go]
+----
+func (c ContextKey) String() string
+----
+
+
+
+
+
+
+== Functions
+
+
+=== Update
+[source, go]
+----
+func Update(ctx context.Context, key string, value interface{}) context.Context
+----
+
+
+
+
+=== Get
+[source, go]
+----
+func Get(ctx context.Context, key string) interface{}
+----
+
+
+
+
+=== New
+[source, go]
+----
+func New() context.Context
+----
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/elements/forms
+
+
+=== Imports
+[source, go]
+----
+import (
+    "context"
+    "fmt"
+    "strings"
+    "sync"
+    "github.com/fatih/color"
+    "github.com/sirupsen/logrus"
+    "github.com/vortex14/gotyphoon/ctx"
+    "github.com/vortex14/gotyphoon/elements/models/awaitabler"
+    "github.com/vortex14/gotyphoon/elements/models/label"
+    "github.com/vortex14/gotyphoon/elements/models/singleton"
+    Errors "github.com/vortex14/gotyphoon/errors"
+    "github.com/vortex14/gotyphoon/interfaces"
+    "github.com/vortex14/gotyphoon/log"
+    "github.com/vortex14/gotyphoon/utils"
+    "net/http"
+)
+----
+
+==== Import _github.com/vortex14/gotyphoon/log_
+/* ignore for building amd64-linux
+*/
+
+==== Import _github.com/vortex14/gotyphoon/interfaces_
+/* ignore for building amd64-linux
+*/
+
+==== Import _github.com/fatih/color_
+/* ignore for building amd64-linux
+*/
+
+== Structs
+
+=== Stats
+[source, go]
+----
+type Stats struct {
+    Input    int64
+}
+----
+
+
+
+==== Input int64
+
+
+
+
+
+=== Action
+[source, go]
+----
+type Action struct {
+    LOG    interfaces.LoggerInterface
+    Stats
+    Path              string
+    Methods           [] string
+    AllowedMethods    [] string
+    Controller        interfaces.Controller
+    Pipeline          interfaces.PipelineGroupInterface
+    PyController      interfaces.Controller
+    Middlewares       [] interfaces.MiddlewareInterface
+}
+----
+
+
+
+
+==== LOG interfaces.LoggerInterface
+
+
+==== Stats
+
+
+==== Path string
+
+
+==== Methods [] string
+
+
+==== AllowedMethods [] string
+
+
+
+==== Controller interfaces.Controller
+
+
+==== Pipeline interfaces.PipelineGroupInterface
+
+
+==== PyController interfaces.Controller
+
+
+==== Middlewares [] interfaces.MiddlewareInterface
+
+
+
+==== Receivers
+
+===== AddMethod
+[source, go]
+----
+func (a *Action) AddMethod(name string)
+----
+
+
+
+===== IsPipeline
+[source, go]
+----
+func (a *Action) IsPipeline() bool
+----
+
+
+
+===== GetMiddlewareStack
+[source, go]
+----
+func (a *Action) GetMiddlewareStack() [] interfaces.MiddlewareInterface
+----
+
+
+
+===== GetMethods
+[source, go]
+----
+func (a *Action) GetMethods() []string
+----
+
+
+
+===== GetController
+[source, go]
+----
+func (a *Action) GetController() interfaces.Controller
+----
+
+
+
+===== GetPipeline
+[source, go]
+----
+func (a *Action) GetPipeline() interfaces.PipelineGroupInterface
+----
+
+
+
+===== SetHandlerPath
+[source, go]
+----
+func (a *Action) SetHandlerPath(path string)
+----
+
+
+
+===== GetHandlerPath
+[source, go]
+----
+func (a *Action) GetHandlerPath() string
+----
+
+
+
+===== InitPipelineGraph
+[source, go]
+----
+func (a *Action) InitPipelineGraph()
+----
+
+
+
+===== UpdateGraphLabel
+[source, go]
+----
+func (a *Action) UpdateGraphLabel(method string, path string)
+----
+
+
+
+===== AddMethodNodes
+[source, go]
+----
+func (a *Action) AddMethodNodes()
+----
+
+
+
+===== OnRequest
+[source, go]
+----
+func (a *Action) OnRequest(method string, path string)
+----
+
+
+
+===== Run
+[source, go]
+----
+func (a *Action) Run(ctx context.Context, logger interfaces.LoggerInterface)
+----
+
+
+
+===== SetLogger
+[source, go]
+----
+func (a *Action) SetLogger(logger interfaces.LoggerInterface)
+----
+
+
+
+
+
+=== Middleware
+[source, go]
+----
+type Middleware struct {
+    Fn      interfaces.MiddlewareCallback
+    PyFn    interfaces.MiddlewareCallback
+}
+----
+
+
+
+
+==== Fn interfaces.MiddlewareCallback
+
+
+==== PyFn interfaces.MiddlewareCallback
+
+
+
+==== Receivers
+
+===== Pass
+[source, go]
+----
+func (m *Middleware) Pass(
+    context context.Context, logger interfaces.LoggerInterface,
+    reject func(err error), next func(ctx context.Context),
+    )
+----
+
+
+
+
+
+=== BasePipeline
+[source, go]
+----
+type BasePipeline struct {
+    Middlewares    []interfaces.MiddlewareInterface
+    Callbacks      []interfaces.CallbackPipelineInterface
+    Fn             func(ctx Context.Context, logger interfaces.LoggerInterface) (error, Context.Context)
+    Cn             func(ctx Context.Context, logger interfaces.LoggerInterface, err error)
+}
+----
+
+
+
+
+
+==== Middlewares []interfaces.MiddlewareInterface
+
+
+==== Callbacks []interfaces.CallbackPipelineInterface
+
+
+==== Fn func(ctx Context.Context, logger interfaces.LoggerInterface) (error, Context.Context)
+
+
+==== Cn func(ctx Context.Context, logger interfaces.LoggerInterface, err error)
+
+
+
+==== Receivers
+
+===== Run
+[source, go]
+----
+func (p *BasePipeline) Run(
+    context Context.Context,
+    reject func(pipeline interfaces.BasePipelineInterface, err error),
+    next func(ctx Context.Context),
+    )
+----
+
+
+
+===== Cancel
+[source, go]
+----
+func (p *BasePipeline) Cancel(ctx Context.Context, logger interfaces.LoggerInterface, err error)
+----
+
+
+
+===== RunMiddlewareStack
+[source, go]
+----
+func (p *BasePipeline) RunMiddlewareStack(
+    context Context.Context,
+    reject func(middleware interfaces.MiddlewareInterface,err error),
+    next func(ctx Context.Context),
+
+    )
+----
+
+
+
+
+
+=== PipelineGroup
+[source, go]
+----
+type PipelineGroup struct {
+    LambdaMap      map[string]interfaces.LambdaInterface
+    PyLambdaMap    map[string]interfaces.LambdaInterface
+    Stages         []interfaces.BasePipelineInterface
+    Consumers      map[string]interfaces.ConsumerInterface
+    LOG            interfaces.LoggerInterface
+}
+----
+
+
+
+
+==== LambdaMap map[string]interfaces.LambdaInterface
+
+
+==== PyLambdaMap map[string]interfaces.LambdaInterface
+
+
+==== Stages []interfaces.BasePipelineInterface
+
+
+==== Consumers map[string]interfaces.ConsumerInterface
+
+
+==== LOG interfaces.LoggerInterface
+/* ignore for building amd64-linux
+*/
+
+
+==== Receivers
+
+===== GetFirstPipelineName
+[source, go]
+----
+func (g *PipelineGroup) GetFirstPipelineName() string
+----
+
+
+
+===== Run
+[source, go]
+----
+func (g *PipelineGroup) Run(context Context.Context)
+----
+
+
+
+===== SetLogger
+[source, go]
+----
+func (g *PipelineGroup) SetLogger(logger interfaces.LoggerInterface)
+----
+
+
+
+
+
+=== Resource
+[source, go]
+----
+type Resource struct {
+    Auth               [] interfaces.ResourceAuthInterface
+    LOG                interfaces.LoggerInterface
+    Actions            map[string] interfaces.ActionInterface
+    Resources          map[string] interfaces.ResourceInterface
+    Middlewares        [] interfaces.MiddlewareInterface
+    OnSetRouteGroup    func(group interface{})
+}
+----
+
+
+
+
+==== Auth [] interfaces.ResourceAuthInterface
+
+
+==== LOG interfaces.LoggerInterface
+
+
+==== Actions map[string] interfaces.ActionInterface
+
+
+==== Resources map[string] interfaces.ResourceInterface
+
+
+==== Middlewares [] interfaces.MiddlewareInterface
+
+
+==== OnSetRouteGroup func(group interface{})
+
+
+
+
+==== Receivers
+
+===== SetRouterGroup
+[source, go]
+----
+func (r *Resource) SetRouterGroup(group interface{})
+----
+
+
+
+===== SetRouteGroup
+[source, go]
+----
+func (r *Resource) SetRouteGroup(group interface{})
+----
+
+
+
+===== GetActions
+[source, go]
+----
+func (r *Resource) GetActions() map[string] interfaces.ActionInterface
+----
+
+
+
+===== GetResources
+[source, go]
+----
+func (r *Resource) GetResources() map[string] interfaces.ResourceInterface
+----
+
+
+
+===== Get
+[source, go]
+----
+func (r *Resource) Get() interfaces.ResourceInterface
+----
+
+
+
+===== GetCountSubResources
+[source, go]
+----
+func (r *Resource) GetCountSubResources() int
+----
+
+
+
+===== GetCountActions
+[source, go]
+----
+func (r *Resource) GetCountActions() int
+----
+
+
+
+===== HasResource
+[source, go]
+----
+func (r *Resource) HasResource(path string) (bool, interfaces.ResourceInterface)
+----
+
+
+
+===== HasAction
+[source, go]
+----
+func (r *Resource) HasAction(path string) (bool, interfaces.ActionInterface)
+----
+
+
+
+===== RunMiddlewareStack
+[source, go]
+----
+func (r *Resource) RunMiddlewareStack(
+    ctx context.Context,
+    reject func(err error),
+
+    )
+----
+
+
+
+===== IsAuth
+[source, go]
+----
+func (r *Resource) IsAuth() bool
+----
+
+
+
+===== InitAuth
+[source, go]
+----
+func (r *Resource) InitAuth(server interfaces.ServerInterface)
+----
+
+
+
+===== AddAction
+[source, go]
+----
+func (r *Resource) AddAction(action interfaces.ActionInterface) interfaces.ResourceInterface
+----
+
+
+
+===== AddResource
+[source, go]
+----
+func (r *Resource) AddResource(resource interfaces.ResourceInterface) interfaces.ResourceInterface
+----
+
+
+
+===== SetLogger
+[source, go]
+----
+func (r *Resource) SetLogger(logger interfaces.LoggerInterface) interfaces.ResourceInterface
+----
+
+
+
+===== GetRouterGroup
+[source, go]
+----
+func (r *Resource) GetRouterGroup() interface{}
+----
+
+
+
+
+
+=== TyphoonServer
+[source, go]
+----
+type TyphoonServer struct {
+    Port                   int
+    IsDebug                bool
+    IsRunning              bool
+    Level                  string
+    LOG                    *logrus.Entry
+    Logger                 *log.TyphoonLogger
+    Resources              map[string]interfaces.ResourceInterface
+    OnStart                OnStart
+    OnRequest              OnRequest
+    OnInitAction           OnInitAction
+    OnServeHandler         OnServeHandler
+    OnBuildSubResources    OnBuildSubResources
+    OnBuildSubAction       OnBuildSubAction
+    OnInitResource         OnInitResource
+    OnAddResource          OnAddResource
+    OnResponse             OnResponse
+    OnReject               OnReject
+    OnCors                 OnCors
+    OnExit                 OnExit
+    LoggerOptions          *log.Options
+    SwaggerOptions         *interfaces.SwaggerOptions
+    TracingOptions         *interfaces.TracingOptions
+    ArchonChIN             ArchonChIN
+    ArchonChOut            ArchonChOut
+    BuildGraph             bool
+}
+----
+
+
+
+
+
+==== Port int
+
+
+==== IsDebug bool
+
+
+==== IsRunning bool
+
+
+==== Level string
+
+
+==== LOG *logrus.Entry
+
+
+
+==== Logger *log.TyphoonLogger
+
+
+==== Resources map[string]interfaces.ResourceInterface
+
+
+==== OnStart OnStart
+
+
+==== OnRequest OnRequest
+
+
+==== OnInitAction OnInitAction
+
+
+==== OnServeHandler OnServeHandler
+
+
+==== OnBuildSubResources OnBuildSubResources
+
+
+==== OnBuildSubAction OnBuildSubAction
+
+
+==== OnInitResource OnInitResource
+
+
+==== OnAddResource OnAddResource
+
+
+==== OnResponse OnResponse
+
+
+==== OnReject OnReject
+
+
+==== OnCors OnCors
+
+
+==== OnExit OnExit
+
+
+==== LoggerOptions *log.Options
+
+
+==== SwaggerOptions *interfaces.SwaggerOptions
+
+
+==== TracingOptions *interfaces.TracingOptions
+
+
+==== ArchonChIN ArchonChIN
+
+
+==== ArchonChOut ArchonChOut
+
+
+==== BuildGraph bool
+
+
+
+==== Receivers
+
+===== SetRouterGroup
+[source, go]
+----
+func (s *TyphoonServer) SetRouterGroup(resource interfaces.ResourceInterface, group interface{})
+----
+
+
+
+===== Stop
+[source, go]
+----
+func (s *TyphoonServer) Stop() error
+----
+
+
+
+===== Restart
+[source, go]
+----
+func (s *TyphoonServer) Restart() error
+----
+
+
+
+===== RunServer
+[source, go]
+----
+func (s *TyphoonServer) RunServer(port int) error
+----
+
+
+
+===== Init
+[source, go]
+----
+func (s *TyphoonServer) Init() interfaces.ServerInterface
+----
+
+
+
+===== InitDocs
+[source, go]
+----
+func (s *TyphoonServer) InitDocs() interfaces.ServerInterface
+----
+
+
+
+===== InitTracer
+[source, go]
+----
+func (s *TyphoonServer) InitTracer() interfaces.ServerInterface
+----
+
+
+
+===== InitLogger
+[source, go]
+----
+func (s *TyphoonServer) InitLogger() interfaces.ServerInterface
+----
+
+
+
+===== Run
+[source, go]
+----
+func (s *TyphoonServer) Run() error
+----
+
+
+
+===== InitResourcesMap
+[source, go]
+----
+func (s *TyphoonServer) InitResourcesMap()
+----
+
+
+
+===== InitRequestPath
+[source, go]
+----
+func (s *TyphoonServer) InitRequestPath(context context.Context, path string) context.Context
+----
+
+
+
+===== GetAction
+[source, go]
+----
+func (s *TyphoonServer) GetAction(
+    requestPath string,
+    logger interfaces.LoggerInterface,
+    context context.Context,
+
+    ) interfaces.ActionInterface
+----
+
+GetAction find the correct action for the client request
+
+===== RunMiddlewareStack
+[source, go]
+----
+func (s *TyphoonServer) RunMiddlewareStack(
+    requestContext context.Context,
+    action interfaces.ActionInterface,
+    ) (error, bool, context.Context)
+----
+
+RunMiddlewareStack - pass request to controller middleware stack.
+Middleware may reject request by custom condition or just enrich context client request.
+Middleware may raise exception, but it be pass if flag required = false.
+Flag = true will be immediately reject client request
+
+===== CreateResource
+[source, go]
+----
+func (s *TyphoonServer) CreateResource(path string, opts label.MetaInfo) (error, interfaces.ResourceInterface)
+----
+
+
+
+===== AddResource
+[source, go]
+----
+func (s *TyphoonServer) AddResource(resource interfaces.ResourceInterface) interfaces.ServerInterface
+----
+
+
+
+===== GetServerEngine
+[source, go]
+----
+func (s *TyphoonServer) GetServerEngine() interface{}
+----
+
+
+
+===== SetServerEngine
+[source, go]
+----
+func (s *TyphoonServer) SetServerEngine(server interface{})
+----
+
+
+
+
+
+=== ServerBuilder
+[source, go]
+----
+type ServerBuilder struct {
+    Constructor    func(project interfaces.Project) interfaces.ServerInterface
+}
+----
+
+
+
+==== Constructor func(project interfaces.Project) interfaces.ServerInterface
+
+
+
+
+
+==== Receivers
+
+===== Run
+[source, go]
+----
+func (s *ServerBuilder) Run(project interfaces.Project) interfaces.ServerInterface
+----
+
+
+
+
+
+
+=== Constants
+[source, go]
+----
+const (
+    
+    
+)
+----
+
+=== RoutePath
+[source, go]
+----
+
+----
+
+
+
+=== RequestContext
+[source, go]
+----
+
+----
+
+
+
+== Function Definitions
+
+
+=== Controller
+[source, go]
+----
+type Controller func(ctx context.Context, logger interfaces.LoggerInterface)
+----
+
+
+
+=== OnExit
+[source, go]
+----
+type OnExit              func()
+----
+
+
+
+=== OnStart
+[source, go]
+----
+type OnStart             func(port int) error
+----
+
+
+
+=== OnRequest
+[source, go]
+----
+type OnRequest           func(context context.Context)
+----
+
+
+
+=== OnServeHandler
+[source, go]
+----
+type OnServeHandler      func(path string, method string, resource interfaces.ResourceInterface)
+----
+
+
+
+=== OnResponse
+[source, go]
+----
+type OnResponse          func(status int, data interfaces.Response)
+----
+
+
+
+=== OnInitResource
+[source, go]
+----
+type OnInitResource      func(newResource interfaces.ResourceInterface)
+----
+
+
+
+=== OnInitAction
+[source, go]
+----
+type OnInitAction        func(resource interfaces.ResourceInterface, action interfaces.ActionInterface)
+----
+
+
+
+=== OnBuildSubResources
+[source, go]
+----
+type OnBuildSubResources func(subResource interfaces.ResourceInterface)
+----
+
+
+
+=== OnBuildSubAction
+[source, go]
+----
+type OnBuildSubAction    func(resource interfaces.ResourceInterface, action interfaces.ActionInterface)
+----
+
+
+
+=== OnAddResource
+[source, go]
+----
+type OnAddResource       func(resource interfaces.ResourceInterface)
+----
+
+
+
+=== OnReject
+[source, go]
+----
+type OnReject            func(status int, data interfaces.Response)
+----
+
+
+
+=== OnCors
+[source, go]
+----
+type OnCors              func()
+----
+
+
+
+=== ArchonChIN
+[source, go]
+----
+type ArchonChIN          func(chan<- interface{} )
+----
+
+
+
+=== ArchonChOut
+[source, go]
+----
+type ArchonChOut         func(<-chan interface{} )
+----
+
+
+
+== Functions
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/elements/ghosts/agent
+
+
+== Package github.com/vortex14/gotyphoon/elements/models/awaitabler
+
+
+=== Imports
+[source, go]
+----
+import "sync"
+----
+
+== Structs
+
+=== Object
+[source, go]
+----
+type Object struct {
+}
+----
+
+
+
+
+
+==== Receivers
+
+===== Init
+[source, go]
+----
+func (o *Object) Init()
+----
+
+
+
+===== Add
+[source, go]
+----
+func (o *Object) Add()
+----
+
+
+
+===== Done
+[source, go]
+----
+func (o *Object) Done()
+----
+
+
+
+===== Await
+[source, go]
+----
+func (o *Object) Await()
+----
+
+
+
+
+
+
+== Functions
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/elements/models/bar
+
+
+=== Imports
+[source, go]
+----
+import "fmt"
+----
+
+== Structs
+
+=== Bar
+[source, go]
+----
+type Bar struct {
+    Cur            int64
+    Total          int64
+    Description    string
+}
+----
+
+
+
+
+==== Cur int64
+
+
+==== Total int64
+
+
+
+
+==== Description string
+
+
+
+==== Receivers
+
+===== NewOption
+[source, go]
+----
+func (bar *Bar) NewOption(start, total int64)
+----
+
+
+
+===== NewOptionWithGraph
+[source, go]
+----
+func (bar *Bar) NewOptionWithGraph(start, total int64, graph string)
+----
+
+
+
+===== Play
+[source, go]
+----
+func (bar *Bar) Play(cur int64, description string)
+----
+
+
+
+===== IncCur
+[source, go]
+----
+func (bar *Bar) IncCur(cur int64)
+----
+
+
+
+===== Increment
+[source, go]
+----
+func (bar *Bar) Increment()
+----
+
+
+
+===== Finish
+[source, go]
+----
+func (bar *Bar) Finish()
+----
+
+
+
+
+
+
+== Functions
+
+
+
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/elements/models/config
+
+
+== Package github.com/vortex14/gotyphoon/elements/models/file
+
+
+=== Imports
+[source, go]
+----
+import (
+    "io"
+    "os"
+    "github.com/vortex14/gotyphoon/elements/models/awaitabler"
+    "github.com/vortex14/gotyphoon/elements/models/label"
+    "github.com/vortex14/gotyphoon/elements/models/singleton"
+    "github.com/vortex14/gotyphoon/interfaces"
+)
+----
+
+== Structs
+
+=== File
+[source, go]
+----
+type File struct {
+    Link        *os.File
+    Path        string
+    LOG         interfaces.LoggerInterface
+    OnFinish    func(f *os.File)
+}
+----
+
+
+
+
+
+==== Link *os.File
+
+
+==== Path string
+
+
+
+
+==== LOG interfaces.LoggerInterface
+
+
+==== OnFinish func(f *os.File)
+
+
+
+==== Receivers
+
+===== Init
+[source, go]
+----
+func (f *File) Init()
+----
+
+
+
+===== GetFileSize
+[source, go]
+----
+func (f *File) GetFileSize() int64
+----
+
+
+
+
+
+
+== Functions
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/elements/models/folder
+
+
+== Structs
+
+=== ExportOptions
+[source, go]
+----
+type ExportOptions struct {
+    TarPath       string
+    IsCompress    bool
+}
+----
+
+
+
+==== TarPath string
+
+
+==== IsCompress bool
+
+
+
+
+
+=== Folder
+[source, go]
+----
+type Folder struct {
+    Path    string
+    ExportOptions
+}
+----
+
+
+
+==== Path string
+
+
+==== ExportOptions
+
+
+
+==== Receivers
+
+===== Compress
+[source, go]
+----
+func (f *Folder) Compress() error
+----
+
+
+
+===== Uncompress
+[source, go]
+----
+func (f *Folder) Uncompress() error
+----
+
+
+
+
+
+
+== Functions
+
+
+
+
+== Package github.com/vortex14/gotyphoon/elements/models/gif
+
+
+=== Imports
+[source, go]
+----
+import (
+    "fmt"
+    "image"
+    "github.com/vortex14/gotyphoon/elements/models/awaitabler"
+    "github.com/vortex14/gotyphoon/elements/models/label"
+    "github.com/vortex14/gotyphoon/elements/models/singleton"
+    "github.com/vortex14/gotyphoon/log"
+    "github.com/vortex14/gotyphoon/utils/img"
+)
+----
+
+== Structs
+
+=== Gif
+[source, go]
+----
+type Gif struct {
+    Fps             int
+    PathImg         []string
+    ExportPath      string
+    SourceFormat    string
+}
+----
+
+
+
+
+
+
+==== Fps int
+
+
+==== PathImg []string
+
+
+==== ExportPath string
+
+
+==== SourceFormat string
+
+
+
+
+==== Receivers
+
+===== Append
+[source, go]
+----
+func (g *Gif) Append(path string) *Gif
+----
+
+
+
+===== Create
+[source, go]
+----
+func (g *Gif) Create()
+----
+
+
+
+
+
+
+== Functions
+
+
+
+
+== Package github.com/vortex14/gotyphoon/elements/models/image
+
+
+== Structs
+
+=== Image
+[source, go]
+----
+type Image struct {
+}
+----
+
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/elements/models/label
+
+
+=== Imports
+[source, go]
+----
+import "strings"
+----
+
+== Structs
+
+=== MetaInfo
+[source, go]
+----
+type MetaInfo struct {
+    Path           string
+    Name           string
+    Label          string
+    Required       bool
+    Description    string
+}
+----
+
+
+
+==== Path string
+
+
+==== Name string
+
+
+==== Label string
+
+
+==== Required bool
+
+
+==== Description string
+
+
+
+==== Receivers
+
+===== GetName
+[source, go]
+----
+func (l *MetaInfo) GetName() string
+----
+
+
+
+===== SetLabel
+[source, go]
+----
+func (l *MetaInfo) SetLabel(label string)
+----
+
+
+
+===== GetLabel
+[source, go]
+----
+func (l *MetaInfo) GetLabel() string
+----
+
+
+
+===== GetDescription
+[source, go]
+----
+func (l *MetaInfo) GetDescription() string
+----
+
+
+
+===== IsRequired
+[source, go]
+----
+func (l *MetaInfo) IsRequired() bool
+----
+
+
+
+===== SetName
+[source, go]
+----
+func (l *MetaInfo) SetName(name string)
+----
+
+
+
+===== SetDescription
+[source, go]
+----
+func (l *MetaInfo) SetDescription(description string)
+----
+
+
+
+===== GetPath
+[source, go]
+----
+func (l *MetaInfo) GetPath() string
+----
+
+
+
+===== SetPath
+[source, go]
+----
+func (l *MetaInfo) SetPath(path string)
+----
+
+
+
+===== SetRequired
+[source, go]
+----
+func (l *MetaInfo) SetRequired()
+----
+
+
+
+
+
+
+== Functions
+
+
+
+
+
+
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/elements/models/singleton
+
+
+=== Imports
+[source, go]
+----
+import "sync"
+----
+
+== Structs
+
+=== Singleton
+[source, go]
+----
+type Singleton struct {
+}
+----
+
+
+
+
+
+
+==== Receivers
+
+===== Construct
+[source, go]
+----
+func (s *Singleton) Construct(init func())
+----
+
+
+
+===== Destruct
+[source, go]
+----
+func (s *Singleton) Destruct(finish func())
+----
+
+
+
+
+
+
+== Functions
+
+
+
+
+== Package github.com/vortex14/gotyphoon/elements/models/task
+
+
+=== Imports
+[source, go]
+----
+import (
+    "context"
+    "github.com/fatih/color"
+    "github.com/vortex14/gotyphoon/ctx"
+    "github.com/vortex14/gotyphoon/interfaces"
+    "github.com/vortex14/gotyphoon/utils"
+)
+----
+
+== Structs
+
+=== FetcherTask
+[source, go]
+----
+type FetcherTask struct {
+    Url                  string
+    Proxy                string
+    ProxyServer          string
+    Method               string
+    Timeout              int
+    MaxRetries           int
+    MaxFailed            int
+    Headers              map[string]string
+    Cookies              interface{}
+    Auth                 map[string]string
+    IsProxyRequired      bool
+    IsResponseCache      bool
+    Strategy             string
+    Save                 struct
+    Data                 interface{}
+    JSON                 interface{}
+    Stream               bool
+    UserAgentRequired    bool
+    ForceUpdate          bool
+    LinesLimit           map[string]string
+    Response             struct
+}
+----
+
+
+
+==== Url string
+
+
+==== Proxy string
+
+
+==== ProxyServer string
+
+
+==== Method string
+
+
+==== Timeout int
+
+
+==== MaxRetries int
+
+
+==== MaxFailed int
+
+
+==== Headers map[string]string
+
+
+==== Cookies interface{}
+
+
+==== Auth map[string]string
+
+
+==== IsProxyRequired bool
+
+
+==== IsResponseCache bool
+
+
+==== Strategy string
+
+
+==== Data interface{}
+
+
+==== JSON interface{}
+
+
+==== Stream bool
+
+
+==== UserAgentRequired bool
+
+
+==== ForceUpdate bool
+
+
+==== LinesLimit map[string]string
+
+
+=== Save
+[source, go]
+----
+struct {
+    Project    map[string]string
+    System     struct
+}
+----
+
+
+
+==== Project map[string]string
+
+
+=== System
+[source, go]
+----
+struct {
+    Failed          int
+    Retries         int
+    StatusCode      int
+    AddedAt         int
+    RetriesDelay    int
+    ExecuteAt       int
+    Exception       struct
+}
+----
+
+
+
+==== Failed int
+
+
+==== Retries int
+
+
+==== StatusCode int
+
+
+==== AddedAt int
+
+
+==== RetriesDelay int
+
+
+==== ExecuteAt int
+
+
+=== Exception
+[source, go]
+----
+struct {
+    Type               interface{}
+    Message            string
+    ErrorDefinition    interface{}
+}
+----
+
+
+
+==== Type interface{}
+
+
+==== Message string
+
+
+==== ErrorDefinition interface{}
+
+
+
+
+
+
+
+
+=== Response
+[source, go]
+----
+struct {
+    Content    string
+    Code       int
+    Headers    map[string]string
+    Cookies    string
+    URL        string
+    OrigURL    string
+}
+----
+
+
+
+==== Content string
+
+
+==== Code int
+
+
+==== Headers map[string]string
+
+
+==== Cookies string
+
+
+==== URL string
+
+
+==== OrigURL string
+
+
+
+
+
+==== Receivers
+
+===== IsBadStatus
+[source, go]
+----
+func (t *FetcherTask) IsBadStatus() bool
+----
+
+
+
+===== IsFailedRetry
+[source, go]
+----
+func (t *FetcherTask) IsFailedRetry() bool
+----
+
+
+
+===== IsResponseRetry
+[source, go]
+----
+func (t *FetcherTask) IsResponseRetry() bool
+----
+
+
+
+===== IsMaxFailedRetry
+[source, go]
+----
+func (t *FetcherTask) IsMaxFailedRetry() bool
+----
+
+
+
+===== IsMaxResponseRetry
+[source, go]
+----
+func (t *FetcherTask) IsMaxResponseRetry() bool
+----
+
+
+
+
+
+=== ProcessorTask
+[source, go]
+----
+type ProcessorTask struct {
+    ErrorResponse          bool
+    MaxProcessorRetries    int
+    Callback               struct
+    Strategy               string
+    Save                   struct
+    History                []interface{}
+}
+----
+
+
+
+==== ErrorResponse bool
+
+
+==== MaxProcessorRetries int
+
+
+==== Strategy string
+
+
+==== History []interface{}
+
+
+=== Callback
+[source, go]
+----
+struct {
+    Name    string
+    Type    string
+}
+----
+
+
+
+==== Name string
+
+
+==== Type string
+
+
+
+
+=== Save
+[source, go]
+----
+struct {
+    Project    ProjectSave
+    System     struct
+}
+----
+
+
+
+==== Project ProjectSave
+
+
+=== System
+[source, go]
+----
+struct {
+    ProcessorRetries    int
+}
+----
+
+
+
+==== ProcessorRetries int
+
+
+
+
+
+
+
+==== Receivers
+
+===== IsMaxProcessorRetry
+[source, go]
+----
+func (t *ProcessorTask) IsMaxProcessorRetry() bool
+----
+
+
+
+===== IsProcessorRetry
+[source, go]
+----
+func (t *ProcessorTask) IsProcessorRetry() bool
+----
+
+
+
+
+
+=== SchedulerTask
+[source, go]
+----
+type SchedulerTask struct {
+    Age       int
+    SendTo    string
+}
+----
+
+
+
+==== Age int
+
+
+==== SendTo string
+
+
+
+
+
+=== TyphoonTask
+[source, go]
+----
+type TyphoonTask struct {
+    Fetcher              FetcherTask
+    Processor            ProcessorTask
+    Scheduler            SchedulerTask
+    ResultTransporter    TransporterTask
+    Priority             int
+    URL                  string
+    Taskid               string
+    ProjectName          string
+}
+----
+
+
+
+==== Fetcher FetcherTask
+
+
+==== Processor ProcessorTask
+
+
+==== Scheduler SchedulerTask
+
+
+==== ResultTransporter TransporterTask
+
+
+==== Priority int
+
+
+==== URL string
+
+
+==== Taskid string
+
+
+==== ProjectName string
+
+
+
+==== Receivers
+
+===== GetFetcherMethod
+[source, go]
+----
+func (t *TyphoonTask) GetFetcherMethod() string
+----
+
+
+
+===== SetJsonRequestData
+[source, go]
+----
+func (t *TyphoonTask) SetJsonRequestData(values interface{})
+----
+
+
+
+===== GetFetcherRequestJson
+[source, go]
+----
+func (t *TyphoonTask) GetFetcherRequestJson() []byte
+----
+
+
+
+===== GetFetcherTimeout
+[source, go]
+----
+func (t *TyphoonTask) GetFetcherTimeout() int
+----
+
+
+
+===== GetFetcherUrl
+[source, go]
+----
+func (t *TyphoonTask) GetFetcherUrl() string
+----
+
+
+
+===== SetFetcherUrl
+[source, go]
+----
+func (t *TyphoonTask) SetFetcherUrl(url string)
+----
+
+
+
+===== SetProxyServerUrl
+[source, go]
+----
+func (t *TyphoonTask) SetProxyServerUrl(url string)
+----
+
+
+
+===== SetUserAgent
+[source, go]
+----
+func (t *TyphoonTask) SetUserAgent(agent string)
+----
+
+
+
+===== SetProxyAddress
+[source, go]
+----
+func (t *TyphoonTask) SetProxyAddress(address string)
+----
+
+
+
+===== IsProxyRequired
+[source, go]
+----
+func (t *TyphoonTask) IsProxyRequired() bool
+----
+
+
+
+===== GetProxyAddress
+[source, go]
+----
+func (t *TyphoonTask) GetProxyAddress() string
+----
+
+
+
+===== GetUserAgent
+[source, go]
+----
+func (t *TyphoonTask) GetUserAgent() string
+----
+
+
+
+===== GetProxyServerUrl
+[source, go]
+----
+func (t *TyphoonTask) GetProxyServerUrl() string
+----
+
+
+
+===== SetStatusCode
+[source, go]
+----
+func (t *TyphoonTask) SetStatusCode(code int)
+----
+
+
+
+===== IsMaxRetry
+[source, go]
+----
+func (t *TyphoonTask) IsMaxRetry() bool
+----
+
+
+
+===== UpdateRetriesCounter
+[source, go]
+----
+func (t *TyphoonTask) UpdateRetriesCounter()
+----
+
+
+
+===== IsRetry
+[source, go]
+----
+func (t *TyphoonTask) IsRetry() bool
+----
+
+
+
+
+
+=== TransporterTask
+[source, go]
+----
+type TransporterTask struct {
+    Consumer       string
+    ForceUpdate    bool
+    Age            int
+    Save           interface{}
+    Result         interface{}
+}
+----
+
+
+
+==== Consumer string
+
+
+==== ForceUpdate bool
+
+
+==== Age int
+
+
+==== Save interface{}
+
+
+==== Result interface{}
+
+
+
+
+
+
+== Variable Typedefinitions
+
+=== Statuses
+[source, go]
+----
+type Statuses map[int]bool
+----
+
+
+
+
+
+=== Codes
+[source, go]
+----
+type Codes map[string]int
+----
+
+
+
+
+
+=== ProjectSave
+[source, go]
+----
+type ProjectSave map[string]string
+----
+
+
+
+
+
+
+== Variables
+
+
+== Functions
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=== Get
+[source, go]
+----
+func Get(c context.Context) (bool, *TyphoonTask)
+----
+
+
+
+
+=== GetTaskCtx
+[source, go]
+----
+func GetTaskCtx(context context.Context) *TyphoonTask
+----
+
+
+
+
+=== NewTaskCtx
+[source, go]
+----
+func NewTaskCtx(task *TyphoonTask) context.Context
+----
+
+
+
+
+=== PatchCtx
+[source, go]
+----
+func PatchCtx(context context.Context, task *TyphoonTask) context.Context
+----
+
+
+
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/elements/models/timer
+
+
+=== Imports
+[source, go]
+----
+import "time"
+----
+
+== Structs
+
+=== Timer
+[source, go]
+----
+type Timer struct {
+}
+----
+
+Timer represents a monitor/iterator that runs
+a function on a given interval.
+
+
+
+
+
+
+
+
+
+
+==== Receivers
+
+===== Start
+[source, go]
+----
+func (timer *Timer) Start()
+----
+
+Start the timer.
+
+===== Await
+[source, go]
+----
+func (timer *Timer) Await()
+----
+
+
+
+===== Stop
+[source, go]
+----
+func (timer *Timer) Stop()
+----
+
+Stop the timer.
+
+===== Count
+[source, go]
+----
+func (timer *Timer) Count() int
+----
+
+Count represents the number of times the interval has been processed.
+
+===== Reset
+[source, go]
+----
+func (timer *Timer) Reset()
+----
+
+Reset the timer
+
+===== IsRunning
+[source, go]
+----
+func (timer *Timer) IsRunning() bool
+----
+
+IsRunning returns a boolean flag indicating whether the timer is running or not.
+
+
+
+
+== Functions
+
+
+
+
+
+
+
+=== SetInterval
+[source, go]
+----
+func SetInterval(fn func(args ...interface{}), duration int, args ...interface{}) *Timer
+----
+
+SetInterval runs the specified function every `X` milliseconds, where
+`X` is the specified interval duration.
+
+
+=== SetTimeout
+[source, go]
+----
+func SetTimeout(fn func(args ...interface{}), duration int, args ...interface{}) *Timer
+----
+
+SetTimeout runs the specified function after waiting the specified duration (defined in milliseconds)
+
+
+
+== Package github.com/vortex14/gotyphoon/environment
+
+
+=== Imports
+[source, go]
+----
+import (
+    "bufio"
+    "bytes"
+    "fmt"
+    "log"
+    "os"
+    "strings"
+    "github.com/fatih/color"
+    "github.com/kelseyhightower/envconfig"
+    "os/exec"
+)
+----
+
+== Structs
+
+=== DockerSettings
+[source, go]
+----
+type DockerSettings struct {
+    DockerLogin       string
+    DockerPassword    string
+    DockerHub         string
+    DockerImages      string
+}
+----
+
+
+
+==== DockerLogin string
+
+
+==== DockerPassword string
+
+
+==== DockerHub string
+
+
+==== DockerImages string
+
+
+
+
+
+=== GrafanaSettings
+[source, go]
+----
+type GrafanaSettings struct {
+    GrafanaToken       string
+    GrafanaEndpoint    string
+}
+----
+
+
+
+==== GrafanaToken string
+
+
+==== GrafanaEndpoint string
+
+
+
+
+
+=== GitlabSettings
+[source, go]
+----
+type GitlabSettings struct {
+    Gitlab         string
+    GitlabToken    string
+}
+----
+
+
+
+==== Gitlab string
+
+
+==== GitlabToken string
+
+
+
+
+
+=== TyphoonSettings
+[source, go]
+----
+type TyphoonSettings struct {
+    Path        string
+    Status      string
+    Clusters    string
+    Projects    string
+}
+----
+
+
+
+==== Path string
+
+
+==== Status string
+
+
+==== Clusters string
+
+
+==== Projects string
+
+
+
+
+
+=== Settings
+[source, go]
+----
+type Settings struct {
+    DockerSettings
+    GitlabSettings
+    GrafanaSettings
+    TyphoonSettings
+}
+----
+
+
+
+==== DockerSettings
+
+
+==== GitlabSettings
+
+
+==== GrafanaSettings
+
+
+==== TyphoonSettings
+
+
+
+
+
+=== Environment
+[source, go]
+----
+type Environment struct {
+    ProfilePath    string
+}
+----
+
+
+
+==== ProfilePath string
+
+
+
+==== Receivers
+
+===== Load
+[source, go]
+----
+func (e *Environment) Load()
+----
+
+
+
+===== Set
+[source, go]
+----
+func (e Environment) Set()
+----
+
+
+
+===== Get
+[source, go]
+----
+func (e Environment) Get()
+----
+
+
+
+===== GetSettings
+[source, go]
+----
+func (e *Environment) GetSettings() (error error, settings *Settings)
+----
+
+
+
+
+
+
+== Functions
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/errors
+
+
+=== Imports
+[source, go]
+----
+import (
+    Errors "errors"
+)
+----
+
+== Variables
+
+=== BasicAuthContextFailed
+[source, go]
+----
+
+----
+
+
+
+=== NotFoundCantrip
+[source, go]
+----
+
+----
+
+
+
+=== ErrorCmdNotFound
+[source, go]
+----
+
+----
+
+
+
+=== BadRequest
+[source, go]
+----
+
+----
+
+
+
+=== ActionMethodsNotFound
+[source, go]
+----
+
+----
+
+
+
+=== MongoNotFoundDB
+[source, go]
+----
+
+----
+
+
+
+=== MongoNotFoundDBMap
+[source, go]
+----
+
+----
+
+
+
+=== SolrConnectionsOptionsNotFound
+[source, go]
+----
+
+----
+
+
+
+=== SolrConnectionEndpointError
+[source, go]
+----
+
+----
+
+
+
+=== DemonFoolish
+[source, go]
+----
+
+----
+
+
+
+=== DemonNotFound
+[source, go]
+----
+
+----
+
+
+
+=== DemonHasNotProject
+[source, go]
+----
+
+----
+
+
+
+=== DemonExecutingWithoutSettings
+[source, go]
+----
+
+----
+
+
+
+=== DockerCommandAlreadyStarted
+[source, go]
+----
+
+----
+
+
+
+=== DockerCommandNotStarted
+[source, go]
+----
+
+----
+
+
+
+=== DockerStoutAlreadySet
+[source, go]
+----
+
+----
+
+
+
+=== DockerStdErrAlreadySet
+[source, go]
+----
+
+----
+
+
+
+=== DockerStdInAlreadySet
+[source, go]
+----
+
+----
+
+
+
+=== NotFoundSigil
+[source, go]
+----
+
+----
+
+
+
+=== GraphNameNotFound
+[source, go]
+----
+
+----
+
+
+
+=== GraphResourceNotFound
+[source, go]
+----
+
+----
+
+
+
+=== GraphMainGraphNotFound
+[source, go]
+----
+
+----
+
+
+
+=== GraphNotFoundFormat
+[source, go]
+----
+
+----
+
+
+
+=== GraphEdgeContextBroken
+[source, go]
+----
+
+----
+
+
+
+=== GraphEdgeOptionsNotFound
+[source, go]
+----
+
+----
+
+
+
+=== GraphEdgeNotFound
+[source, go]
+----
+
+----
+
+
+
+=== GraphParentNodeNotFound
+[source, go]
+----
+
+----
+
+
+
+=== GraphNodeOptionsNotFound
+[source, go]
+----
+
+----
+
+
+
+=== GraphOptionsLabelRequired
+[source, go]
+----
+
+----
+
+
+
+=== GraphOptionsNotFound
+[source, go]
+----
+
+----
+
+
+
+=== GraphResourceContextInvalid
+[source, go]
+----
+
+----
+
+
+
+=== GraphActionContextInvalid
+[source, go]
+----
+
+----
+
+
+
+=== JqExecuteQueryError
+[source, go]
+----
+
+----
+
+
+
+=== LambdaRequired
+[source, go]
+----
+
+----
+
+
+
+=== TaskPipelineRequiredHandler
+[source, go]
+----
+
+----
+
+
+
+=== TaskPipelineRequiredCancelHandler
+[source, go]
+----
+
+----
+
+
+
+=== MiddlewareBasicAuthOptionsNotFound
+[source, go]
+----
+
+----
+
+
+
+=== MiddlewareNotImplemented
+[source, go]
+----
+
+----
+
+
+
+=== MiddlewareRequired
+[source, go]
+----
+
+----
+
+
+
+=== ForceSkipMiddlewares
+[source, go]
+----
+
+----
+
+
+
+=== ForceSkipRequest
+[source, go]
+----
+
+----
+
+
+
+=== MiddlewareContextFailed
+[source, go]
+----
+
+----
+
+
+
+=== TableHeadersNotFound
+[source, go]
+----
+
+----
+
+
+
+=== PipelineContexFailed
+[source, go]
+----
+
+----
+
+
+
+=== CtxLogFailed
+[source, go]
+----
+
+----
+
+
+
+=== ProjectGitlabNotFound
+[source, go]
+----
+
+----
+
+
+
+=== ProxyBusy
+[source, go]
+----
+
+----
+
+
+
+=== ProxyBlocked
+[source, go]
+----
+
+----
+
+
+
+=== ProxyTimeout
+[source, go]
+----
+
+----
+
+
+
+=== ProxyAuthFailed
+[source, go]
+----
+
+----
+
+
+
+=== ProxyUrlWrong
+[source, go]
+----
+
+----
+
+
+
+=== ProxyTaskNotFound
+[source, go]
+----
+
+----
+
+
+
+=== ProxyTaskRequired
+[source, go]
+----
+
+----
+
+
+
+=== ProxyServerNotAvailable
+[source, go]
+----
+
+----
+
+
+
+=== ProxyServerError
+[source, go]
+----
+
+----
+
+
+
+=== RequestErrorClientContext
+[source, go]
+----
+
+----
+
+
+
+=== ResponseHttpGzipDecodeError
+[source, go]
+----
+
+----
+
+
+
+=== ResponseReaderCloseError
+[source, go]
+----
+
+----
+
+
+
+=== ResponseReadError
+[source, go]
+----
+
+----
+
+
+
+=== ResponsePathError
+[source, go]
+----
+
+----
+
+
+
+=== ResponseEmptyError
+[source, go]
+----
+
+----
+
+
+
+=== ActionAlreadyExists
+[source, go]
+----
+
+----
+
+
+
+=== ServerNotFoundError
+[source, go]
+----
+
+----
+
+
+
+=== ResourceAlreadyExist
+[source, go]
+----
+
+----
+
+
+
+=== NoResourcesAvailable
+[source, go]
+----
+
+----
+
+
+
+=== ServerMethodNotImplemented
+[source, go]
+----
+
+----
+
+
+
+=== ServerOnStartError
+[source, go]
+----
+
+----
+
+
+
+=== ActionContextRequestFailed
+[source, go]
+----
+
+----
+
+
+
+=== ActionAddMethodNotImplemented
+[source, go]
+----
+
+----
+
+
+
+=== ActionPathNotFound
+[source, go]
+----
+
+----
+
+
+
+=== ServerOnHandlerMethodNotImplemented
+[source, go]
+----
+
+----
+
+
+
+=== ServerEngineNotImplemented
+[source, go]
+----
+
+----
+
+
+
+=== ServerContextFailed
+[source, go]
+----
+
+----
+
+
+
+=== TracerContextNotFound
+[source, go]
+----
+
+----
+
+
+
+=== ServiceNotAvailable
+[source, go]
+----
+
+----
+
+
+
+=== ErrorSshCloseClient
+[source, go]
+----
+
+----
+
+
+
+=== ErrorSshCloseSession
+[source, go]
+----
+
+----
+
+
+
+=== ErrorSshConnection
+[source, go]
+----
+
+----
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/agents/capturer
+
+
+=== Imports
+[source, go]
+----
+import (
+    "bytes"
+    "time"
+    "github.com/kbinani/screenshot"
+    "github.com/vortex14/gotyphoon/elements/models/awaitabler"
+    "github.com/vortex14/gotyphoon/elements/models/singleton"
+    "github.com/vortex14/gotyphoon/interfaces"
+    "github.com/vortex14/gotyphoon/log"
+    "image/jpeg"
+)
+----
+
+== Structs
+
+=== Capturer
+[source, go]
+----
+type Capturer struct {
+    Count           int
+    Active          bool
+    Quality         int
+    Delay           float32
+    IsFullScreen    bool
+    Output          chan []byte
+    LOG             interfaces.LoggerInterface
+}
+----
+
+
+
+
+
+==== Count int
+
+
+==== Active bool
+
+
+==== Quality int
+
+
+==== Delay float32
+
+
+==== IsFullScreen bool
+
+
+==== Output chan []byte
+
+
+==== LOG interfaces.LoggerInterface
+
+
+
+==== Receivers
+
+===== Stop
+[source, go]
+----
+func (c *Capturer) Stop() *Capturer
+----
+
+
+
+===== Capture
+[source, go]
+----
+func (c *Capturer) Capture() *Capturer
+----
+
+
+
+
+
+
+== Functions
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/agents/ci
+
+
+== Package github.com/vortex14/gotyphoon/extensions/agents/events-metric-v1
+
+
+=== Imports
+[source, go]
+----
+import (
+    "context"
+    "time"
+    Gin "github.com/gin-gonic/gin"
+    "github.com/vortex14/gotyphoon/elements/forms"
+    "github.com/vortex14/gotyphoon/elements/models/awaitabler"
+    "github.com/vortex14/gotyphoon/elements/models/label"
+    "github.com/vortex14/gotyphoon/elements/models/singleton"
+    "github.com/vortex14/gotyphoon/extensions/servers/gin"
+    "github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/graph"
+    "github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/ping"
+    GinMiddlewares "github.com/vortex14/gotyphoon/extensions/servers/gin/middlewares"
+    "github.com/vortex14/gotyphoon/integrations/mongo"
+    "github.com/vortex14/gotyphoon/interfaces"
+    "github.com/vortex14/gotyphoon/interfaces/server"
+    "github.com/vortex14/gotyphoon/log"
+    "go.mongodb.org/mongo-driver/bson"
+    Mongo "go.mongodb.org/mongo-driver/mongo"
+)
+----
+
+== Structs
+
+=== Track
+[source, go]
+----
+type Track struct {
+    Event           string
+    RegisteredAt    time.Time
+    Payload         interface{}
+}
+----
+
+
+
+==== Event string
+
+
+==== RegisteredAt time.Time
+
+
+==== Payload interface{}
+
+
+
+
+
+=== AgentMetric
+[source, go]
+----
+type AgentMetric struct {
+    ServerDescription    string
+    ServerBasePath       string
+    ServerPort           int
+    ServerName           string
+    Databases            []string
+    MongoHost            string
+    MongoPort            int
+    OutDb                string
+    OutCollection        string
+    LOG                  interfaces.LoggerInterface
+}
+----
+
+
+
+
+
+
+==== ServerDescription string
+
+
+==== ServerBasePath string
+
+
+==== ServerPort int
+
+
+==== ServerName string
+
+
+==== Databases []string
+
+
+==== MongoHost string
+
+
+==== MongoPort int
+
+
+==== OutDb string
+
+
+==== OutCollection string
+
+
+
+
+
+==== LOG interfaces.LoggerInterface
+
+
+
+==== Receivers
+
+===== Run
+[source, go]
+----
+func (m *AgentMetric) Run()
+----
+
+
+
+
+
+
+=== Constants
+[source, go]
+----
+const (
+    
+)
+----
+
+=== TRACKER
+[source, go]
+----
+
+----
+
+
+
+== Functions
+
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/agents/sftp
+
+
+=== Imports
+[source, go]
+----
+import (
+    "github.com/fsnotify/fsnotify"
+    "github.com/vortex14/gotyphoon/elements/models/awaitabler"
+    "github.com/vortex14/gotyphoon/elements/models/label"
+    . "github.com/vortex14/gotyphoon/elements/models/singleton"
+    Errors "github.com/vortex14/gotyphoon/errors"
+    . "github.com/vortex14/gotyphoon/extensions/models/watcher"
+    "github.com/vortex14/gotyphoon/integrations/ssh"
+    "github.com/vortex14/gotyphoon/interfaces"
+    "github.com/vortex14/gotyphoon/log"
+)
+----
+
+== Structs
+
+=== Mirror
+[source, go]
+----
+type Mirror struct {
+    HostPath           string
+    DestinationPath    string
+    ExcludeMatch       []string
+}
+----
+
+
+
+==== HostPath string
+
+
+==== DestinationPath string
+
+
+==== ExcludeMatch []string
+
+
+
+
+
+=== Agent
+[source, go]
+----
+type Agent struct {
+    Singleton
+    SSHOptions    ssh.Options
+    LOG           interfaces.LoggerInterface
+}
+----
+
+
+
+
+
+==== Singleton
+
+
+
+==== SSHOptions ssh.Options
+
+
+==== LOG interfaces.LoggerInterface
+
+
+
+==== Receivers
+
+===== PingSSH
+[source, go]
+----
+func (a *Agent) PingSSH() bool
+----
+
+
+
+===== Watch
+[source, go]
+----
+func (a *Agent) Watch(options Mirror)
+----
+
+
+
+===== CopyFileFromHost
+[source, go]
+----
+func (a *Agent) CopyFileFromHost(options Mirror) error
+----
+
+
+
+
+
+
+== Functions
+
+=== Constructor
+[source, go]
+----
+func Constructor(options ssh.Options) *Agent
+----
+
+
+
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/archons/project
+
+
+=== Imports
+[source, go]
+----
+import (
+    "sync"
+    "github.com/fatih/color"
+    Errors "github.com/vortex14/gotyphoon/errors"
+    "github.com/vortex14/gotyphoon/interfaces"
+    "github.com/vortex14/gotyphoon/interfaces/ghosts"
+)
+----
+
+== Structs
+
+=== Archon
+[source, go]
+----
+type Archon struct {
+}
+----
+
+
+
+
+
+
+
+==== Receivers
+
+===== AddPromise
+[source, go]
+----
+func (a *Archon) AddPromise()
+----
+
+
+
+===== Call
+[source, go]
+----
+func (a *Archon) Call(detail *ghosts.DemonDecree) error
+----
+
+
+
+===== ClosePromise
+[source, go]
+----
+func (a *Archon) ClosePromise()
+----
+
+
+
+===== AwaitDecision
+[source, go]
+----
+func (a *Archon) AwaitDecision()
+----
+
+
+
+===== RunDemons
+[source, go]
+----
+func (a *Archon) RunDemons(project interfaces.Project)
+----
+
+
+
+===== RunProjectServers
+[source, go]
+----
+func (a *Archon) RunProjectServers(project interfaces.Project)
+----
+
+
+
+
+
+
+== Functions
+
+
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/data
+
+
+=== Imports
+[source, go]
+----
+import "github.com/vortex14/gotyphoon/interfaces"
+----
+
+== Structs
+
+=== StructData
+[source, go]
+----
+type StructData struct {
+    Fields    []string
+}
+----
+
+
+
+==== Fields []string
+
+
+
+==== Receivers
+
+===== GetFields
+[source, go]
+----
+func (s *StructData) GetFields()
+----
+
+
+
+
+
+
+== Variables
+
+=== Brands
+[source, go]
+----
+
+----
+
+
+
+=== CategoriesFirstLevel
+[source, go]
+----
+
+----
+
+
+
+=== CategoriesSecondLevel
+[source, go]
+----
+
+----
+
+
+
+=== CategoriesThirdLevel
+[source, go]
+----
+
+----
+
+
+
+== Functions
+
+
+=== TestFunc
+[source, go]
+----
+func TestFunc () interfaces.TestData
+----
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/data/fake
+
+
+=== Imports
+[source, go]
+----
+import (
+    "fmt"
+    "reflect"
+    "strconv"
+    "time"
+    "encoding/base64"
+    browser "github.com/EDDYCJY/fake-useragent"
+    "github.com/brianvoe/gofakeit/v6"
+    "github.com/bxcodec/faker"
+    "github.com/dgrijalva/jwt-go"
+    "github.com/fatih/color"
+    "github.com/osamingo/checkdigit"
+    typhoonTask "github.com/vortex14/gotyphoon/elements/models/task"
+    "github.com/vortex14/gotyphoon/extensions/data"
+    "github.com/vortex14/gotyphoon/interfaces"
+    "github.com/vortex14/gotyphoon/utils"
+    "math/rand"
+)
+----
+
+== Structs
+
+=== Category
+[source, go]
+----
+type Category struct {
+    Name    string
+    Id      string
+}
+----
+
+
+
+==== Name string
+
+
+==== Id string
+
+
+
+
+
+=== Categories
+[source, go]
+----
+type Categories struct {
+    Categories       []string
+    CategoriesIds    []string
+}
+----
+
+
+
+==== Categories []string
+
+
+==== CategoriesIds []string
+
+
+
+
+
+=== Charge
+[source, go]
+----
+type Charge struct {
+    Id          string
+    Amount      float32
+    Currency    string
+}
+----
+
+
+
+==== Id string
+
+
+==== Amount float32
+
+
+==== Currency string
+
+
+
+
+
+=== Customer
+[source, go]
+----
+type Customer struct {
+    Id       string
+    Name     string
+    Phone    string
+    Email    string
+}
+----
+
+
+
+==== Id string
+
+
+==== Name string
+
+
+==== Phone string
+
+
+==== Email string
+
+
+
+
+
+=== Payment
+[source, go]
+----
+type Payment struct {
+    Id                  string
+    Price               float32
+    Currency            string
+    CreditCardExp       string
+    CreditCardType      string
+    CreditCardNumber    string
+}
+----
+
+
+
+==== Id string
+
+
+==== Price float32
+
+
+==== Currency string
+
+
+==== CreditCardExp string
+
+
+==== CreditCardType string
+
+
+==== CreditCardNumber string
+
+
+
+
+
+=== ProductShippingDimensions
+[source, go]
+----
+type ProductShippingDimensions struct {
+    Dimensions    struct
+}
+----
+
+
+
+=== Dimensions
+[source, go]
+----
+struct {
+    Height    struct
+    Length    struct
+    Depth     struct
+    Weight    struct
+}
+----
+
+
+
+=== Height
+[source, go]
+----
+struct {
+    Value    float64
+    Unit     string
+}
+----
+
+
+
+==== Value float64
+
+
+==== Unit string
+
+
+
+
+=== Length
+[source, go]
+----
+struct {
+    Value    float64
+    Unit     string
+}
+----
+
+
+
+==== Value float64
+
+
+==== Unit string
+
+
+
+
+=== Depth
+[source, go]
+----
+struct {
+    Value    float64
+    Unit     string
+}
+----
+
+
+
+==== Value float64
+
+
+==== Unit string
+
+
+
+
+=== Weight
+[source, go]
+----
+struct {
+    Value    float64
+    Unit     string
+}
+----
+
+
+
+==== Value float64
+
+
+==== Unit string
+
+
+
+
+
+
+
+
+
+=== BaseProduct
+[source, go]
+----
+type BaseProduct struct {
+    Url            string
+    Upc            string
+    Id             string
+    Title          string
+    Description    string
+    Price          struct
+}
+----
+
+
+
+==== Url string
+
+
+==== Upc string
+
+
+==== Id string
+
+
+==== Title string
+
+
+==== Description string
+
+
+=== Price
+[source, go]
+----
+struct {
+    OfferPrice      float32
+    ListingPrice    float32
+}
+----
+
+
+
+==== OfferPrice float32
+
+
+==== ListingPrice float32
+
+
+
+
+
+
+
+=== StockProduct
+[source, go]
+----
+type StockProduct struct {
+    Quantity    int
+}
+----
+
+
+
+==== Quantity int
+
+
+
+
+
+=== MediaProductDetails
+[source, go]
+----
+type MediaProductDetails struct {
+    Images    []string
+}
+----
+
+
+
+==== Images []string
+
+
+
+
+
+=== ProviderDetails
+[source, go]
+----
+type ProviderDetails struct {
+    ApiProvider        string
+    CountryOfOrigin    string
+    Marketplace        string
+}
+----
+
+
+
+==== ApiProvider string
+
+
+==== CountryOfOrigin string
+
+
+==== Marketplace string
+
+
+
+
+
+=== ProductAttributes
+[source, go]
+----
+type ProductAttributes struct {
+    Color    string
+    Brand    string
+}
+----
+
+
+
+==== Color string
+
+
+==== Brand string
+
+
+
+
+
+=== Product
+[source, go]
+----
+type Product struct {
+    BaseProduct
+    Categories
+    StockProduct
+    ProviderDetails
+    Shipping     ProductShippingDimensions
+    ProductId    string
+}
+----
+
+
+
+==== BaseProduct
+
+
+==== Categories
+
+
+==== StockProduct
+
+
+==== ProviderDetails
+
+
+==== Shipping ProductShippingDimensions
+
+
+==== ProductId string
+
+
+
+
+
+=== Proxy
+[source, go]
+----
+type Proxy struct {
+    Proxy          string
+    Agent          string
+    Success        bool
+    AgentMobile    string
+}
+----
+
+
+
+==== Proxy string
+
+
+==== Agent string
+
+
+==== Success bool
+
+
+==== AgentMobile string
+
+
+
+
+
+=== Upc
+[source, go]
+----
+type Upc struct {
+    Upc    string
+}
+----
+
+
+
+==== Upc string
+
+
+
+
+
+
+== Variables
+
+
+== Functions
+
+=== CreateCategories
+[source, go]
+----
+func CreateCategories() *Categories
+----
+
+
+
+
+=== CreateCategory
+[source, go]
+----
+func CreateCategory() *Category
+----
+
+
+
+
+
+=== CreateCharge
+[source, go]
+----
+func CreateCharge() *Charge
+----
+
+
+
+
+
+=== CreateCustomer
+[source, go]
+----
+func CreateCustomer() *Customer
+----
+
+
+
+
+
+=== GenerateImage
+[source, go]
+----
+func GenerateImage()
+----
+
+
+
+
+
+=== CreatePayment
+[source, go]
+----
+func CreatePayment() *Payment
+----
+
+
+
+
+=== CreateProduct
+[source, go]
+----
+func CreateProduct() *Product
+----
+
+
+
+
+=== CreateProductWithId
+[source, go]
+----
+func CreateProductWithId() *BaseProduct
+----
+
+
+
+
+=== CreateShipping
+[source, go]
+----
+func CreateShipping() *ProductShippingDimensions
+----
+
+
+
+
+
+
+=== CreateFakeProxy
+[source, go]
+----
+func CreateFakeProxy() *Proxy
+----
+
+
+
+
+
+=== CreateDefaultTask
+[source, go]
+----
+func CreateDefaultTask() *typhoonTask.TyphoonTask
+----
+
+
+
+
+=== CreateFakeTask
+[source, go]
+----
+func CreateFakeTask(options interfaces.FakeTaskOptions)  (*typhoonTask.TyphoonTask, error)
+----
+
+
+
+
+
+=== CreateUpc
+[source, go]
+----
+func CreateUpc() *Upc
+----
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/demons/service
+
+
+=== Imports
+[source, go]
+----
+import (
+    "sync"
+    "github.com/fatih/color"
+    Errors "github.com/vortex14/gotyphoon/errors"
+    NSQSig "github.com/vortex14/gotyphoon/extensions/sigils/nsq"
+    "github.com/vortex14/gotyphoon/interfaces"
+    "github.com/vortex14/gotyphoon/interfaces/ghosts"
+)
+----
+
+== Structs
+
+=== Demon
+[source, go]
+----
+type Demon struct {
+}
+----
+
+
+
+
+
+==== Receivers
+
+===== GetName
+[source, go]
+----
+func (d *Demon) GetName() string
+----
+
+
+
+===== Run
+[source, go]
+----
+func (d *Demon) Run() error
+----
+
+
+
+===== Sleep
+[source, go]
+----
+func (d *Demon) Sleep() error
+----
+
+
+
+===== AddSigil
+[source, go]
+----
+func (d *Demon) AddSigil(sig *interfaces.Sigil) bool
+----
+
+
+
+===== Execute
+[source, go]
+----
+func (d *Demon) Execute(detail *ghosts.DemonDecree) error
+----
+
+
+
+
+
+
+=== Constants
+[source, go]
+----
+const (
+    
+    
+)
+----
+
+=== NAME
+[source, go]
+----
+
+----
+
+
+
+=== DESCRIPTION
+[source, go]
+----
+
+----
+
+
+
+== Variables
+
+
+
+=== BaseOptions
+[source, go]
+----
+
+----
+
+
+
+== Functions
+
+
+
+
+
+
+=== Constructor
+[source, go]
+----
+func Constructor(opt *ghosts.DemonOptions, project interfaces.Project) ghosts.DemonInterface
+----
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/forms/graph
+
+
+== Package github.com/vortex14/gotyphoon/extensions/forms/http
+
+
+=== Imports
+[source, go]
+----
+import (
+    "github.com/vortex14/gotyphoon/elements/forms"
+    "github.com/vortex14/gotyphoon/interfaces"
+)
+----
+
+== Structs
+
+=== PipelineHttpGroup
+[source, go]
+----
+type PipelineHttpGroup struct {
+    LambdaMap      map[string]interfaces.LambdaInterface
+    PyLambdaMap    map[string]interfaces.LambdaInterface
+    Stages         []interfaces.BasePipelineInterface
+    Consumers      map[string]interfaces.ConsumerInterface
+}
+----
+
+
+
+
+==== LambdaMap map[string]interfaces.LambdaInterface
+
+
+==== PyLambdaMap map[string]interfaces.LambdaInterface
+
+
+==== Stages []interfaces.BasePipelineInterface
+
+
+==== Consumers map[string]interfaces.ConsumerInterface
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/middlewares
+
+
+=== Imports
+[source, go]
+----
+import (
+    "context"
+    "github.com/vortex14/gotyphoon/ctx"
+    "github.com/vortex14/gotyphoon/elements/forms"
+    "github.com/vortex14/gotyphoon/elements/models/task"
+    "github.com/vortex14/gotyphoon/interfaces"
+)
+----
+
+== Structs
+
+=== TaskMiddleware
+[source, go]
+----
+type TaskMiddleware struct {
+    Fn    MiddlewareTaskCallback
+}
+----
+
+
+
+
+==== Fn MiddlewareTaskCallback
+
+
+
+==== Receivers
+
+===== Pass
+[source, go]
+----
+func (m *TaskMiddleware) Pass(
+    context context.Context,
+    logger interfaces.LoggerInterface,
+    reject func(err error),
+    next func(ctx context.Context),
+
+    )
+----
+
+
+
+
+
+
+== Function Definitions
+
+
+=== MiddlewareTaskCallback
+[source, go]
+----
+type MiddlewareTaskCallback func(
+    context context.Context,
+    task *task.TyphoonTask,
+    logger interfaces.LoggerInterface,
+    reject func(err error),
+    next func(ctx context.Context),
+)
+----
+
+
+
+== Functions
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/models
+
+
+== Structs
+
+=== Proxy
+[source, go]
+----
+type Proxy struct {
+    Proxy          string
+    Agent          string
+    Success        bool
+    AgentMobile    string
+}
+----
+
+
+
+==== Proxy string
+
+
+==== Agent string
+
+
+==== Success bool
+
+
+==== AgentMobile string
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/models/generator
+
+
+== Package github.com/vortex14/gotyphoon/extensions/models/go-cmd
+
+
+=== Imports
+[source, go]
+----
+import (
+    "sync"
+    "time"
+    "github.com/go-cmd/cmd"
+    "github.com/vortex14/gotyphoon/elements/models/awaitabler"
+    "github.com/vortex14/gotyphoon/elements/models/singleton"
+    Errors "github.com/vortex14/gotyphoon/errors"
+)
+----
+
+== Structs
+
+=== Command
+[source, go]
+----
+type Command struct {
+    Cmd        string
+    Dir        string
+    Args       []string
+    Refresh    float32
+    Output     chan string
+}
+----
+
+
+
+
+
+
+
+==== Cmd string
+
+
+
+==== Dir string
+
+
+==== Args []string
+
+
+
+==== Refresh float32
+
+
+==== Output chan string
+
+
+
+==== Receivers
+
+===== Run
+[source, go]
+----
+func (c *Command) Run() error
+----
+
+
+
+
+
+
+== Functions
+
+
+
+
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/models/graphviz
+
+
+=== Constants
+[source, go]
+----
+const (
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+)
+----
+
+=== ARROWBox
+[source, go]
+----
+
+----
+
+
+
+=== ARROWVee
+[source, go]
+----
+
+----
+
+
+
+=== ARROWNone
+[source, go]
+----
+
+----
+
+
+
+=== ARROWNormal
+[source, go]
+----
+
+----
+
+
+
+=== COLORRed
+[source, go]
+----
+
+----
+
+
+
+=== COLORNavy
+[source, go]
+----
+
+----
+
+
+
+=== COLORBlack
+[source, go]
+----
+
+----
+
+
+
+=== COLORGreen
+[source, go]
+----
+
+----
+
+
+
+=== COLORTomato
+[source, go]
+----
+
+----
+
+
+
+=== COLORAzure
+[source, go]
+----
+
+----
+
+
+
+=== COLORSnow
+[source, go]
+----
+
+----
+
+
+
+=== COLORAliceblue
+[source, go]
+----
+
+----
+
+
+
+=== COLORBeige
+[source, go]
+----
+
+----
+
+
+
+=== COLORDarksalmon
+[source, go]
+----
+
+----
+
+
+
+=== COLORGainsboro
+[source, go]
+----
+
+----
+
+
+
+=== COLORCornflowerblue
+[source, go]
+----
+
+----
+
+
+
+=== COLORCoral
+[source, go]
+----
+
+----
+
+
+
+=== COLORGold
+[source, go]
+----
+
+----
+
+
+
+=== COLORGray
+[source, go]
+----
+
+----
+
+
+
+=== SHAPEBox3D
+[source, go]
+----
+
+----
+
+
+
+=== SHAPEFolder
+[source, go]
+----
+
+----
+
+
+
+=== SHAPETab
+[source, go]
+----
+
+----
+
+
+
+=== SHAPEPipeline
+[source, go]
+----
+
+----
+
+
+
+=== SHAPERecord
+[source, go]
+----
+
+----
+
+
+
+=== SHAPEComponent
+[source, go]
+----
+
+----
+
+
+
+=== SHAPEAction
+[source, go]
+----
+
+----
+
+
+
+=== StyleSolid
+[source, go]
+----
+
+----
+
+
+
+=== StyleDashed
+[source, go]
+----
+
+----
+
+
+
+=== StyleDotted
+[source, go]
+----
+
+----
+
+
+
+=== StyleFilled
+[source, go]
+----
+
+----
+
+
+
+=== StyleRounded
+[source, go]
+----
+
+----
+
+
+
+=== StyleBold
+[source, go]
+----
+
+----
+
+
+
+=== LAYOUTDefault
+[source, go]
+----
+
+----
+
+
+
+=== LAYOUTNeato
+[source, go]
+----
+
+----
+
+
+
+=== LAYOUTLine
+[source, go]
+----
+
+----
+
+
+
+=== LAYOUTFdp
+[source, go]
+----
+
+----
+
+
+
+=== LAYOUTTwopi
+[source, go]
+----
+
+----
+
+
+
+=== LAYOUTPatchwork
+[source, go]
+----
+
+----
+
+
+
+=== LAYOUTCirco
+[source, go]
+----
+
+----
+
+
+
+=== ExportSVG
+[source, go]
+----
+
+----
+
+
+
+=== ExportPNG
+[source, go]
+----
+
+----
+
+
+
+=== ExportJPG
+[source, go]
+----
+
+----
+
+
+
+=== ExportDot
+[source, go]
+----
+
+----
+
+
+
+=== CFLAG
+[source, go]
+----
+
+----
+
+
+
+== Package github.com/vortex14/gotyphoon/extensions/models/progress-file
+
+
+=== Imports
+[source, go]
+----
+import (
+    "fmt"
+    "github.com/vortex14/gotyphoon/elements/models/bar"
+    "github.com/vortex14/gotyphoon/elements/models/file"
+    "github.com/vortex14/gotyphoon/log"
+)
+----
+
+== Structs
+
+=== File
+[source, go]
+----
+type File struct {
+}
+----
+
+
+
+
+
+
+
+==== Receivers
+
+===== Read
+[source, go]
+----
+func (f *File) Read(p []byte) (int, error)
+----
+
+
+
+
+
+
+== Functions
+
+
+
+

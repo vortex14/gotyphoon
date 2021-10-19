@@ -3,8 +3,9 @@ package code
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
+
+	"path/filepath"
 
 	"github.com/fatih/color"
 
@@ -17,11 +18,11 @@ func UnCommentCode(marker string, code string) string {
 	isUncomment := false
 	for _, line := range lines {
 
-		if strings.Contains(line, marker){
+		if strings.Contains(line, marker) {
 			unCommentedLineList = append(unCommentedLineList, line)
 			isUncomment = true
 			continue
-		} else if !isUncomment ||  len(line) <= 1 {
+		} else if !isUncomment || len(line) <= 1 {
 			unCommentedLineList = append(unCommentedLineList, line)
 			continue
 		} else if len(line) <= 3 && strings.Contains(line, "//") && isUncomment {
@@ -35,6 +36,8 @@ func UnCommentCode(marker string, code string) string {
 		} else if strings.Contains(line, "//") {
 			uncommentLine := strings.Replace(line, "//", "", 1)
 			unCommentedLineList = append(unCommentedLineList, uncommentLine)
+		} else {
+			unCommentedLineList = append(unCommentedLineList, line)
 		}
 
 	}
@@ -49,16 +52,21 @@ func CommentCode(marker string, code string) string {
 	isComment := false
 
 	for _, line := range lines {
-		if utils.IsStrContain(line, "package") { CommentedLineList = append(CommentedLineList, line); continue }
+		if utils.IsStrContain(line, "package") {
+			CommentedLineList = append(CommentedLineList, line)
+			continue
+		}
 
 		firstSliceStr := ""
 
-		if len(line) >= 5 { firstSliceStr = line[:5] }
+		if len(line) >= 2 {
+			firstSliceStr = line[:2]
+		}
 
 		if strings.Contains(line, "*/") {
 			isComment = false
 			CommentedLineList = append(CommentedLineList, line)
-		} else if strings. Contains(line, marker) {
+		} else if strings.Contains(line, marker) {
 			isComment = true
 			CommentedLineList = append(CommentedLineList, line)
 		} else if strings.Contains(line, fmt.Sprintf("// %s", marker)) {
@@ -66,7 +74,6 @@ func CommentCode(marker string, code string) string {
 			CommentedLineList = append(CommentedLineList, line)
 		} else if strings.Contains(firstSliceStr, "//") {
 			CommentedLineList = append(CommentedLineList, line)
-
 		} else if isComment {
 			commentLine := fmt.Sprintf("//%s", line)
 			CommentedLineList = append(CommentedLineList, commentLine)
@@ -80,22 +87,37 @@ func CommentCode(marker string, code string) string {
 	return CommentedLines
 }
 
+func getSourceCode(
+	path string,
+	matchCode string,
+	info os.FileInfo,
+	excludeDirs map[string]bool,
+	callback func(marker string, source string)) error {
+
+	firstDir := utils.GetFirstDir(path)
+
+	switch {
+	case info.IsDir() || strings.Contains(path, "_test.go") || excludeDirs[firstDir]:
+		return nil
+	}
+
+	contentFileCode := utils.ReadFile(path)
+	marker := fmt.Sprintf("/* %s", matchCode)
+	if strings.Contains(contentFileCode, marker) {
+		callback(marker, contentFileCode)
+	}
+	return nil
+}
+
 func UncommentDir(startDir string, matchCode string, excludeDirs map[string]bool)  {
 	_ = filepath.Walk(startDir,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil { return err }
-			firstDir := utils.GetFirstDir(path)
-			if _, ok := excludeDirs[firstDir]; ok { return nil }
-			if info.IsDir() { return nil}
-			if strings.Contains(path, "_test.go") { return nil}
-			contentFileCode := utils.ReadFile(path)
-			marker := fmt.Sprintf("/* %s", matchCode)
-			if strings.Contains(contentFileCode, marker) {
-				unCommentCode := UnCommentCode(marker, contentFileCode)
+			return getSourceCode(path, matchCode, info, excludeDirs, func(marker string, source string) {
+				unCommentCode := UnCommentCode(marker, source)
 				errUn := utils.SaveData(path, unCommentCode)
 				if errUn != nil { color.Red(errUn.Error()) }
-			}
-			return nil
+			})
 		})
 }
 
@@ -104,17 +126,10 @@ func CommentDir(startDir string, matchCode string, excludeDirs map[string]bool) 
 	_ = filepath.Walk(startDir,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil { return err }
-			firstDir := utils.GetFirstDir(path)
-			if _, ok := excludeDirs[firstDir]; ok { return nil }
-			if info.IsDir() { return nil}
-			if strings.Contains(path, "_test.go") { return nil}
-			contentFileCode := utils.ReadFile(path)
-			marker := fmt.Sprintf("/* %s", matchCode)
-			if strings.Contains(contentFileCode, marker) {
-				commentedCode := CommentCode(marker, contentFileCode)
+			return getSourceCode(path, matchCode, info, excludeDirs, func(marker string, source string) {
+				commentedCode := CommentCode(marker, source)
 				errUn := utils.SaveData(path, commentedCode)
 				if errUn != nil { color.Red(errUn.Error()) }
-			}
-			return nil
+			})
 		})
 }

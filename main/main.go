@@ -70,7 +70,7 @@ func main40()  {
 
 		//println(fakeTask.URL)
 		//u := utils.Utils{}
-		//println(u.PrintPrettyJson(fakeTask))
+		//println(u.DumpPrettyJson(fakeTask))
 
 
 		//pipeline := httpPipeline.Constructor(fakeTask, nil)

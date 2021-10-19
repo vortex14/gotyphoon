@@ -7,7 +7,7 @@ import (
 )
 
 type Project interface {
-	Run()
+	Run() Project
 	Close()
 	Watch()
 	goPromise
@@ -17,6 +17,7 @@ type Project interface {
 	GetName() string
 	GetVersion() string
 	GetLogLevel() string
+	GetConfigPath() string
 	GetConfigFile() string
 	GetProjectPath() string
 	builders.ProjectBuilder
@@ -30,6 +31,6 @@ type Project interface {
 	GetLabels() *ClusterProjectLabels
 	GetBuilderOptions() *BuilderOptions
 	GetEnvSettings() *environment.Settings
-	LoadServices(opts TyphoonIntegrationsOptions)
 	GetService(name string) Service
+	LoadServices(opts TyphoonIntegrationsOptions)
 }

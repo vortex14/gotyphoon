@@ -18,6 +18,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/vortex14/gotyphoon/elements/models/singleton"
 
 	"github.com/vortex14/gotyphoon/environment"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -28,16 +29,29 @@ import (
 //echo -n 'LOGIN:PASSWORD' | base64
 
 type Docker struct {
+	singleton.Singleton
+
 	//isLatestTag bool
-	LatestTag   string
-	env         *environment.Settings
-	Project     interfaces.Project
-	client      *client.Client
+	LatestTag string
+	env       *environment.Settings
+	Project   interfaces.Project
+	client    *client.Client
 
-	RemoteSSHUrl string
+	RemoteSSHUrl       string
 	remoteDockerClient *client.Client
+}
 
+func (d *Docker) GetRemoteClient() *client.Client {
+	return d.remoteDockerClient
+}
 
+func (d *Docker) GetClient() *client.Client {
+	switch {
+	case d.remoteDockerClient != nil:
+		return d.GetRemoteClient()
+	default:
+		return d.GetLocalClient()
+	}
 }
 
 var dockerRegistryUserID = ""
@@ -54,7 +68,6 @@ type ErrorDetail struct {
 type Log struct {
 	Stream string `json:"stream"`
 	Status string `json:"status"`
-
 }
 
 func (d *Docker) print(rd io.Reader) error {
@@ -93,7 +106,7 @@ func (d *Docker) GetLastTagName() string {
 	return tagName
 }
 
-func (d *Docker) GetClient() *client.Client {
+func (d *Docker) GetLocalClient() *client.Client {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		fmt.Println(err.Error())

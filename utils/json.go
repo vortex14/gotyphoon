@@ -16,7 +16,7 @@ func JsonDump(model interface{}) (error, []byte) {
 	return nil, data
 }
 
-func PrintPrettyJson(f interface{}) (error, string) {
+func DumpPrettyJson(f interface{}) (error, string) {
 	dump, err := json.MarshalIndent(f, "  ", "  ")
 	return err, string(dump)
 }

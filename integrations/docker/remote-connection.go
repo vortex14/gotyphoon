@@ -1,10 +1,8 @@
 package docker
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/fatih/color"
 	"io"
 	//docker "github.com/fsouza/go-dockerclient"
@@ -13,7 +11,6 @@ import (
 	"os"
 
 	"github.com/docker/cli/cli/connhelper"
-	MobyContainer "github.com/moby/moby/integration/internal/container"
 
 	//"github.com/ahmetalpbalkan/dexec"
 	"github.com/docker/docker/api/types"
@@ -93,13 +90,20 @@ func (d *Docker) GetRemoteDockerImagesList() (error, []types.ImageSummary) {
 }
 
 func (d *Docker) GetRemoteActiveContainersList() (error, []types.Container) {
-	if d.remoteDockerClient == nil { err, _ := d.RemoteConnect(); if err != nil { return err, nil }}
+	var clientConnection *client.Client
+	var err error
+	if d.remoteDockerClient == nil && len(d.RemoteSSHUrl) > 0 {
+		err, clientConnection = d.RemoteConnect(); if err != nil { return err, nil }
+	} else {
+		clientConnection = d.GetClient()
+	}
+	println("!!! >> > >> >> > > > > >", d.client)
 
-	containers, err := d.remoteDockerClient.ContainerList(context.Background(), types.ContainerListOptions{})
+	containers, err := clientConnection.ContainerList(context.Background(), types.ContainerListOptions{})
 	if err != nil { return err, nil }
 
 	for _, container := range containers {
-		fmt.Println(container.ID)
+		fmt.Println(container.ID, container.Names[0])
 	}
 
 	return nil, containers
@@ -107,111 +111,13 @@ func (d *Docker) GetRemoteActiveContainersList() (error, []types.Container) {
 
 //https://github.com/moby/moby/blob/8e610b2b55bfd1bfa9436ab110d311f5e8a74dcb/integration/internal/container/exec.go#L38
 
-func (d *Docker) RunRemoteCommandInContainer(context context.Context, container types.Container) (error, MobyContainer.ExecResult)  {
-	attach, err := d.remoteDockerClient.ContainerExecAttach(context, container.ID, types.ExecStartCheck{})
+func (d *Docker) RunSyncRemoteCommandInContainer(context context.Context, container types.Container) (error, ExecResult)  {
+
+	exec, err := Exec(context, d.remoteDockerClient, container.ID, []string{"ls", "/opt/bitnami/solr/data"})
 	if err != nil {
-		color.Red("%+v", err.Error())
-		return err, MobyContainer.ExecResult{}
+		return err, ExecResult{}
 	}
 
-	config :=  types.ExecConfig{
-		AttachStderr: true,
-		AttachStdout: true,
-		Cmd: []string{"ls", "-la"},
-	}
-
-	cresp, err := d.remoteDockerClient.ContainerExecCreate(context, container.ID, config)
-	if err != nil {
-		return err, MobyContainer.ExecResult{}
-	}
-
-	execID := cresp.ID
-
-	// run it, with stdout/stderr attached
-	aresp, err := d.remoteDockerClient.ContainerExecAttach(context, execID, types.ExecStartCheck{})
-	if err != nil {
-		return err, MobyContainer.ExecResult{}
-	}
-
-	defer aresp.Close()
-
-	// read the output
-	var outBuf, errBuf bytes.Buffer
-	outputDone := make(chan error)
-
-	go func() {
-		// StdCopy demultiplexes the stream into two buffers
-		_, err = stdcopy.StdCopy(&outBuf, &errBuf, aresp.Reader)
-		outputDone <- err
-	}()
-
-	select {
-	case err := <-outputDone:
-		if err != nil {
-			return err, MobyContainer.ExecResult{}
-		}
-		break
-
-	case <-context.Done():
-		return context.Err(), MobyContainer.ExecResult{}
-	}
-
-	// get the exit code
-	_, err = d.remoteDockerClient.ContainerExecInspect(context, execID)
-	if err != nil {
-		return err, MobyContainer.ExecResult{}
-	}
-
-	return nil, MobyContainer.ExecResult{}
-
-
-
-
-	//ContainerCMD{
-	//	Method:         nil,
-	//	Path:           "",
-	//	Args:           nil,
-	//	Dir:            "",
-	//	DockerClient:   nil,
-	//	started:        false,
-	//	closeAfterWait: nil,
-	//}
-	//
-	//cmd := exec.Command("ls", "-la")
-	//cmd.Stdin = attach.Reader
-	//
-	//var out bytes.Buffer
-	//cmd.Stdout = &out
-	//errm := cmd.Run()
-	//if err != nil {
-	//	color.Red(errm.Error())
-	//}
-	//fmt.Printf("in all caps: %q\n", out.String())
-
-
-
-
-
-
-
-	//attach.Conn.
-
-	//attach.Conn.
-
-	color.Red("%+v", attach)
-	//client := d.remoteDockerClient.(*client.Client)
-	//err := client.Ping()
-	//if err != nil {
-	//	return
-	//}
-	//dc := dexec.Docker{}
-	//
-	////d.remoteDockerClient..
-	//m, _ := dexec.ByCreatingContainer(docker.CreateContainerOptions{
-	//	Config: &docker.Config{Image: container.Image}})
-	//
-	//md := d.Command(m, "echo", `I am running inside a container!`)
-	//b, err := cmd.Output()
-	//if err != nil { log.Fatal(err) }
-	//log.Printf("%s", b)
+	color.Yellow("%+v", exec.outBuffer.String())
+	return nil, ExecResult{}
 }

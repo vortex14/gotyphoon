@@ -4,6 +4,10 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/elements/models/awaitabler"
+	"github.com/vortex14/gotyphoon/elements/models/folder"
+	"github.com/vortex14/gotyphoon/elements/models/singleton"
+	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/extensions/data"
 	tyLog "github.com/vortex14/gotyphoon/log"
 	"io"
@@ -17,7 +21,6 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -61,6 +64,10 @@ type TestMongo struct {
 }
 
 type Project struct {
+	folder *folder.Folder
+	singleton.Singleton
+	awaitabler.Object
+
 	AutoReload        bool
 	task              *Task
 	Path              string
@@ -175,7 +182,9 @@ func (p *Project) GetRemotes() ([]*git.Remote, error) {
 }
 
 func watchDirTeet(path string, fi os.FileInfo, err error) error {
+	print(path)
 
+	return nil
 	// since fsnotify can watch all the files in a directory, watchers only need
 	// to be added to each nested directory
 	if fi.Mode().IsDir() {
@@ -248,7 +257,7 @@ func (p *Project) ImportExceptions(component string, sourceFileName string) erro
 		//u := utils.Utils{}
 		//j
 
-		//o := u.PrintPrettyJson(suurceBson)
+		//o := u.DumpPrettyJson(suurceBson)
 
 		//println(BsonTools)
 
@@ -439,45 +448,48 @@ func (p *Project) GetEnvSettings() *environment.Settings {
 }
 
 func (p *Project) AddPromise()  {
-	p.task.wg.Add(1)
+	//p.task.wg.Add(1)
 }
 func (p *Project) PromiseDone()  {
-	p.task.wg.Done()
+	//p.task.wg.Done()
 }
 func (p *Project) WaitPromises()  {
-	p.task.wg.Wait()
+	//p.task.wg.Wait()
 }
-func (p *Project) Run()  {
+func (p *Project) Run() interfaces.Project {
+	p.folder = &folder.Folder{ Path: p.GetProjectPath() }
+
 	p.CheckProject()
-	p.task = &Task{
-		closed: make(chan struct{}),
-		ticker: time.NewTicker(time.Second * 2),
-	}
-	typhoonDir := &Directory{
-		Path: "typhoon",
-	}
-
-	if !typhoonDir.IsExistDir("typhoon") {
-		_ = p.CreateSymbolicLink()
-	}
 
 
-	color.Magenta("start components")
-	p.AddPromise()
-	go p.StartComponents(true)
+
+	println(">>>>>>>> >>>>>>>",p.folder.Path)
+	//if !typhoonDir.IsExist("typhoon") {
+	//	println(111)
+	//	_ = p.CreateSymbolicLink()
+	//}
+
 	//
-	p.AddPromise()
-	go p.task.Run()
+	//
+	//color.Magenta("start components")
+	//p.AddPromise()
+	//go p.StartComponents(true)
+	////
+	//p.AddPromise()
+	//go p.task.Run()
+	//
+	//c := make(chan os.Signal, 1)
+	//signal.Notify(c, os.Interrupt)
+	//go p.Watch()
+	////go Watch(&task.wg, typhoonComponent, project.GetConfigFile())
+	//sig := <-c
+	//fmt.Printf("Got %s signal. Aborting...\n", sig)
+	//p.AddPromise()
+	//go p.Close()
+	//p.task.Stop()
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go p.Watch()
-	//go Watch(&task.wg, typhoonComponent, project.GetConfigFile())
-	sig := <-c
-	fmt.Printf("Got %s signal. Aborting...\n", sig)
-	p.AddPromise()
-	go p.Close()
-	p.task.Stop()
+
+	return p
 
 }
 
@@ -561,6 +573,7 @@ func (p *Project) Watch()  {
 }
 
 func (p *Project) Close()  {
+	color.Yellow("close project ...")
 	defer p.PromiseDone()
 	for _, component := range p.components.ActiveComponents {
 
@@ -699,7 +712,9 @@ func (p *Project) CreateSymbolicLink() error {
 
 	linkTyphoonPath := fmt.Sprintf("%s/pytyphoon/typhoon", settings.Path)
 	color.Yellow("TYPHOON_PATH=%s", settings.Path)
-	err := os.Symlink(linkTyphoonPath, "typhoon")
+	directLink := filepath.Join(p.GetProjectPath(), "typhoon")
+	color.Yellow(directLink)
+	err := os.Symlink(linkTyphoonPath, directLink)
 
 	if err != nil{
 		fmt.Printf("err %s",  err)
@@ -722,6 +737,10 @@ func (p *Project) GetComponents() []string {
 
 func (p *Project) GetConfigFile() string {
 	return p.ConfigFile
+}
+
+func (p *Project) GetConfigPath() string {
+	return filepath.Join(p.GetProjectPath(), p.GetConfigFile())
 }
 
 func (p *Project) GetProjectPath() string {
@@ -824,36 +843,27 @@ func (p *Project) LoadConfig() (configProject *interfaces.ConfigProject) {
 }
 
 func (p *Project) CheckProject() {
-	var status = true
-	var statuses = make(map[string]bool)
 
-	p.Path = p.GetProjectPath()
+	var status = true
 
 	for _, componentName := range p.SelectedComponent {
 		component := &Component{
-
+			ProjectPath: p.Path,
 			Name: componentName,
 		}
-		color.Yellow("checking: %s...",componentName)
+		color.Yellow("checking: %s...", componentName)
 
-		componentStatus := component.CheckComponent()
-		statuses[componentName] = componentStatus
-	}
-
-	for componentStatus, statusComponent := range statuses {
-		if !statusComponent {
+		if !component.CheckComponent() {
 			status = false
+			color.Yellow("%s is: false", componentName)
 		}
-		color.Yellow("component %s is: %t", componentStatus, statusComponent)
-	}
 
+	}
 	p.LoadConfig()
 
 
-
-
 	if !status {
-		color.Red("Project does not exists in the current directory :%s", p.Path )
+		color.Red("%s : %s", Errors.ProjectNotFound.Error(), p.Path )
 		os.Exit(1)
 	}
 
@@ -862,7 +872,7 @@ func (p *Project) CheckProject() {
 	_, settings := env.GetSettings()
 
 	if len(settings.Path) == 0 || len(settings.Projects) == 0 {
-		color.Red("We need set valid environment variables like TYPHOON_PATH and TYPHOON_PROJECTS in %s", env.ProfilePath )
+		color.Red("%s in %s", Errors.ProjectInvalidEnv.Error(), env.ProfilePath )
 		os.Exit(1)
 	}
 

@@ -34,34 +34,31 @@ func (timer *Timer) Start() {
 
 	go func(timer *Timer) {
 		for {
-			if timer.running {
-				select {
-				case <-timer.ticker.C:
-					go func(timer *Timer) {
-						if !timer.running {
-							return
-						}
+			if !timer.running { return }
+			select {
+			case <-timer.ticker.C:
+				go func(timer *Timer) {
+					if !timer.running {
+						return
+					}
 
-						timer.iterations = timer.iterations + 1
+					timer.iterations = timer.iterations + 1
 
-						if timer.maxIntervals > 0 && timer.iterations > timer.maxIntervals {
-							timer.Stop()
-							return
-						}
+					if timer.maxIntervals > 0 && timer.iterations > timer.maxIntervals {
+						timer.Stop()
+						return
+					}
 
-						timer.fn(timer.args)
+					timer.fn(timer.args)
 
-						if timer.maxIntervals == 0 {
-							timer.Stop()
-							return
-						}
-					}(timer)
+					if timer.maxIntervals == 0 {
+						timer.Stop()
+						return
+					}
+				}(timer)
 
-				case <-timer.process:
-					timer.Stop()
-					return
-				}
-			} else {
+			case <-timer.process:
+				timer.Stop()
 				return
 			}
 		}

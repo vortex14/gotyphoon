@@ -208,6 +208,24 @@ type PipelineGroupInterface interface {
 		})
 
 
+		Convey("Run commenting code twice",func() {
+			matchCode := "ignore for building amd64-linux"
+
+			data := CommentCode(fmt.Sprintf("/* %s", matchCode), testCode)
+			data2 := CommentCode(fmt.Sprintf("/* %s", matchCode), data)
+
+			So(testcommented, ShouldContainSubstring, data2)
+		})
+
+		Convey("Run uncommenting code twice",func() {
+			matchCode := "ignore for building amd64-linux"
+
+			data := UnCommentCode(fmt.Sprintf("/* %s", matchCode), testcommented)
+			data2 := UnCommentCode(fmt.Sprintf("/* %s", matchCode), data)
+			So(data2, ShouldContainSubstring, testCode)
+		})
+
+
 
 	})
 

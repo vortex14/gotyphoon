@@ -15,7 +15,7 @@ import (
 	"github.com/vortex14/gotyphoon/environment"
 	"github.com/vortex14/gotyphoon/interfaces"
 
-	. "github.com/vortex14/gotyphoon/extensions/models/go-cmd"
+	. "github.com/vortex14/gotyphoon/extensions/models/cmd"
 )
 
 type Git struct {

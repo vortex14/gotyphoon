@@ -7,14 +7,14 @@ tmp_dir = "tmp"
 
 [build]
 # Just plain old shell command. You could use `make` as well.
-cmd = "go build -o ./tmp/ametrics -i ./main/ametrics/ametrics.go"
+cmd = "go build -o ./tmp/python-project -i ./main/project/python3/python3.go"
 # Binary file yields from `cmd`.
 bin = "/Users/vortex/go/bin"
 
 
 # Customize binary.
 #full_bin = "APP_ENV=dev APP_USER=air ./tmp/main"
-full_bin = "APP_ENV=dev APP_USER=air ./tmp/ametrics"
+full_bin = "APP_ENV=dev APP_USER=air ./tmp/python-project"
 
 
 # Watch these filename extensions.

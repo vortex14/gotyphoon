@@ -242,7 +242,7 @@ func (c *Client) CreateCollection()  {
 
 	admin.SetBasicAuth("tst", "test2")
 
-	//_, s := utils.PrintPrettyJson(reload)
+	//_, s := utils.DumpPrettyJson(reload)
 	//println(s, admin)
 	//if err != nil {
 	//	color.Red("%s", err.Error())
