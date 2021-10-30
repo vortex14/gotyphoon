@@ -5,8 +5,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	// /* ignore for building amd64-linux
-//	"fmt"
-//	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
+	"fmt"
+	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	// */
 	"github.com/vortex14/gotyphoon/log"
 
@@ -35,7 +35,7 @@ type Action struct {
 	Middlewares    [] interfaces.MiddlewareInterface  //Before a call to action we need to check this into middleware. May be client state isn't ready for serve
 
 	// /* ignore for building amd64-linux
-//	Graph          interfaces.GraphInterface
+	Graph          interfaces.GraphInterface
 	// */
 
 }
@@ -83,32 +83,32 @@ func (a *Action) InitPipelineGraph()  {
 	pipelineLogger := log.Patch(a.LOG.(*logrus.Entry), log.D{"pipeline-group": a.GetPipeline().GetName()})
 	a.Pipeline.SetLogger(pipelineLogger)
 	// /* ignore for building amd64-linux
-//	a.Pipeline.SetGraph(a.Graph)
-//	a.Pipeline.InitGraph(a.GetHandlerPath())
+	a.Pipeline.SetGraph(a.Graph)
+	a.Pipeline.InitGraph(a.GetHandlerPath())
 	// */
 }
 
 func (a *Action) UpdateGraphLabel(method string, path string)  {
 
 	///* ignore for building amd64-linux
-//	a.Input ++
-//
-//		labelAction := fmt.Sprintf(`
-//	
-//	R: %d
-//	
-//	`, a.Input)
-//
-//	if a.Graph != nil {
-//		a.Graph.UpdateEdge(&interfaces.EdgeOptions{
-//			NodeA: method,
-//			NodeB: path,
-//			LabelH: labelAction,
-//			Color: graphvizExt.COLORNavy,
-//
-//		})
-//	}
-//
+	a.Input ++
+
+		labelAction := fmt.Sprintf(`
+	
+	R: %d
+	
+	`, a.Input)
+
+	if a.Graph != nil {
+		a.Graph.UpdateEdge(&interfaces.EdgeOptions{
+			NodeA: method,
+			NodeB: path,
+			LabelH: labelAction,
+			Color: graphvizExt.COLORNavy,
+
+		})
+	}
+
     //  */
 
 }
@@ -116,65 +116,65 @@ func (a *Action) UpdateGraphLabel(method string, path string)  {
 func (a *Action) AddMethodNodes() {
 
 	// /* ignore for building amd64-linux
-//	for _, method := range a.GetMethods() {
-//		a.Graph.AddNode(&interfaces.NodeOptions{
-//			Name: method,
-//			Label: graphvizExt.FormatBottomSpace(method),
-//			Shape: graphvizExt.SHAPEAction,
-//			EdgeOptions: &interfaces.EdgeOptions{
-//				NodeB:  a.GetHandlerPath(),
-//				ArrowS: 0.5,
-//			},
-//		})
-//	}
-//
+	for _, method := range a.GetMethods() {
+		a.Graph.AddNode(&interfaces.NodeOptions{
+			Name: method,
+			Label: graphvizExt.FormatBottomSpace(method),
+			Shape: graphvizExt.SHAPEAction,
+			EdgeOptions: &interfaces.EdgeOptions{
+				NodeB:  a.GetHandlerPath(),
+				ArrowS: 0.5,
+			},
+		})
+	}
+
 	//*/
 }
 
 
 // /* ignore for building amd64-linux
-//
-//func (a *Action) SetGraph(parent interfaces.GraphInterface, buildMethods bool)  {
-//	a.Graph = parent
-//
-//	opts := &interfaces.NodeOptions{
-//		Name: a.GetHandlerPath(),
-//		Label: graphvizExt.FormatSpace(a.GetHandlerPath()),
-//		Shape: graphvizExt.SHAPETab,
-//		Style: graphvizExt.StyleFilled,
-//		BackgroundColor: graphvizExt.COLORGray,
-//		EdgeOptions: &interfaces.EdgeOptions{},
-//
-//	}
-//
-//	a.Graph.AddNode(opts)
-//
-//	if buildMethods {
-//		a.AddMethodNodes()
-//	}
-//
-//	if a.IsPipeline() {
-//		a.InitPipelineGraph()
-//	}
-//}
-//
-//func (a *Action) SetGraphNodes(nodes map[string]interfaces.NodeInterface)  {
-//	println(fmt.Sprintf("ACTION NAME :%s INIT GRAPH NODES ------ >>> %+v", a.GetPath(), nodes))
-//	a.Graph.SetNodes(nodes)
-//
-//	println(fmt.Sprintf("ACTION NAME :%s GET GRAPH NODES ------ >>> %+v", a.GetPath(), a.Graph.GetNodes()))
-//}
-//
-//func (a *Action) GetGraph() interfaces.GraphInterface {
-//	return a.Graph
-//}
-//
-//
+
+func (a *Action) SetGraph(parent interfaces.GraphInterface, buildMethods bool)  {
+	a.Graph = parent
+
+	opts := &interfaces.NodeOptions{
+		Name: a.GetHandlerPath(),
+		Label: graphvizExt.FormatSpace(a.GetHandlerPath()),
+		Shape: graphvizExt.SHAPETab,
+		Style: graphvizExt.StyleFilled,
+		BackgroundColor: graphvizExt.COLORGray,
+		EdgeOptions: &interfaces.EdgeOptions{},
+
+	}
+
+	a.Graph.AddNode(opts)
+
+	if buildMethods {
+		a.AddMethodNodes()
+	}
+
+	if a.IsPipeline() {
+		a.InitPipelineGraph()
+	}
+}
+
+func (a *Action) SetGraphNodes(nodes map[string]interfaces.NodeInterface)  {
+	println(fmt.Sprintf("ACTION NAME :%s INIT GRAPH NODES ------ >>> %+v", a.GetPath(), nodes))
+	a.Graph.SetNodes(nodes)
+
+	println(fmt.Sprintf("ACTION NAME :%s GET GRAPH NODES ------ >>> %+v", a.GetPath(), a.Graph.GetNodes()))
+}
+
+func (a *Action) GetGraph() interfaces.GraphInterface {
+	return a.Graph
+}
+
+
 // */
 
 func (a *Action) OnRequest(method string, path string)  {
 	// /* ignore for building amd64-linux
-//	a.UpdateGraphLabel(method, path)
+	a.UpdateGraphLabel(method, path)
 	//*/
 }
 

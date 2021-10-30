@@ -115,7 +115,7 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 		s.server.Use(Gin.Recovery())
 
 		// /* ignore for building amd64-linux
-//		s.InitGraph()
+		s.InitGraph()
 		// */
 
 		s.OnCors = s.onCors
@@ -141,20 +141,20 @@ func (s *TyphoonGinServer) Restart() error {
 func (s *TyphoonGinServer) onInitAction(resource interfaces.ResourceInterface, action interfaces.ActionInterface) {
 
 	// /* ignore for building amd64-linux
-//
-//	if graphAction, ok := action.(interfaces.ActionGraphInterface); ok {
-//
-//		if graphResource, okR := resource.(interfaces.ResourceGraphInterface); okR {
-//
-//			graphResource.AddGraphActionNode(graphAction)
-//		} else {
-//			s.LOG.Error(Errors.GraphActionContextInvalid.Error())
-//		}
-//
-//	} else {
-//		s.LOG.Error(Errors.GraphActionContextInvalid.Error())
-//	}
-//
+
+	if graphAction, ok := action.(interfaces.ActionGraphInterface); ok {
+
+		if graphResource, okR := resource.(interfaces.ResourceGraphInterface); okR {
+
+			graphResource.AddGraphActionNode(graphAction)
+		} else {
+			s.LOG.Error(Errors.GraphActionContextInvalid.Error())
+		}
+
+	} else {
+		s.LOG.Error(Errors.GraphActionContextInvalid.Error())
+	}
+
 	// */
 
 }
@@ -189,13 +189,13 @@ func (s *TyphoonGinServer) onAddResource(resource interfaces.ResourceInterface) 
 	//if resource.IsAuth() { resource.InitAuth(s) }
 
 	// /* ignore for building amd64-linux
-//
-//	if graphResource, ok := resource.(interfaces.ResourceGraphInterface); ok {
-//		s.AddNewGraphResource(graphResource)
-//	} else {
-//		s.LOG.Error(Errors.GraphResourceContextInvalid.Error())
-//	}
-//
+
+	if graphResource, ok := resource.(interfaces.ResourceGraphInterface); ok {
+		s.AddNewGraphResource(graphResource)
+	} else {
+		s.LOG.Error(Errors.GraphResourceContextInvalid.Error())
+	}
+
    // */
 
 }

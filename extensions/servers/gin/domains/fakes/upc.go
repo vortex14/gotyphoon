@@ -9,8 +9,8 @@ import (
 	GinExtension "github.com/vortex14/gotyphoon/extensions/servers/gin"
 
 	// /* ignore for building amd64-linux
-//	GraphExtension "github.com/vortex14/gotyphoon/extensions/forms/graph"
-//	GinGraphExt "github.com/vortex14/gotyphoon/extensions/servers/gin/graph"
+	GraphExtension "github.com/vortex14/gotyphoon/extensions/forms/graph"
+	GinGraphExt "github.com/vortex14/gotyphoon/extensions/servers/gin/graph"
 	// */
 
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -21,22 +21,22 @@ func handler(ctx *Gin.Context, logger interfaces.LoggerInterface)  {
 }
 
 // /* ignore for building amd64-linux
-//
-//var GraphController = &GinGraphExt.Action{
-//	Action: &GraphExtension.Action{
-//		Action: &forms.Action{
-//			MetaInfo: &label.MetaInfo{
-//				Name: NAME,
-//				Path: FakeUPCPath,
-//				Description: "Fake Typhoon UPC code",
-//			},
-//			Methods: []string{interfaces.GET},
-//		},
-//	},
-//	GinController: handler,
-//
-//}
-//
+
+var GraphController = &GinGraphExt.Action{
+	Action: &GraphExtension.Action{
+		Action: &forms.Action{
+			MetaInfo: &label.MetaInfo{
+				Name: NAME,
+				Path: FakeUPCPath,
+				Description: "Fake Typhoon UPC code",
+			},
+			Methods: []string{interfaces.GET},
+		},
+	},
+	GinController: handler,
+
+}
+
 // */
 
 func CreateUpcAction() interfaces.ActionInterface {

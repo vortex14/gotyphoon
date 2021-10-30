@@ -5,9 +5,9 @@ import (
 	"github.com/vortex14/gotyphoon/elements/models/label"
 
 	// /* ignore for building amd64-linux
-//	"fmt"
-//	"github.com/sirupsen/logrus"
-//	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
+	"fmt"
+	"github.com/sirupsen/logrus"
+	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	//*/
 	"github.com/vortex14/gotyphoon/interfaces"
 
@@ -23,7 +23,7 @@ type PipelineGroup struct {
 	Stages        []interfaces.BasePipelineInterface
 	Consumers     map[string]interfaces.ConsumerInterface
 	// /* ignore for building amd64-linux
-//	graph         interfaces.GraphInterface
+	graph         interfaces.GraphInterface
 	//*/
 	LOG           interfaces.LoggerInterface
 
@@ -81,51 +81,51 @@ func (g *PipelineGroup) Run(context Context.Context) {
 }
 
 // /* ignore for building amd64-linux
-//
-//func (g *PipelineGroup) InitGraph(parentNode string)  {
-//	groupGraph := g.graph.AddSubGraph(&interfaces.GraphOptions{
-//		IsCluster: true,
-//		Name: g.GetName(),
-//		Label: g.GetName(),
-//	})
-//
-//	groupGraph.SetNodes(g.graph.GetNodes())
-//
-//	g.LOG.Warning(">>>>>>>>>>>>>>>>>>",g.graph.GetNodes(), parentNode)
-//	var prevPipeline = parentNode
-//	for _, pipeline := range g.Stages {
-//		nodeOptions := &interfaces.NodeOptions{
-//			Name: pipeline.GetName(),
-//			Label: graphvizExt.FormatBottomSpace(pipeline.GetName()),
-//			Shape: graphvizExt.SHAPEPipeline,
-//			EdgeOptions: &interfaces.EdgeOptions{
-//				//NodeB:  a.handlerPath,
-//				ArrowS: 0.5,
-//			},
-//		}
-//
-//		if len(prevPipeline) > 0 {
-//			nodeOptions.EdgeOptions.NodeA = prevPipeline
-//		}
-//
-//		groupGraph.AddNode(nodeOptions)
-//
-//		prevPipeline = pipeline.GetName()
-//	}
-//}
-//
-//func (g *PipelineGroup) SetGraph(graph interfaces.GraphInterface)  {
-//	if g.graph != nil { return }
-//	g.LOG.Debug(fmt.Sprintf("SetGraph: %+v", graph.GetNodes()))
-//	g.graph = graph
-//
-//}
-//
-//func (g *PipelineGroup) SetGraphNodes(nodes map[string]interfaces.NodeInterface)  {
-//	logrus.Error(nodes)
-//	g.graph.SetNodes(nodes)
-//}
-//
+
+func (g *PipelineGroup) InitGraph(parentNode string)  {
+	groupGraph := g.graph.AddSubGraph(&interfaces.GraphOptions{
+		IsCluster: true,
+		Name: g.GetName(),
+		Label: g.GetName(),
+	})
+
+	groupGraph.SetNodes(g.graph.GetNodes())
+
+	g.LOG.Warning(">>>>>>>>>>>>>>>>>>",g.graph.GetNodes(), parentNode)
+	var prevPipeline = parentNode
+	for _, pipeline := range g.Stages {
+		nodeOptions := &interfaces.NodeOptions{
+			Name: pipeline.GetName(),
+			Label: graphvizExt.FormatBottomSpace(pipeline.GetName()),
+			Shape: graphvizExt.SHAPEPipeline,
+			EdgeOptions: &interfaces.EdgeOptions{
+				//NodeB:  a.handlerPath,
+				ArrowS: 0.5,
+			},
+		}
+
+		if len(prevPipeline) > 0 {
+			nodeOptions.EdgeOptions.NodeA = prevPipeline
+		}
+
+		groupGraph.AddNode(nodeOptions)
+
+		prevPipeline = pipeline.GetName()
+	}
+}
+
+func (g *PipelineGroup) SetGraph(graph interfaces.GraphInterface)  {
+	if g.graph != nil { return }
+	g.LOG.Debug(fmt.Sprintf("SetGraph: %+v", graph.GetNodes()))
+	g.graph = graph
+
+}
+
+func (g *PipelineGroup) SetGraphNodes(nodes map[string]interfaces.NodeInterface)  {
+	logrus.Error(nodes)
+	g.graph.SetNodes(nodes)
+}
+
 // */
 
 func (g *PipelineGroup) SetLogger(logger interfaces.LoggerInterface)  {
