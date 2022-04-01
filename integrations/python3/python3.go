@@ -10,18 +10,18 @@ import (
 )
 
 type Python struct {
-	Modules map[string] *PythonModule
+	Modules map[string]*PythonModule
 }
 
-func (p *Python) InitEnvironment()  {
+func (p *Python) InitEnvironment() {
 	Python3.Py_Initialize()
 	if !Python3.Py_IsInitialized() {
-		fmt.Println("Error initializing the python interpreter")
+		fmt.Println("Error initializing the python3 interpreter")
 		os.Exit(1)
 	}
 }
 
-func (p *Python) RunFile(path string)  bool {
+func (p *Python) RunFile(path string) bool {
 	s, error := Python3.PyRun_AnyFile(path)
 	if error != nil {
 		color.Red(error.Error())
@@ -31,9 +31,7 @@ func (p *Python) RunFile(path string)  bool {
 	return true
 }
 
-
-
-func (p *Python) InitModules()  {
+func (p *Python) InitModules() {
 	for name := range p.Modules {
 		module := p.Modules[name]
 		status := module.InitModuleHere()
@@ -45,12 +43,12 @@ func (p *Python) InitModules()  {
 	}
 }
 
-func (p *Python) Init()  {
+func (p *Python) Init() {
 	p.InitEnvironment()
 	p.InitModules()
 }
 
-func (p *Python) CloseEnvironment()  {
+func (p *Python) CloseEnvironment() {
 	for name := range p.Modules {
 		module := p.Modules[name]
 		module.Clean()
@@ -58,13 +56,11 @@ func (p *Python) CloseEnvironment()  {
 	Python3.Py_Finalize()
 }
 
-
-
 func (p *Python) GetInt(object *Python3.PyObject) int {
 	return Python3.PyLong_AsLong(object)
 }
 
-func ToString(object *Python3.PyObject) string  {
+func ToString(object *Python3.PyObject) string {
 	return Python3.PyUnicode_AsUTF8(object)
 }
 
@@ -74,8 +70,8 @@ func (p *Python) GetNewList(length int) interfaces.PythonListInterface {
 
 }
 
-
 func PyMethodCheck(object *Python3.PyObject) int {
 	return 1
 }
+
 //*/

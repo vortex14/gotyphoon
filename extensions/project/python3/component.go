@@ -1,4 +1,4 @@
-package typhoon
+package python3
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/go-logfmt/logfmt"
-	//"path/filepath"
 
 	. "github.com/vortex14/gotyphoon/extensions/models/cmd"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -69,7 +68,7 @@ func (c *Component) Restart(project *Project) {
 	c.Close(project)
 	c.Start(project)
 
-	project.components.ActiveComponents[c.Name] = c
+	project.Components.ActiveComponents[c.Name] = c
 }
 
 func (c *Component) CheckComponent() bool {

@@ -1,6 +1,5 @@
 package python3
 
-
 // /* ignore for building amd64-linux
 import (
 	"log"
@@ -11,43 +10,39 @@ import (
 )
 
 type PythonModule struct {
-	Name string
-	Path string
-	dict *Python3.PyObject
-	module *Python3.PyObject
+	Name      string
+	Path      string
+	dict      *Python3.PyObject
+	module    *Python3.PyObject
 	importRef *Python3.PyObject
 }
 
-func (m *PythonModule) GetName() string  {
+func (m *PythonModule) GetName() string {
 	return m.Name
 }
 
-func (m *PythonModule) GetPath() string  {
+func (m *PythonModule) GetPath() string {
 	return m.Path
 }
 
-
-func (m *PythonModule) Reset()  {
+func (m *PythonModule) Reset() {
 
 }
 
-func (m *PythonModule) Clean()  {
+func (m *PythonModule) Clean() {
 	m.importRef.DecRef()
 	m.module.DecRef()
 }
 
-
-func (m *PythonModule) SetImport()  {
-
-}
-
-func (m *PythonModule) CreatePythonCallback()  {
+func (m *PythonModule) SetImport() {
 
 }
 
+func (m *PythonModule) CreatePythonCallback() {
 
+}
 
-func (m *PythonModule) GetFunction(name string) *Python3.PyObject  {
+func (m *PythonModule) GetFunction(name string) *Python3.PyObject {
 	if m.dict == nil {
 		color.Red("Module did not initialized")
 		return nil
@@ -86,7 +81,7 @@ func (m *PythonModule) InitModuleHere() bool {
 	ret := Python3.PyRun_SimpleString("import sys\nsys.path.append(\"" + path + "\")")
 	if ret != 0 {
 		status = false
-		log.Fatalf("error appending '%s' to python sys.path", path)
+		log.Fatalf("error appending '%s' to python3 sys.path", path)
 		return status
 	}
 
@@ -120,9 +115,7 @@ func (m *PythonModule) InitModuleHere() bool {
 
 	status = true
 
-
 	return status
-
 
 }
 

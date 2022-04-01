@@ -56,28 +56,28 @@ workers:
   fetcher:
     <<: *baseWorker
     command:
-      - python
+      - python3
       - fetcher.py
       - --config=config.kube-stage.yaml
       - --level=DEBUG
   processor:
     <<: *baseWorker
     command:
-      - python
+      - python3
       - processor.py
       - --config=config.kube-stage.yaml
       - --level=DEBUG
   scheduler:
     <<: *baseWorker
     command:
-      - python
+      - python3
       - scheduler.py
       - --config=config.kube-stage.yaml
       - --level=DEBUG
   result-transporter:
     <<: *baseWorker
     command:
-      - python
+      - python3
       - result_transporter.py
       - --config=config.kube-stage.yaml
       - --level=DEBUG

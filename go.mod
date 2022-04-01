@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/Bose/go-gin-logrus v1.0.3
 	github.com/Bose/go-gin-opentracing v1.0.5
-	github.com/DataDog/go-python3 v0.0.0-20210805105248-03d93fb21b67 // indirect
+	github.com/DataDog/go-python3 v0.0.0-20210805105248-03d93fb21b67
 	github.com/EDDYCJY/fake-useragent v0.2.0
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/Microsoft/hcsshim v0.8.20 // indirect
@@ -34,7 +34,7 @@ require (
 	github.com/fogleman/gg v1.3.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/fsouza/go-dockerclient v1.7.4 // indirect
-	github.com/gdamore/tcell v1.4.0
+	github.com/gdamore/tcell v1.4.0 // indirect
 	github.com/gdamore/tcell/v2 v2.4.1-0.20210905002822-f057f0a857a1
 	github.com/geziyor/geziyor v0.0.0-20210830182932-110394a75314
 	github.com/gin-contrib/cors v1.3.1 // indirect

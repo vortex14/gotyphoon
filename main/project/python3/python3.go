@@ -1,11 +1,13 @@
 package main
 
 import (
+	"github.com/fatih/color"
+	"github.com/vortex14/gotyphoon/elements/forms"
 	"os"
 	"path/filepath"
 	"strings"
 
-	typhoon "github.com/vortex14/gotyphoon"
+	pyTyphoon "github.com/vortex14/gotyphoon/extensions/project/python3"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"
@@ -13,11 +15,11 @@ import (
 	. "github.com/vortex14/gotyphoon/elements/models/osignal"
 )
 
-func init()  {
+func init() {
 	log.InitD()
 }
 
-func getProjectPath()  string {
+func getProjectPath() string {
 	herePath := utils.GetCurrentDir()
 	var projectPath string
 	// for __main__
@@ -30,18 +32,23 @@ func getProjectPath()  string {
 	return projectPath
 }
 
-func main()  {
-	project := (&typhoon.Project{
-		Path: getProjectPath(),
-		SelectedComponent: []string{interfaces.PROCESSOR},
-		ConfigFile:        "config.local.yaml",
-		AutoReload:        true,
+func main() {
+	color.Red("Project path >>>>>>>>> %s <<<<<<<<<", getProjectPath())
+	project := (&pyTyphoon.Project{
+		Project: forms.Project{
+			Name:              "test-project-cmd",
+			Path:              getProjectPath(),
+			SelectedComponent: []string{interfaces.PROCESSOR, interfaces.FETCHER},
+			ConfigFile:        "config.local.yaml",
+			AutoReload:        true,
+		},
 	}).Run()
 
 	(&OSignal{
 		Callback: func(logger interfaces.LoggerInterface, sig os.Signal) {
-			logger.Warning("close !")
 			project.Close()
+			project.WaitPromises()
+			logger.Warning("close !")
 		},
 	}).Wait()
 

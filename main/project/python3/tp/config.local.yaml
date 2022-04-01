@@ -1,5 +1,5 @@
 ---
-project_name: &project_name tp
+project_name: &project_name test-project
 debug: true
 default_retries_delay: 15
 priority_depth_check_delay: 15
@@ -21,10 +21,10 @@ max_failed: 5
 memory_limit: 0.01
 retrying_delay: 5
 
-register_service:
-  port: 12735
-  host: localhost
-  cluster: debug
+#register_service:
+#  port: 12735
+#  host: localhost
+#  cluster: debug
 
 
 ty_components:

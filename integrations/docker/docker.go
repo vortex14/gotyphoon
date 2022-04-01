@@ -25,7 +25,6 @@ import (
 	"github.com/vortex14/gotyphoon/utils"
 )
 
-
 //echo -n 'LOGIN:PASSWORD' | base64
 
 type Docker struct {
@@ -118,7 +117,7 @@ func (d *Docker) GetLocalClient() *client.Client {
 	return cli
 }
 
-func (d *Docker) CreateNewTag(cli *client.Client)  {
+func (d *Docker) CreateNewTag(cli *client.Client) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -184,11 +183,11 @@ func (d *Docker) GetAuthConfig() types.AuthConfig {
 	return authConfig
 }
 
-func (d *Docker) PushImage()  {
+func (d *Docker) PushImage() {
 	d.initEnv()
 	color.Yellow("Typhoon docker push to %s...", d.env.DockerHub)
 	b, err := strconv.ParseBool(d.LatestTag)
-	if err != nil{
+	if err != nil {
 
 		color.Red(err.Error())
 		os.Exit(1)
@@ -219,7 +218,7 @@ func (d *Docker) PushImage()  {
 		os.Exit(1)
 	}
 
-	rd, err := dockerClient.ImagePush(ctx, dockerRegistryUserID+ lastTagName, opts)
+	rd, err := dockerClient.ImagePush(ctx, dockerRegistryUserID+lastTagName, opts)
 	if err != nil {
 		color.Red("%s", err.Error())
 		os.Exit(1)
@@ -235,7 +234,7 @@ func (d *Docker) PushImage()  {
 	color.Green("%s", lastTagName)
 }
 
-func (d *Docker) BuildImage()  {
+func (d *Docker) BuildImage() {
 	color.Yellow("Typhoon docker build ...")
 	d.initEnv()
 
@@ -244,7 +243,7 @@ func (d *Docker) BuildImage()  {
 			"extensions/tests/*",
 			".git",
 			"chrome",
-	}}
+		}}
 
 	opts := types.ImageBuildOptions{
 		Dockerfile: "Dockerfile",
@@ -253,7 +252,6 @@ func (d *Docker) BuildImage()  {
 		AuthConfigs: map[string]types.AuthConfig{
 			d.env.DockerHub: d.GetAuthConfig(),
 		},
-
 	}
 
 	err := d.build(d.env.Path, options, opts)
@@ -262,10 +260,9 @@ func (d *Docker) BuildImage()  {
 		return
 	}
 
-
 }
 
-func (d *Docker) ListContainers()  {
+func (d *Docker) ListContainers() {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		panic(err)
@@ -295,9 +292,8 @@ func (d *Docker) RunComponent(component string) error {
 
 	containerConfig := &container.Config{
 		Image: fmt.Sprintf("typhoon-lite-%s", d.Project.GetName()),
-		Cmd: []string{"python", "donor.py --config=config.local.yaml --level=DEBUG"},
+		Cmd:   []string{"python3", "donor.py --config=config.local.yaml --level=DEBUG"},
 	}
-
 
 	_, err = cli.ContainerCreate(ctx, containerConfig, nil, nil, nil, "typhoon")
 
@@ -309,16 +305,15 @@ func (d *Docker) RunComponent(component string) error {
 	return nil
 }
 
-func (d *Docker) ProjectBuild()  {
+func (d *Docker) ProjectBuild() {
 	u := utils.Utils{}
 
 	_, dockerFile := u.GetGoTemplate(&interfaces.FileObject{
 		Path: "../builders/v1.1",
 		Name: "ProjectDockerfile",
-
 	})
 	goTemplateDocker := interfaces.GoTemplate{
-		Source: dockerFile,
+		Source:     dockerFile,
 		ExportPath: "Dockerfile",
 		Data: map[string]string{
 			"TYPHOON_IMAGE": d.Project.GetDockerImageName(),
@@ -341,7 +336,6 @@ func (d *Docker) ProjectBuild()  {
 		Dockerfile: "Dockerfile",
 		Tags:       []string{"typhoon-lite-" + projectConfig.ProjectName},
 		Remove:     true,
-
 	}
 
 	_ = d.build(d.Project.GetProjectPath(), options, opts)
@@ -350,13 +344,9 @@ func (d *Docker) ProjectBuild()  {
 	//	return
 	//}
 
-
-
-
-
 }
 
-func (d *Docker) RemoveResources()  {
+func (d *Docker) RemoveResources() {
 	u := utils.Utils{}
 	u.RemoveFiles([]string{
 		"Dockerfile",
