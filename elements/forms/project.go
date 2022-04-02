@@ -8,7 +8,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-git/go-git/v5"
-	//"github.com/vortex14/gotyphoon/interfaces/ghosts"
 	"go.mongodb.org/mongo-driver/bson"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -27,7 +26,6 @@ import (
 	"github.com/vortex14/gotyphoon/integrations/mongo"
 	"github.com/vortex14/gotyphoon/integrations/redis"
 	"github.com/vortex14/gotyphoon/interfaces"
-	//"github.com/vortex14/gotyphoon/interfaces/ghosts"
 	"github.com/vortex14/gotyphoon/services"
 	"github.com/vortex14/gotyphoon/utils"
 )

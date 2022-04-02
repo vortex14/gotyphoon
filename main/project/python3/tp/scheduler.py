@@ -7,3 +7,5 @@ from typhoon.components.scheduler.state.state import StateManager
 if __name__ == "__main__":
     component = ConfigurationComponent("scheduler", Scheduler, SchedulerApi, StateManager)
     component.run()
+
+

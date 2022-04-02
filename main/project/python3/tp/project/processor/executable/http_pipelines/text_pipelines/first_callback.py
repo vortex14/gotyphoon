@@ -10,7 +10,7 @@ class FirstCallback(BasePipeline):
         # PLOG = ProcessorLogger(ppl='first_group')
         # PLOG.debug(f"response.code:{self.response.code},test_at:{datetime.utcnow()}" )
         # self.switch_pipelines_group(test_product, "second_group")
-
+        print("1ыы =======sssdd444 44 4 4 jk  j --kk kk gd df fdsf wefef dsdsds ---- >>>>>>")
         self.LOG.debug("++++++++++++++++++++++++")
         await self.finish({"status_code": self.response.code, "test_at": datetime.utcnow()})
         # callback = self.handler.first_group

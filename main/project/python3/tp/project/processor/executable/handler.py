@@ -3,8 +3,6 @@ from typhoon.components.processor.executable.base_handler import BaseHandler
 from project.processor.executable.http_pipelines.text_pipelines import first_callback
 from project.processor.executable.http_pipelines.text_pipelines import second_callback
 
-
-
 class Handler(BaseHandler):
 
     async def init_attributes(self):
@@ -22,7 +20,21 @@ class Handler(BaseHandler):
     # @BaseHandler.execute_at("23:00", "UTC")
     @BaseHandler.every(minutes=1)
     async def on_start(self, task):
-
-
         await self.crawl(self.url, callback=self.first_group, force_update=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

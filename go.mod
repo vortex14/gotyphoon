@@ -88,6 +88,7 @@ require (
 	github.com/pkg/sftp v1.13.3
 	github.com/prometheus/common v0.30.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/radovskyb/watcher v1.0.7
 	github.com/rivo/tview v0.0.0-20210909154944-f7430b878d17
 	github.com/sbunce/bson v0.0.0-20181119052045-2aa5ebe749b2 // indirect
 	github.com/schollz/progressbar v1.0.0 // indirect

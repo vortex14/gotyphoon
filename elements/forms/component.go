@@ -88,3 +88,7 @@ func (c *Component) InitConsumers(project interfaces.Project) {
 	color.Yellow("current fetcher settings %+v", queueSettings)
 	color.Yellow("InitConsumers for %s", c.Name)
 }
+
+func (c *Component) Restart(project interfaces.Project) {
+
+}

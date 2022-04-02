@@ -3,9 +3,13 @@ package python3
 import (
 	"context"
 	"fmt"
+	lessWatcher "github.com/radovskyb/watcher"
+	BaseWatcher "github.com/vortex14/gotyphoon/elements/models/watcher"
+	"github.com/vortex14/gotyphoon/extensions/models/watcher"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/fatih/color"
@@ -34,6 +38,8 @@ type TestMongo struct {
 
 type Project struct {
 	forms.Project
+
+	Watcher *watcher.EventFSLess
 }
 
 func (p *Project) GetService(name string) interfaces.Service {
@@ -54,40 +60,43 @@ func (p *Project) RunTestServices() {
 }
 
 func (p *Project) Run() interfaces.Project {
-	p.Folder = &folder.Folder{Path: p.GetProjectPath()}
+	p.Construct(func() {
+		p.Folder = &folder.Folder{Path: p.GetProjectPath()}
 
-	p.CheckProject()
+		p.CheckProject()
 
-	p.LOG = tyLog.New(tyLog.D{"project": p.Name})
+		p.LOG = tyLog.New(tyLog.D{"project": p.Name})
 
-	//println(">>>>>>>> >>>>>>>", p.folder.Path)
+		p.Add()
+		go p.Watch()
 
-	p.LOG.Info(p.Folder.Path)
+		p.LOG.Info(p.Folder.Path)
 
-	if !p.Folder.IsExist("typhoon") {
-		p.LOG.Info("init typhoon symlink path")
-		_ = p.CreateSymbolicLink()
-	}
+		if !p.Folder.IsExist("typhoon") {
+			p.LOG.Info("init typhoon symlink path")
+			_ = p.CreateSymbolicLink()
+		}
 
-	//
-	//
-	//color.Magenta("start components")
-	p.LOG.Info("start components ...")
-	//p.AddPromise()
-	p.StartComponents(true)
-	////
-	//p.AddPromise()
-	//go p.task.Run()
-	//
-	//c := make(chan os.Signal, 1)
-	//signal.Notify(c, os.Interrupt)
-	//go p.Watch()
-	////go Watch(&task.wg, typhoonComponent, project.GetConfigFile())
-	//sig := <-c
-	//fmt.Printf("Got %s signal. Aborting...\n", sig)
-	//p.AddPromise()
-	//go p.Close()
-	//p.task.Stop()
+		//
+		//
+		//color.Magenta("start components")
+		p.LOG.Info("start components ...")
+		//p.AddPromise()
+		p.StartComponents(true)
+		////
+		//p.AddPromise()
+		//go p.task.Run()
+		//
+		//c := make(chan os.Signal, 1)
+		//signal.Notify(c, os.Interrupt)
+		//go p.Watch()
+		////go Watch(&task.wg, typhoonComponent, project.GetConfigFile())
+		//sig := <-c
+		//fmt.Printf("Got %s signal. Aborting...\n", sig)
+		//p.AddPromise()
+		//go p.Close()
+		//p.task.Stop()
+	})
 
 	return p
 
@@ -229,6 +238,47 @@ func (p *Project) GetEnvSettings() *environment.Settings {
 
 func (p *Project) Watch() {
 	color.Green("watch for project ..")
+
+	p.LOG.Debug(p.GetProjectPath())
+
+	p.Watcher = &watcher.EventFSLess{
+		Watcher: BaseWatcher.Watcher{Path: p.GetProjectPath()},
+		Callback: func(log interfaces.LoggerInterface, event *lessWatcher.Event) {
+			//println("111!!! !!! >>>>> >>  >> > >")
+			//log.Error(event.)
+
+			componentChanged := ""
+
+			for _, component := range p.SelectedComponent {
+				if strings.Contains(event.Path, strings.ToLower(component)) {
+					color.Yellow("reloading %s ... !", component)
+					componentChanged = component
+					break
+				}
+
+			}
+
+			if _, ok := p.Components.ActiveComponents[componentChanged]; ok {
+
+				color.Yellow("Reload %s ...", componentChanged)
+				color.Yellow("event %+v", event)
+				component := p.Components.ActiveComponents[componentChanged]
+
+				//p.AddPromise()
+				component.Restart(p)
+
+				// "example" is not in the map
+			} else {
+				color.Yellow("%s isn't running", componentChanged)
+			}
+
+		},
+		Timeout: 100,
+	}
+	p.LOG.Warning("Start watching ...")
+	p.Watcher.Watch()
+	p.LOG.Warning("Stop watching ...")
+
 	//watcher, _ = fsnotify.NewWatcher()
 	//defer watcher.Close()
 	//
@@ -304,6 +354,9 @@ func (p *Project) Watch() {
 }
 
 func (p *Project) Close() {
+	// Close Watcher Promise
+	p.Done()
+
 	color.Yellow("close project ...")
 	for _, component := range p.Components.ActiveComponents {
 		if component.IsActive() {

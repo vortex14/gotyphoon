@@ -24,51 +24,62 @@ type Component struct {
 	CMDProcess *Command
 }
 
+func (c *Component) Init(project interfaces.Project) {
+	projectNameArg := fmt.Sprintf("--project_name=%s", project.GetName())
+	logLevelArg := fmt.Sprintf("--level=%s", project.GetLogLevel())
+	configArg := fmt.Sprintf("--config=%s", project.GetConfigPath())
+
+	cmd := &Command{
+		Cmd:  "python3.8",
+		Dir:  project.GetProjectPath(),
+		Args: []string{c.FileExt, projectNameArg, configArg, logLevelArg},
+	}
+
+	err := cmd.Run()
+	c.Active = true
+	c.CMDProcess = cmd
+	if err != nil {
+		color.Red(err.Error())
+		return
+	}
+
+	c.Add()
+	go c.Logging()
+}
+
 func (c *Component) Start(project interfaces.Project) {
 	c.Construct(func() {
 		c.LOG = TyLog.New(TyLog.D{"component": c.Name})
 		defer project.PromiseDone()
+
+		c.Init(project)
 		//executable := filepath.Join(project.GetProjectPath(), c.FileExt)
 
-		projectNameArg := fmt.Sprintf("--project_name=%s", project.GetName())
-		logLevelArg := fmt.Sprintf("--level=%s", project.GetLogLevel())
-		configArg := fmt.Sprintf("--config=%s", project.GetConfigPath())
-
-		cmd := &Command{
-			Cmd:  "python3.8",
-			Dir:  project.GetProjectPath(),
-			Args: []string{c.FileExt, projectNameArg, configArg, logLevelArg},
-		}
-
-		err := cmd.Run()
-		c.Active = true
-		c.CMDProcess = cmd
-		if err != nil {
-			color.Red(err.Error())
-			return
-		}
-
-		c.Add()
-		go c.Logging()
 	})
 }
 
 func (c *Component) Close(project interfaces.Project) {
+	c.LOG.Info("Close project")
 	defer project.PromiseDone()
+
 	c.CMDProcess.Close()
 	c.Done()
 	c.Await()
 	c.CMDProcess.Await()
 	c.Active = false
+	c.LOG.Debug("Close")
 
 }
 
-func (c *Component) Restart(project *Project) {
+func (c *Component) Restart(project interfaces.Project) {
+	//defer project.PromiseDone()
 	color.Red("Restart component %s ...", c.Name)
+	project.AddPromise()
 	c.Close(project)
+	c.Init(project)
 	c.Start(project)
 
-	project.Components.ActiveComponents[c.Name] = c
+	color.Green("restarted !")
 }
 
 func (c *Component) CheckComponent() bool {
