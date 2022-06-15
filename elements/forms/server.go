@@ -3,6 +3,12 @@ package forms
 import (
 	"context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/elements/models/singleton"
+
+	// /* ignore for building amd64-linux
+	ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
+	// */
+
 	"net/http"
 	"strings"
 	"sync"
@@ -15,18 +21,23 @@ import (
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
-
 )
 
-type OnExit           func()
-type OnStart          func(port int) error
-type OnRequest        func(context context.Context)
-type OnResponse       func(status int, data interfaces.Response)
-type OnReject         func(status int, data interfaces.Response)
-type OnServeHandler   func(path string, method string)
+type OnExit              func()
+type OnStart             func(port int) error
+type OnRequest           func(context context.Context)
+type OnServeHandler      func(path string, method string, resource interfaces.ResourceInterface)
+type OnResponse          func(status int, data interfaces.Response)
+type OnInitResource      func(newResource interfaces.ResourceInterface)
+type OnInitAction        func(resource interfaces.ResourceInterface, action interfaces.ActionInterface)
+type OnBuildSubResources func(subResource interfaces.ResourceInterface)
+type OnBuildSubAction    func(resource interfaces.ResourceInterface, action interfaces.ActionInterface)
+type OnAddResource       func(resource interfaces.ResourceInterface)
+type OnReject            func(status int, data interfaces.Response)
+type OnCors              func()
 
-type ArchonChIN       func(chan<- interface{} )
-type ArchonChOut      func(<-chan interface{} )
+type ArchonChIN          func(chan<- interface{} )
+type ArchonChOut         func(<-chan interface{} )
 
 const (
 	RoutePath      = "ROUTE_PATH"
@@ -34,26 +45,33 @@ const (
 )
 
 type TyphoonServer struct {
+	singleton.Singleton
 	*label.MetaInfo
 
 	Port            int
 	IsDebug         bool
 	IsRunning   	bool
+
 	Level           string
-	Instance        sync.Once
 
 	LOG             *logrus.Entry
 	logInstance     sync.Once
 	Logger          *log.TyphoonLogger
 
-	Resources   	map[string]interfaces.ResourceInterface
+	Resources       map[string]interfaces.ResourceInterface
 
-	OnStart         OnStart
-	OnRequest       OnRequest
-	OnServeHandler  OnServeHandler
-	OnResponse      OnResponse
-	OnReject        OnReject
-	OnExit          OnExit
+	OnStart             OnStart
+	OnRequest           OnRequest
+	OnInitAction        OnInitAction
+	OnServeHandler      OnServeHandler
+	OnBuildSubResources OnBuildSubResources
+	OnBuildSubAction    OnBuildSubAction
+	OnInitResource      OnInitResource
+	OnAddResource       OnAddResource
+	OnResponse          OnResponse
+	OnReject            OnReject
+	OnCors              OnCors
+	OnExit              OnExit
 
 	LoggerOptions	*log.Options
 	SwaggerOptions  *interfaces.SwaggerOptions
@@ -62,6 +80,21 @@ type TyphoonServer struct {
 	ArchonChIN      ArchonChIN
 	ArchonChOut     ArchonChOut
 
+
+
+	BuildGraph      bool
+
+	// /* ignore for building amd64-linux
+
+	Graph           interfaces.GraphInterface
+
+	// */
+
+
+}
+
+func (s *TyphoonServer) SetRouterGroup(resource interfaces.ResourceInterface, group interface{}) {
+	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
 }
 
 func (s *TyphoonServer) Stop() error  {
@@ -89,14 +122,13 @@ func (s *TyphoonServer) InitTracer() interfaces.ServerInterface {
 }
 
 func (s *TyphoonServer) InitLogger() interfaces.ServerInterface {
-	if s.IsDebug { log.InitD() }
 	s.LOG = log.New(log.D{"server": s.Name})
 	s.logInstance.Do(func() {
 		if s.LoggerOptions == nil { return }
 		s.Logger = (&log.TyphoonLogger{
 			TracingOptions: s.TracingOptions,
 			Name: s.LoggerOptions.Name,
-			Options: log.Options{ BaseOptions: &log.BaseOptions{} },
+			Options: *s.LoggerOptions,
 		}).Init()
 	})
 	return s
@@ -105,6 +137,10 @@ func (s *TyphoonServer) InitLogger() interfaces.ServerInterface {
 func (s *TyphoonServer) Run() error {
 	if !s.IsRunning && len(s.Resources) > 0 {
 		if s.OnStart == nil { s.LOG.Error(Errors.ServerOnStartError.Error()); return Errors.ServerOnStartError }
+		if s.OnCors != nil  {
+			s.OnCors()
+		}
+
 		err := s.OnStart(s.Port)
 		if err != nil {
 			s.LOG.Error(fmt.Sprintf("Server %s, Error: %s", s.Name, err.Error()))
@@ -113,7 +149,7 @@ func (s *TyphoonServer) Run() error {
 		color.Yellow("Running Server %d ", s.Port)
 
 	} else if len(s.Resources) == 0 {
-		s.LOG.Error(Errors.NoResourcesAvailable.Error()); return Errors.ServerMethodNotImplemented
+		s.LOG.Error(Errors.NoResourcesAvailable.Error()); return Errors.NoResourcesAvailable
 	}
 
 	return nil
@@ -155,7 +191,6 @@ func (s *TyphoonServer) GetAction(
 
 	var joinedPath string
 	var found bool
-
 
 	for _, path := range paths {
 		if s.isMainAction(requestPath) && currentResource == nil {
@@ -201,28 +236,43 @@ func (s *TyphoonServer) GetAction(
 	return currentAction
 }
 
-func (s *TyphoonServer) RunMiddlewareStack(requestContext context.Context, action interfaces.ActionInterface) (error, bool, context.Context)  {
-	// Pass request to controller middleware stack.
-	// Middleware may reject request by custom condition or just enrich context client request.
-	// Middleware may raise exception, but it be pass if flag required = false.
-	// Flag = true will be immediately reject client request
+// RunMiddlewareStack - pass request to controller middleware stack.
+// Middleware may reject request by custom condition or just enrich context client request.
+// Middleware may raise exception, but it be pass if flag required = false.
+// Flag = true will be immediately reject client request
+func (s *TyphoonServer) RunMiddlewareStack(
+	requestContext context.Context,
+	action interfaces.ActionInterface,
+	) (error, bool, context.Context)  {
+
 	statusMiddlewareStack := true
+	var skipRequest bool
 	var LastErrorMiddleware error
 	{
 		for _, middleware := range action.GetMiddlewareStack() {
-			if !statusMiddlewareStack { break }
-			middlewareLogger := log.New(log.D{ "middleware": middleware.GetName()})
+			if !statusMiddlewareStack || skipRequest { break }
+			middlewareLogger := log.Patch(s.LOG, log.D{"middleware": middleware.GetName()})
+			//middlewareLogger := log.New(log.D{ "middleware": middleware.GetName()})
 
 			// Refect client request
 			middleware.Pass(requestContext, middlewareLogger, func(err error) {
 				LastErrorMiddleware = err
 				if middleware.IsRequired() {
-					middlewareLogger.Error(err.Error())
-					s.OnResponse(http.StatusBadRequest, interfaces.Response{
-						"message": err.Error(),
-						"status": false,
-					})
-					statusMiddlewareStack = false
+
+					switch err {
+					case Errors.ForceSkipRequest:
+						skipRequest = true
+					default:
+						middlewareLogger.Error(err.Error())
+						s.OnResponse(http.StatusBadRequest, interfaces.Response{
+							"message": err.Error(),
+							"status": false,
+						})
+						statusMiddlewareStack = false
+
+					}
+
+
 					return
 				} else {
 					middlewareLogger.Warning(err.Error())
@@ -242,7 +292,7 @@ func (s *TyphoonServer) RunMiddlewareStack(requestContext context.Context, actio
 func (s *TyphoonServer) initActions(resource interfaces.ResourceInterface)  {
 	for _, action := range resource.GetActions() {
 
-		if len(action.GetMethods()) == 0 { s.LOG.Warning(Errors.ActionMethodsNotFound.Error()); break }
+		if len(action.GetMethods()) == 0 { s.LOG.Warning(Errors.ActionMethodsNotFound.Error()); continue }
 
 		for _, method := range action.GetMethods() {
 			var handlerPath string
@@ -251,34 +301,55 @@ func (s *TyphoonServer) initActions(resource interfaces.ResourceInterface)  {
 			} else {
 				handlerPath = fmt.Sprintf("/%s", action.GetPath())
 			}
-			s.LOG.Debug(fmt.Sprintf("need serve path: %s", handlerPath))
+			action.SetHandlerPath(handlerPath)
 
-			s.initHandler(method, handlerPath)
+			actionLogger := log.Patch(s.LOG, log.D{"resource": resource.GetName(), "action": action.GetName()})
+			action.SetLogger(actionLogger)
+			s.LOG.Debug(fmt.Sprintf("need serve path: %s method: %s", handlerPath, method))
 
+			s.initHandler(method, handlerPath, resource)
+			if s.OnInitAction != nil { s.OnInitAction(resource, action) }
 		}
 	}
 }
+
 
 func (s *TyphoonServer) buildSubResources(parentPath string, newResource interfaces.ResourceInterface)  {
+	if newResource.GetCountSubResources() > 0 {
+		for resourceName, subResource := range newResource.GetResources() {
+			var resourcePath string
+			if parentPath != "/" {
+				resourcePath = fmt.Sprintf("%s/%s", parentPath, resourceName)
+			} else {
+				resourcePath = fmt.Sprintf("/%s", resourceName)
+			}
 
-	for resourceName, subResource := range newResource.GetResources() {
-		resourcePath := fmt.Sprintf("%s/%s", parentPath, resourceName)
+			s.LOG.Debug("init subresource ", resourcePath, newResource.GetName(), newResource)
 
-		if subResource.GetCountActions() > 0 {
+			subResource.SetLogger(s.LOG)
+
+			subResource.SetPath(resourcePath)
+
+			if s.OnBuildSubResources != nil { s.OnBuildSubResources(subResource) }
+
 			s.buildSubActions(resourcePath, subResource)
-		}
-
-		if subResource.GetCountSubResources() > 0 {
 			s.buildSubResources(resourcePath, subResource)
+
 		}
 	}
 }
 
+
 func (s *TyphoonServer) buildSubActions(parentPath string, newResource interfaces.ResourceInterface)  {
-	for name, action := range newResource.GetActions() {
-		for _, method := range action.GetMethods() {
-			handlerPath := fmt.Sprintf("%s/%s", parentPath, name)
-			s.initHandler(method, handlerPath)
+	if newResource.GetCountActions() > 0 {
+		for name, action := range newResource.GetActions() {
+			for _, method := range action.GetMethods() {
+				handlerPath := fmt.Sprintf("%s/%s", parentPath, name)
+				s.LOG.Debug("init sub action ", handlerPath)
+				action.SetHandlerPath(handlerPath)
+				if s.OnBuildSubAction != nil { s.OnBuildSubAction(newResource, action) }
+				s.initHandler(method, handlerPath, newResource)
+			}
 		}
 	}
 }
@@ -289,31 +360,27 @@ func (s *TyphoonServer) initResource(newResource interfaces.ResourceInterface) e
 	}
 	if s.Resources == nil { s.InitResourcesMap() }
 
+	logger := log.Patch(s.LOG, log.D{"resource": newResource.GetName()})
+	newResource.SetLogger(logger)
+
 	if _, ok := s.Resources[newResource.GetPath()]; ok {
 		return Errors.ResourceAlreadyExist
 	} else {
+		if s.OnInitResource != nil { s.OnInitResource(newResource) }
 		s.Resources[newResource.GetPath()] = newResource
 		s.initActions(newResource)
 
 		// build resource fractal
-		if newResource.GetCountSubResources() > 0 {
-			s.buildSubResources(newResource.GetPath(), newResource)
-		}
+		s.buildSubResources(newResource.GetPath(), newResource)
 	}
 	return nil
 }
 
-func (s *TyphoonServer) ServePlease(path string, handler func(ctx context.Context))  {
-	s.LOG.Error(Errors.ServerEngineNotImplemented.Error())
-}
 
-func (s *TyphoonServer) initHandler(method string, path string)  {
-
-
+func (s *TyphoonServer) initHandler(method string, path string, resource interfaces.ResourceInterface)  {
 	if s.OnServeHandler == nil { s.LOG.Error(Errors.ServerOnHandlerMethodNotImplemented.Error()) } else {
-		s.OnServeHandler(method, path)
+		s.OnServeHandler(method, path, resource)
 	}
-
 }
 
 func (s *TyphoonServer) CreateResource(path string, opts label.MetaInfo) (error, interfaces.ResourceInterface) {
@@ -330,11 +397,14 @@ func (s *TyphoonServer) CreateResource(path string, opts label.MetaInfo) (error,
 	return err, newResource
 }
 
+
 func (s *TyphoonServer) AddResource(resource interfaces.ResourceInterface) interfaces.ServerInterface {
+	logger := log.Patch(s.LOG, log.D{"resource": resource.GetName()})
+	resource.SetLogger(logger)
+
+	if s.OnAddResource != nil { s.OnAddResource(resource) }
 	err := s.initResource(resource)
-	if err != nil {
-		color.Red("%s", err.Error())
-	}
+	if err != nil { color.Red("%s", err.Error()) }
 	return s
 }
 
@@ -345,8 +415,51 @@ type ServerBuilder struct {
 }
 
 func (s *ServerBuilder) Run(project interfaces.Project) interfaces.ServerInterface {
-	s.once.Do(func() {
-		s.server = s.Constructor(project)
-	})
+	s.once.Do(func() { s.server = s.Constructor(project) })
 	return s.server
+}
+
+
+// /* ignore for building amd64-linux
+
+func (s *TyphoonServer) InitGraph() interfaces.ServerInterface {
+	s.Graph = (&ghvzExt.Graph{
+		Options: &interfaces.GraphOptions{
+			IsCluster: true,
+		},
+		MetaInfo: &label.MetaInfo{
+			Name: fmt.Sprintf("Graph of %s",s.Name),
+			Label: s.Name,
+		},
+		Layout: ghvzExt.LAYOUTCirco,
+	}).Init()
+	return s
+}
+
+func (s *TyphoonServer) GetGraph() interfaces.GraphInterface {
+	return s.Graph
+}
+
+func (s *TyphoonServer) AddNewGraphResource(newResource interfaces.ResourceGraphInterface)  {
+	if s.Graph != nil {
+		subGraph := s.Graph.AddSubGraph(&interfaces.GraphOptions{
+			Name:      newResource.GetName(),
+			Label:     newResource.GetName(),
+			IsCluster: true,
+		})
+		s.LOG.Debug(fmt.Sprintf("init subGraph for %s", newResource.GetName()), subGraph)
+		newResource.SetGraph(subGraph)
+	} else {
+		s.LOG.Error("not found server graph. ",newResource.GetPath(), newResource.GetName())
+	}
+}
+
+// */
+
+func (s *TyphoonServer) GetServerEngine() interface{} {
+	s.LOG.Error(Errors.ServerMethodNotImplemented.Error()); return Errors.ServerMethodNotImplemented
+}
+
+func (s *TyphoonServer) SetServerEngine(server interface{})  {
+	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
 }

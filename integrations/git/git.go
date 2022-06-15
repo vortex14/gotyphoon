@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/vortex14/gotyphoon/environment"
 	"github.com/vortex14/gotyphoon/interfaces"
 
+	. "github.com/vortex14/gotyphoon/extensions/models/cmd"
 )
 
 type Git struct {
@@ -22,6 +24,8 @@ type Git struct {
 	Path     string
 	workTree *git.Worktree
 	Project  interfaces.Project
+	Remote   string
+	Branch   string
 }
 
 var fileStatusMapping = map[git.StatusCode]string{
@@ -60,7 +64,7 @@ func (g *Git) Commit(message string, opt *git.CommitOptions) error {
 
 }
 
-func (g *Git) Push(remote string, branch string)  {
+func (g *Git) Push(remote string, branch string) {
 	g.LoadRepo()
 
 	pushCommand := cmd.NewCmd("git", "push", remote, branch)
@@ -70,8 +74,6 @@ func (g *Git) Push(remote string, branch string)  {
 	for _, l := range s.Stdout {
 		color.Yellow("%s", l)
 	}
-
-
 
 	//TO DO: research AUTH method
 
@@ -85,7 +87,7 @@ func (g *Git) Push(remote string, branch string)  {
 	//}
 }
 
-func (g *Git) RemovePyCacheFiles()  {
+func (g *Git) RemovePyCacheFiles() {
 	//HOW TO RUN  THIS sample ???? ::::
 	//find . -name "__pycache__" -exec rm -r "{}" \;
 	//removeCommand := cmd.NewCmd("find", ".", "-name", "__pycache__", "-exec", "rm", "-r")
@@ -107,7 +109,7 @@ func (g *Git) RemovePyCacheFiles()  {
 				if _, err := os.Stat(path); err == nil {
 					pyIgnoreDir := strings.Split(path, pyignore)[0] + pyignore
 
-					color.Yellow("%s",pyIgnoreDir)
+					color.Yellow("%s", pyIgnoreDir)
 					err := os.RemoveAll(pyIgnoreDir)
 					if err != nil {
 						color.Red("%s", err.Error())
@@ -120,10 +122,9 @@ func (g *Git) RemovePyCacheFiles()  {
 			return nil
 		})
 
-
 }
 
-func (g *Git) ShowPyCacheFiles()  {
+func (g *Git) ShowPyCacheFiles() {
 
 	g.LoadRepo()
 	removeCommand := cmd.NewCmd("find", ".", "-name", "__pycache__")
@@ -134,13 +135,13 @@ func (g *Git) ShowPyCacheFiles()  {
 	}
 }
 
-func (g Git) AddAll()  {
+func (g Git) AddAll() {
 	g.LoadRepo()
 	//g.AddAndCommit()
 
 }
 
-func (g *Git) RemoveAllUnTrackingFiles()  {
+func (g *Git) RemoveAllUnTrackingFiles() {
 	g.LoadRepo()
 	cleanCommand := cmd.NewCmd("git", "clean", "-fd")
 	cleanCommand.Dir = g.Path
@@ -152,11 +153,13 @@ func (g *Git) RemoveAllUnTrackingFiles()  {
 
 func (g *Git) GetStoreBranchName() string {
 	currTime := time.Now()
-	name := fmt.Sprintf("backup-store-branch-%d-%d-%d", currTime.Day(), int(currTime.Month()), currTime.Year())
+	name := fmt.Sprintf("backup-store-branch-%d-%d-%d-%d",
+		currTime.Day(), int(currTime.Month()),
+		currTime.Year(), currTime.UnixNano())
 	return name
 }
 
-func (g *Git) SaveLocalChanging(){
+func (g *Git) SaveLocalChanging() {
 	newBranchName := g.GetStoreBranchName()
 
 	g.AddAndCommit("save backup changes")
@@ -168,7 +171,7 @@ func (g *Git) SaveLocalChanging(){
 	}
 }
 
-func (g *Git) CreateBranch(name string)  {
+func (g *Git) CreateBranch(name string) {
 	headRef, err := g.repo.Head()
 	if err != nil {
 		color.Red("%s", err.Error())
@@ -184,18 +187,23 @@ func (g *Git) SwitchBranch(branch string) error {
 	refs := fmt.Sprintf("refs/heads/%s", branch)
 	err := g.workTree.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.ReferenceName(refs),
-		//Create: false,
-		//Force:  false,
-		//Keep:   false,
+		Create: true,
+		//Force:  true,
+		//Keep:   true,
 	})
-	if err != nil {
-		color.Red("%s", err.Error())
 
+	if err == nil { return nil }
+
+	switch strings.Contains(err.Error(), "already exists") {
+	case true:
+		return nil
+	default:
+		color.Red("%s", err.Error(), reflect.TypeOf(err), err)
+		return err
 	}
-	return err
 }
 
-func (g *Git) CreateBranchAndCommit(message string, branch string)  {
+func (g *Git) CreateBranchAndCommit(message string, branch string) {
 	g.LoadRepo()
 
 	g.AddAndCommit(message)
@@ -207,11 +215,9 @@ func (g *Git) CreateBranchAndCommit(message string, branch string)  {
 		_ = g.SwitchBranch(branch)
 	}
 
-
 }
 
-
-func (g *Git) LocalResetLikeRemote(remote string, branch string, backup bool)  {
+func (g *Git) LocalResetLikeRemote(remote string, branch string, backup bool) {
 	g.LoadRepo()
 	err := g.SwitchBranch(branch)
 	if err != nil {
@@ -222,31 +228,50 @@ func (g *Git) LocalResetLikeRemote(remote string, branch string, backup bool)  {
 	if backup {
 		g.SaveLocalChanging()
 	}
-	fetchCommand := cmd.NewCmd("git", "fetch", remote)
-	fetchCommand.Dir = g.Path
-	<-fetchCommand.Start()
+	fetchCmd := Command{Cmd: "git", Args: []string{"fetch", remote}}
+	fetchCmd.Run()
+
+
 	resetOpt := fmt.Sprintf("%s/%s", remote, branch)
-	color.Yellow(resetOpt)
-	resetCommand := cmd.NewCmd("git", "reset", "--hard" , resetOpt)
-	resetCommand.Dir = g.Path
-	out := <-resetCommand.Start()
-	for _, l := range out.Stdout {
-		color.Yellow("%s", l)
+	color.Yellow(fmt.Sprintf("reset to %s ...",resetOpt))
+
+	resetCmd := Command{Cmd: "git", Args: []string{"reset", "--hard", resetOpt}}
+	resetCmd.Run()
+
+	for line := range resetCmd.Output {
+		color.Yellow(line)
 	}
 }
 
-func (g *Git) AddAndCommit(message string)  {
+func (g *Git) AddAndCommit(message string) {
 	g.LoadRepo()
 
 	AddCommand := cmd.NewCmd("git", "add", ".")
 	AddCommand.Dir = g.Path
 	<-AddCommand.Start()
-	err := g.Commit(message, &git.CommitOptions{
-
-	})
+	err := g.Commit(message, &git.CommitOptions{})
 	if err != nil {
 		color.Red("%s", err.Error())
 		return
+	}
+}
+
+func (g *Git) LocalResetLikeRemoteByCommitHash(hash string, backup bool) {
+	color.Red(hash, backup, g.Remote, g.Branch)
+	g.LoadRepo()
+
+	if err := g.SwitchBranch(g.Branch); err != nil {
+		color.Red(err.Error(), "!!!!!")
+		return
+	}
+
+	g.LocalResetLikeRemote(g.Remote, g.Branch, backup)
+
+	resetCommand := cmd.NewCmd("git", "reset", "--hard", hash)
+	resetCommand.Dir = g.Path
+	out := <-resetCommand.Start()
+	for _, l := range out.Stdout {
+		color.Yellow("%s", l)
 	}
 }
 
@@ -268,8 +293,7 @@ func (g *Git) LoadRepo() {
 	}
 }
 
-
-func (g *Git) RepoStatus() () {
+func (g *Git) RepoStatus() {
 	g.LoadRepo()
 	s, err := g.workTree.Status()
 	if err != nil {

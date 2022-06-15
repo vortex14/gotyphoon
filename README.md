@@ -9,6 +9,9 @@ Symbian mode will be pass task to python pipeline and return to golang env as fi
 
 Rust PyO3 provided better way for python extension better that glue of DataDog company. We need return after sometime for deep research
 
+
+![GitHub Logo](schemas/t-builds.png)
+
 For Typhoon Micro build:
 1. All component running in one process, may be in different thread
 

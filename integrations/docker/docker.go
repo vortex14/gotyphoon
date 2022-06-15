@@ -18,21 +18,39 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/vortex14/gotyphoon/elements/models/singleton"
 
 	"github.com/vortex14/gotyphoon/environment"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/utils"
 )
 
-
 //echo -n 'LOGIN:PASSWORD' | base64
 
 type Docker struct {
+	singleton.Singleton
+
 	//isLatestTag bool
-	LatestTag   string
-	env         *environment.Settings
-	Project     interfaces.Project
-	client      *client.Client
+	LatestTag string
+	env       *environment.Settings
+	Project   interfaces.Project
+	client    *client.Client
+
+	RemoteSSHUrl       string
+	remoteDockerClient *client.Client
+}
+
+func (d *Docker) GetRemoteClient() *client.Client {
+	return d.remoteDockerClient
+}
+
+func (d *Docker) GetClient() *client.Client {
+	switch {
+	case d.remoteDockerClient != nil:
+		return d.GetRemoteClient()
+	default:
+		return d.GetLocalClient()
+	}
 }
 
 var dockerRegistryUserID = ""
@@ -49,7 +67,6 @@ type ErrorDetail struct {
 type Log struct {
 	Stream string `json:"stream"`
 	Status string `json:"status"`
-
 }
 
 func (d *Docker) print(rd io.Reader) error {
@@ -88,7 +105,7 @@ func (d *Docker) GetLastTagName() string {
 	return tagName
 }
 
-func (d *Docker) GetClient() *client.Client {
+func (d *Docker) GetLocalClient() *client.Client {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		fmt.Println(err.Error())
@@ -100,7 +117,7 @@ func (d *Docker) GetClient() *client.Client {
 	return cli
 }
 
-func (d *Docker) CreateNewTag(cli *client.Client)  {
+func (d *Docker) CreateNewTag(cli *client.Client) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -166,11 +183,11 @@ func (d *Docker) GetAuthConfig() types.AuthConfig {
 	return authConfig
 }
 
-func (d *Docker) PushImage()  {
+func (d *Docker) PushImage() {
 	d.initEnv()
 	color.Yellow("Typhoon docker push to %s...", d.env.DockerHub)
 	b, err := strconv.ParseBool(d.LatestTag)
-	if err != nil{
+	if err != nil {
 
 		color.Red(err.Error())
 		os.Exit(1)
@@ -201,7 +218,7 @@ func (d *Docker) PushImage()  {
 		os.Exit(1)
 	}
 
-	rd, err := dockerClient.ImagePush(ctx, dockerRegistryUserID+ lastTagName, opts)
+	rd, err := dockerClient.ImagePush(ctx, dockerRegistryUserID+lastTagName, opts)
 	if err != nil {
 		color.Red("%s", err.Error())
 		os.Exit(1)
@@ -217,7 +234,7 @@ func (d *Docker) PushImage()  {
 	color.Green("%s", lastTagName)
 }
 
-func (d *Docker) BuildImage()  {
+func (d *Docker) BuildImage() {
 	color.Yellow("Typhoon docker build ...")
 	d.initEnv()
 
@@ -226,7 +243,7 @@ func (d *Docker) BuildImage()  {
 			"extensions/tests/*",
 			".git",
 			"chrome",
-	}}
+		}}
 
 	opts := types.ImageBuildOptions{
 		Dockerfile: "Dockerfile",
@@ -235,7 +252,6 @@ func (d *Docker) BuildImage()  {
 		AuthConfigs: map[string]types.AuthConfig{
 			d.env.DockerHub: d.GetAuthConfig(),
 		},
-
 	}
 
 	err := d.build(d.env.Path, options, opts)
@@ -244,10 +260,9 @@ func (d *Docker) BuildImage()  {
 		return
 	}
 
-
 }
 
-func (d *Docker) ListContainers()  {
+func (d *Docker) ListContainers() {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		panic(err)
@@ -277,9 +292,8 @@ func (d *Docker) RunComponent(component string) error {
 
 	containerConfig := &container.Config{
 		Image: fmt.Sprintf("typhoon-lite-%s", d.Project.GetName()),
-		Cmd: []string{"python", "donor.py --config=config.local.yaml --level=DEBUG"},
+		Cmd:   []string{"python3", "donor.py --config=config.local.yaml --level=DEBUG"},
 	}
-
 
 	_, err = cli.ContainerCreate(ctx, containerConfig, nil, nil, nil, "typhoon")
 
@@ -291,30 +305,8 @@ func (d *Docker) RunComponent(component string) error {
 	return nil
 }
 
-func (d *Docker) ProjectBuild()  {
-	u := utils.Utils{}
-
-	_, dockerFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "ProjectDockerfile",
-
-	})
-	goTemplateDocker := interfaces.GoTemplate{
-		Source: dockerFile,
-		ExportPath: "Dockerfile",
-		Data: map[string]string{
-			"TYPHOON_IMAGE": d.Project.GetDockerImageName(),
-		},
-	}
-
-	err := u.GoRunTemplate(&goTemplateDocker)
-	if !err {
-		color.Red("creation Dockerfile was fail")
-		os.Exit(1)
-	}
-
-	color.Green("Dockerfile created!")
-
+func (d *Docker) ProjectBuild() {
+	
 	color.Yellow("Typhoon project docker build ...")
 
 	options := &archive.TarOptions{}
@@ -323,22 +315,13 @@ func (d *Docker) ProjectBuild()  {
 		Dockerfile: "Dockerfile",
 		Tags:       []string{"typhoon-lite-" + projectConfig.ProjectName},
 		Remove:     true,
-
 	}
 
 	_ = d.build(d.Project.GetProjectPath(), options, opts)
-	//if err != nil {
-	//	fmt.Println(err.Error())
-	//	return
-	//}
-
-
-
-
 
 }
 
-func (d *Docker) RemoveResources()  {
+func (d *Docker) RemoveResources() {
 	u := utils.Utils{}
 	u.RemoveFiles([]string{
 		"Dockerfile",

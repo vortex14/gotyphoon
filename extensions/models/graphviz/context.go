@@ -22,11 +22,15 @@ const (
 	COLORCornflowerblue = "cornflowerblue"
 	COLORCoral          = "coral"
 	COLORGold           = "gold"
+	COLORGray           = "grey94"
 
  	SHAPEBox3D          = "box3d"
 	SHAPEFolder         = "folder"
+	SHAPETab            = "tab"
 	SHAPEPipeline       = "cylinder"
+	SHAPERecord         = "record"
 	SHAPEComponent      = "component"
+	SHAPEAction         = "promoter"
 
 	StyleSolid          = "solid"
 	StyleDashed         = "dashed"
@@ -38,7 +42,10 @@ const (
 	LAYOUTDefault       = "dot"
 	LAYOUTNeato         = "neato"
 	LAYOUTLine          = "sfdp"
-	LAYOUTInvertedFlow  = "twopi"
+	LAYOUTFdp           = "fdp"
+	LAYOUTTwopi         = "twopi"
+	LAYOUTPatchwork     = "patchwork"
+	LAYOUTCirco         = "circo"
 
 
 	ExportSVG           = "svg"

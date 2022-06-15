@@ -5,4 +5,13 @@ import (
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
-type Controller func(ctx *gin.Context, logger interfaces.LoggerInterface)
+type Controller func(
+	ctx *gin.Context,
+	logger interfaces.LoggerInterface,
+)
+
+type ServerController func(
+	ctx *gin.Context,
+	server interfaces.ServerInterface,
+	logger interfaces.LoggerInterface,
+)

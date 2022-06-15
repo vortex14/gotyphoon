@@ -2,9 +2,9 @@ package interfaces
 
 type FileSystem interface {
 	GetDataFromDirectory(path string) MapFileObjects
-	IsExistDir (path string) bool
+	IsExistDir(path string) bool
+	GetPath() string
 }
-
 
 type Utils interface {
 	GoRunTemplate(goTemplate *GoTemplate) bool

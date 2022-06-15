@@ -32,30 +32,65 @@ type ProductShippingDimensions struct {
 	} `json:"dimensions"`
 }
 
-type Product struct {
-	Categories
+type BaseProduct struct {
+	Url string `fake:"{url}" json:"url"`
+	Upc string `fake:"{upc}" json:"upc"`
+	Id string `fake:"{product_id}" json:"id"`
 
+	Title string `fake:"{sentence}" json:"title"`
+	Description string `fake:"{paragraph}" json:"description"`
 	Price struct {
 		OfferPrice float32 `fake:"{price:0,100}" json:"offerPrice"`
 		ListingPrice float32 `fake:"{price:100,200}" json:"listingPrice"`
 	} `json:"price"`
-	Url string `fake:"{url}" json:"url"`
-	Upc string `fake:"{upc}" json:"upc"`
-	Color string `fake:"{color}" json:"color"`
-	Brand string `fake:"{brand}" json:"brand"`
-	Title string `fake:"{sentence}" json:"title"`
+}
+
+type StockProduct struct {
 	Quantity  int                       `fake:"{number:1,10}" json:"quantity"`
-	Shipping  ProductShippingDimensions `json:"shipping"`
-	ProductId string                    `fake:"{product_id}" json:"productId"`
-	Description string `fake:"{paragraph}" json:"description"`
+}
+
+type MediaProductDetails struct {
 	Images []string `fake:"{images}" fakesize:"3" json:"images"`
+}
+
+type ProviderDetails struct {
 	ApiProvider string `json:"api_provider" fake:"{randomstring:[typhoon]}"`
 	CountryOfOrigin string `fake:"{randomstring:[USA,CA]}" json:"countryoforigin"`
 	Marketplace string `fake:"{randomstring:[ebay.com,amazon.com,walmart.com,homedepot.com]}" json:"marketplace"`
 }
 
+type ProductAttributes struct {
+	Color string `fake:"{color}" json:"color"`
+	Brand string `fake:"{brand}" json:"brand"`
+}
+
+type Product struct {
+	BaseProduct
+	Categories
+	StockProduct
+	ProviderDetails
+
+
+
+	
+	Shipping  ProductShippingDimensions `json:"shipping"`
+	ProductId string                    `fake:"{product_id}" json:"productId"`
+	
+	
+}
+
 func CreateProduct() *Product {
 	var p *Product
+	err := gofakeit.Struct(&p)
+	if utils.NotNill(err) {
+		color.Red("%s", err.Error())
+		return nil
+	}
+	return p
+}
+
+func CreateProductWithId() *BaseProduct {
+	var p *BaseProduct
 	err := gofakeit.Struct(&p)
 	if utils.NotNill(err) {
 		color.Red("%s", err.Error())

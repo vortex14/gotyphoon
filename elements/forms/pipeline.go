@@ -3,7 +3,7 @@ package forms
 import (
 	Context "context"
 
-	"github.com/vortex14/gotyphoon/elements/models/awaitable"
+	"github.com/vortex14/gotyphoon/elements/models/awaitabler"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/utils"
@@ -14,7 +14,7 @@ import (
 
 type BasePipeline struct {
 	*label.MetaInfo
-	*awaitable.Object
+	*awaitabler.Object
 
 	//stageIndex    int32
 

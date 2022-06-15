@@ -52,6 +52,13 @@ const (
 
 var PRIORITIES = [3]int{PRIORITY2FIRST, PRIORITY2SECOND, PRIORITY2THIRD}
 
+var TyphoonComponents = []string{
+	DONOR,
+	FETCHER,
+	PROCESSOR,
+	SCHEDULER,
+	TRANSPORTER,
+}
 
 func (c *ConfigProject) SetConfigName(name string) {
 	c.configFile = name

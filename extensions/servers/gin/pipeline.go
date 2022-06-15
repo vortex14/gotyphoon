@@ -13,8 +13,19 @@ import (
 
 type RequestPipeline struct {
 	*forms.BasePipeline
-	Fn func(context context.Context, ginCtx *gin.Context, logger interfaces.LoggerInterface)  (error, context.Context)
-	Cn func(err error, context context.Context, ginCtx *gin.Context, logger interfaces.LoggerInterface)
+
+	Fn func(
+		context context.Context,
+		ginCtx *gin.Context,
+		logger interfaces.LoggerInterface,
+	)  (error, context.Context)
+
+	Cn func(
+		err error,
+		context context.Context,
+		ginCtx *gin.Context,
+		logger interfaces.LoggerInterface,
+	)
 }
 
 func (t *RequestPipeline) UnpackCtx(ctx context.Context) (bool, *gin.Context, interfaces.LoggerInterface)  {

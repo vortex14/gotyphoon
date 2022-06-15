@@ -5,12 +5,21 @@ import "strings"
 type MetaInfo struct {
 	Path string
 	Name string
+	Label string
 	Required bool
 	Description string
 }
 
 func (l *MetaInfo) GetName() string {
 	return l.Name
+}
+
+func (l *MetaInfo) SetLabel(label string)  {
+	l.Label = label
+}
+
+func (l *MetaInfo) GetLabel() string {
+	return l.Label
 }
 
 func (l *MetaInfo) GetDescription() string {

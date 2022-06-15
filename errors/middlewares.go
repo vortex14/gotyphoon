@@ -6,5 +6,6 @@ var MiddlewareBasicAuthOptionsNotFound = Errors.New("middleware basic auth optio
 var MiddlewareNotImplemented = Errors.New("middleware not implemented")
 var MiddlewareRequired = Errors.New("middleware required")
 var ForceSkipMiddlewares = Errors.New("skip all future middleware stack")
+var ForceSkipRequest = Errors.New("skip request")
 
 var MiddlewareContextFailed = Errors.New("invalid middleware context. ctx must contain task & request")

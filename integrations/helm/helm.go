@@ -1,6 +1,8 @@
 package helm
 
 import (
+	"embed"
+	"io/fs"
 	"os"
 
 	"github.com/fatih/color"
@@ -12,8 +14,12 @@ type Resources struct {
 	Project interfaces.Project
 }
 
-func (r *Resources) RemoveHelmMinikubeManifests()  {
+//go:embed templates
+var helmTemplates embed.FS
+
+func (r *Resources) RemoveHelmMinikubeManifests() {
 	u := utils.Utils{}
+
 	u.RemoveFiles([]string{
 		"helm",
 		"helm_delete.sh",
@@ -25,17 +31,22 @@ func (r *Resources) RemoveHelmMinikubeManifests()  {
 	color.Green("Removed")
 }
 
-func (r *Resources) BuildHelmMinikubeResources()  {
+func (r *Resources) BuildHelmMinikubeResources() {
 	color.Yellow("build helm minikube resources ...")
 	r.Project.LoadConfig()
 
 	u := utils.Utils{}
-	fileObject := &interfaces.FileObject{
-		Path: "../builders/v1.1/helm/helm",
+
+	dir, err := fs.Sub(helmTemplates, "templates/v1.1")
+	if err != nil {
+		panic(err)
 	}
 
-	err := u.CopyDirAndReplaceLabel("helm", &interfaces.ReplaceLabel{Label: "{{PROJECT_NAME}}", Value: r.Project.GetName()}, fileObject)
+	fileObject := &interfaces.FileObject{
+		Path: ".",
+	}
 
+	err = u.CopyDirAndReplaceLabel("helm", &interfaces.ReplaceLabel{Label: "{{PROJECT_NAME}}", Value: r.Project.GetName()}, fileObject, dir)
 
 	if err != nil {
 
@@ -44,81 +55,74 @@ func (r *Resources) BuildHelmMinikubeResources()  {
 
 	}
 
-	_, dataTDeployLocal := u.GetGoTemplate(&interfaces.FileObject{Path: "../builders/v1.1/helm", Name: "helm_deploy.gosh"})
+	_, dataTDeployLocal := u.GetGoTemplate(&interfaces.FileObject{Path: ".", Name: "helm_deploy.gosh"}, dir)
 
 	dataConfig := map[string]string{
 		"projectName": r.Project.GetName(),
 	}
 
 	goTemplateHelmDeployLocal := interfaces.GoTemplate{
-		Source: dataTDeployLocal,
+		Source:     dataTDeployLocal,
 		ExportPath: "helm_deploy.sh",
-		Data: dataConfig,
+		Data:       dataConfig,
 	}
-
 
 	u.GoRunTemplate(&goTemplateHelmDeployLocal)
 
-	_, dataTDumpLocal := u.GetGoTemplate(&interfaces.FileObject{Path: "../builders/v1.1/helm", Name: "helm_dump.gosh"})
+	_, dataTDumpLocal := u.GetGoTemplate(&interfaces.FileObject{Path: ".", Name: "helm_dump.gosh"}, dir)
 
 	dataDumpConfig := map[string]string{
 		"projectName": r.Project.GetName(),
 	}
 
 	goTemplateHelmDumpLocal := interfaces.GoTemplate{
-		Source: dataTDumpLocal,
+		Source:     dataTDumpLocal,
 		ExportPath: "helm_dump.sh",
-		Data: dataDumpConfig,
+		Data:       dataDumpConfig,
 	}
-
 
 	u.GoRunTemplate(&goTemplateHelmDumpLocal)
 
-
-	_, dataTDeleteLocal := u.GetGoTemplate(&interfaces.FileObject{Path: "../builders/v1.1/helm", Name: "helm_delete.gosh"})
+	_, dataTDeleteLocal := u.GetGoTemplate(&interfaces.FileObject{Path: ".", Name: "helm_delete.gosh"}, dir)
 
 	dataDeleteConfig := map[string]string{
 		"projectName": r.Project.GetName(),
 	}
 
 	goTemplateHelmDeleteLocal := interfaces.GoTemplate{
-		Source: dataTDeleteLocal,
+		Source:     dataTDeleteLocal,
 		ExportPath: "helm_delete.sh",
-		Data: dataDeleteConfig,
+		Data:       dataDeleteConfig,
 	}
-
 
 	u.GoRunTemplate(&goTemplateHelmDeleteLocal)
 
-
 	if err := os.Chmod("helm_delete.sh", 0755); err != nil {
-		color.Red("%s",err)
+		color.Red("%s", err)
 	}
 
 	if err := os.Chmod("helm_deploy.sh", 0755); err != nil {
-		color.Red("%s",err)
+		color.Red("%s", err)
 	}
 
 	if err := os.Chmod("helm_dump.sh", 0755); err != nil {
-		color.Red("%s",err)
+		color.Red("%s", err)
 	}
 
 	_, confT := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
+		Path: ".",
 		Name: "config.minikube.goyaml",
-
-	})
+	}, dir)
 	goTemplate := interfaces.GoTemplate{
-		Source: confT,
+		Source:     confT,
 		ExportPath: "config.minikube.yaml",
 		Data: map[string]string{
 			"projectName": r.Project.GetName(),
 		},
 	}
 
-	_= u.GoRunTemplate(&goTemplate)
+	_ = u.GoRunTemplate(&goTemplate)
 
 	color.Green("Generated")
-
 
 }

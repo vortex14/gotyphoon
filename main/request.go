@@ -19,7 +19,7 @@ func init()  {
 	log.InitD()
 }
 
-func main() {
+func main8() {
 	taskTest := fake.CreateDefaultTask()
 	taskTest.SetFetcherUrl("http://localhost:12666/fake/product")
 
@@ -27,7 +27,7 @@ func main() {
 
 
 	(&forms.PipelineGroup{
-		BaseLabel: interfaces.BaseLabel{
+		MetaInfo: &label.MetaInfo{
 			Name:        "Http strategy",
 			Required:    true,
 		},

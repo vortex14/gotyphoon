@@ -2,6 +2,7 @@ package gin
 
 import (
 	"context"
+
 	"github.com/vortex14/gotyphoon/elements/forms"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -10,7 +11,9 @@ import (
 
 type Action struct {
 	*forms.Action
-	GinController Controller
+
+	GinController  Controller
+	GinSController ServerController
 }
 
 func (a *Action) AddMethod(name string) {
@@ -25,6 +28,9 @@ func (a *Action) Run(context context.Context, logger interfaces.LoggerInterface)
 	if !status { logger.Error(Errors.ActionContextRequestFailed.Error()) }
 	if a.GinController != nil { a.GinController(requestCtx, logger) } else if a.Pipeline != nil {
 		a.Pipeline.Run(context)
+	}
+	if ok, server := GetServerCtx(context); ok && a.GinSController != nil {
+		a.GinSController(requestCtx, server ,logger )
 	}
 }
 

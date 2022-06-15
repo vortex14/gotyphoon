@@ -32,6 +32,10 @@ func Patch(logger *logrus.Entry, values map[string]interface{}) *logrus.Entry {
 	return logger.WithFields(values)
 }
 
+func PatchLogI (logger interfaces.LoggerInterface, values map[string]interface{}) *logrus.Entry  {
+	return Patch(logger.(*logrus.Entry), values)
+}
+
 func Get(context context.Context) (bool, interfaces.LoggerInterface) {
 	log, ok := ctx.Get(context, interfaces.LOGGER).(*logrus.Entry)
 	if !ok { log = New(D{"unstable context": true})}

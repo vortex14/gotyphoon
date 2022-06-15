@@ -1,0 +1,109 @@
+= typhoon/integrations/solr/main
+:author_name: vortex
+:author: {author_name}
+:source-highlighter: highlightjs
+:icons: font
+:kroki-default-format: svg
+:doctype: book
+
+== Package typhoon/integrations/solr/main
+
+
+=== Imports
+[source, go]
+----
+import (
+    "context"
+    "github.com/fatih/color"
+    Solr "github.com/sf9v/solr-go"
+    "github.com/vortex14/gotyphoon/extensions/data/fake"
+    "github.com/vortex14/gotyphoon/integrations/solr"
+    "github.com/vortex14/gotyphoon/log"
+    "github.com/vortex14/gotyphoon/utils"
+    "path/filepath"
+)
+----
+
+== Structs
+
+=== ParseConfig
+[source, go]
+----
+type ParseConfig struct {
+    Test          bool
+    Internal      bool
+    UnderScore    bool
+}
+----
+
+ParseConfig to use when invoking ParseAny, ParseSingleFileWalker, and
+ParseSinglePackageWalker.
+
+.ParserConfig
+[source,go]
+----
+include::/Users/vortex/go/src/typhoon/integrations/solr/main/main.go[tag=parse-config,indent=0]
+----
+<1> These are usually excluded since many testcases is not documented anyhow
+<2> As of _go 1.16_ it is recommended to *only* use module based parsing
+
+==== Test bool
+Test denotes if test files (ending with _test.go) should be included or not
+(default not included)
+
+==== Internal bool
+Internal determines if internal folders are included or not (default not)
+
+==== UnderScore bool
+UnderScore, when set to true it will include directories beginning with _
+
+
+
+
+=== CollectionSchema
+[source, go]
+----
+type CollectionSchema struct {
+    Collection    string
+    Schema        []Solr.Field
+}
+----
+
+CollectionSchema to use when invoking ParseAny, ParseSingleFileWalker, and
+ParseSinglePackageWalker.
+.CollectionSchema
+<1> These are usually excluded since many testcases is not documented anyhow
+
+==== Collection string
+
+
+==== Schema []Solr.Field
+
+
+
+
+
+
+== Functions
+
+
+=== CreateSchema
+[source, go]
+----
+func CreateSchema(client *solr.Client,schema []Solr.Field, collection string)
+----
+
+
+
+
+=== GetFieldsFromTemplate
+[source, go]
+----
+func GetFieldsFromTemplate(template *solr.TemplateConfig) chan CollectionSchema
+----
+
+
+
+
+
+

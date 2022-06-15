@@ -8,12 +8,11 @@ import (
 )
 
 type Producer struct {
-	total int
+	total  int
 	Worker *nsq.Producer
 }
 
-
-func (s *Service) PriorityPub(priority int, name string, message string)  {
+func (s *Service) PriorityPub(priority int, name string, message string) {
 	err := s.priorityProducers[name][priority].Worker.Publish([]byte(message))
 	if err != nil {
 		color.Red("%s", err.Error())
@@ -29,10 +28,8 @@ func (s *Service) Pub(
 	topic string,
 	message string,
 ) error {
-
 	return s.Producers[name].Worker.PublishTo(topic, []byte(message))
 }
-
 
 func (s *Service) InitProducer(settings *interfaces.Queue) {
 	name := settings.GetGroupName()
@@ -40,16 +37,15 @@ func (s *Service) InitProducer(settings *interfaces.Queue) {
 	color.Yellow(`init NSQ producer. 
 	Group:%s 
 	Topic: %s 
-	Channel: %s`,  name, settings.Topic, settings.Channel,
+	Channel: %s`, name, settings.Topic, settings.Channel,
 	)
 	s.initConfig()
 	producer, _ := nsq.StartProducer(nsq.ProducerConfig{
-		Topic: settings.Topic,
+		Topic:   settings.Topic,
 		Address: s.Config.NsqdNodes[0].IP,
 	})
 
 	newProducer := &Producer{Worker: producer}
-
 
 	if s.Producers == nil {
 		s.Producers = Producers{
@@ -59,6 +55,9 @@ func (s *Service) InitProducer(settings *interfaces.Queue) {
 		s.Producers[name] = newProducer
 	}
 
+	if _, ok := s.Producers[name]; !ok {
+		panic("producer cannot be installed on the map ")
+	}
 
 	if priority > 0 {
 
@@ -74,8 +73,7 @@ func (s *Service) InitProducer(settings *interfaces.Queue) {
 
 }
 
-
-func (s *Service) StopProducers()  {
+func (s *Service) StopProducers() {
 	color.Yellow("Stop all producers ...")
 	for producer := range s.Producers {
 		s.Producers[producer].Worker.Stop()

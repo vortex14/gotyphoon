@@ -1,13 +1,13 @@
 package interfaces
 
 import (
-	"github.com/vortex14/gotyphoon/builders"
 	"github.com/vortex14/gotyphoon/environment"
-	"github.com/vortex14/gotyphoon/migrates"
+	//"github.com/vortex14/gotyphoon/extensions/project/python3"
+	"github.com/vortex14/gotyphoon/extensions/project/python3/builders"
 )
 
 type Project interface {
-	Run()
+	Run() Project
 	Close()
 	Watch()
 	goPromise
@@ -17,10 +17,11 @@ type Project interface {
 	GetName() string
 	GetVersion() string
 	GetLogLevel() string
+	GetConfigPath() string
 	GetConfigFile() string
 	GetProjectPath() string
 	builders.ProjectBuilder
-	migrates.ProjectMigrate
+	//python3.ProjectMigrate
 	GetComponents() []string
 	CreateSymbolicLink() error
 	GetDockerImageName() string
@@ -30,6 +31,6 @@ type Project interface {
 	GetLabels() *ClusterProjectLabels
 	GetBuilderOptions() *BuilderOptions
 	GetEnvSettings() *environment.Settings
-	LoadServices(opts TyphoonIntegrationsOptions)
 	GetService(name string) Service
+	LoadServices(opts TyphoonIntegrationsOptions)
 }

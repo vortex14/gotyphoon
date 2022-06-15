@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/vortex14/gotyphoon/extensions/data"
-	tyLog "github.com/vortex14/gotyphoon/log"
+	"github.com/vortex14/gotyphoon/elements/forms"
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	"io"
 	"log"
 	"os"
@@ -17,7 +17,6 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -27,21 +26,27 @@ import (
 	"github.com/go-git/go-git/v5"
 	"go.mongodb.org/mongo-driver/bson"
 
+	"github.com/vortex14/gotyphoon/elements/models/awaitabler"
+	"github.com/vortex14/gotyphoon/elements/models/folder"
+	"github.com/vortex14/gotyphoon/elements/models/singleton"
+	"github.com/vortex14/gotyphoon/extensions/data"
+
+	Errors "github.com/vortex14/gotyphoon/errors"
+	tyLog "github.com/vortex14/gotyphoon/log"
+
 	"github.com/vortex14/gotyphoon/environment"
 	"github.com/vortex14/gotyphoon/integrations/mongo"
 	"github.com/vortex14/gotyphoon/integrations/redis"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/interfaces/ghosts"
-	"github.com/vortex14/gotyphoon/migrates/v1.1"
 	"github.com/vortex14/gotyphoon/services"
-	"github.com/vortex14/gotyphoon/utils"
 )
 
 type components = struct {
-	PathProject 		string
-	TyphoonPath			string
-	ConfigFile			string
-	ActiveComponents 	map[string] *Component
+	PathProject      string
+	TyphoonPath      string
+	ConfigFile       string
+	ActiveComponents map[string]*Component
 }
 
 type Task struct {
@@ -51,16 +56,20 @@ type Task struct {
 }
 
 type Services struct {
-	Mongo map[string] mongo.Service
-	Redis map[string] redis.Service
+	Mongo map[string]mongo.Service
+	Redis map[string]redis.Service
 }
 
-
 type TestMongo struct {
-
 }
 
 type Project struct {
+	folder *folder.Folder
+	singleton.Singleton
+	awaitabler.Object
+
+	LOG interfaces.LoggerInterface
+
 	AutoReload        bool
 	task              *Task
 	Path              string
@@ -91,9 +100,10 @@ func (p *Project) GetLabels() *interfaces.ClusterProjectLabels {
 }
 
 func (p *Project) IsDebug() bool {
+
 	return p.Config.Debug
 }
-func (p *Project) RunFetcherQueues()  {
+func (p *Project) RunFetcherQueues() {
 	p.LoadConfig()
 	if p.components.ActiveComponents == nil {
 		p.initComponents()
@@ -105,8 +115,8 @@ func (p *Project) GetService(name string) interfaces.Service {
 	switch name {
 	case interfaces.NSQ:
 		return p.Services.Collections.Nsq
-	//case interfaces.MONGO:
-	//	return p.Services.Collections.Mongo
+		//case interfaces.MONGO:
+		//	return p.Services.Collections.Mongo
 
 	}
 	return nil
@@ -146,7 +156,7 @@ func (p *Project) GetBranch() (error, string) {
 	var err error
 	errRepo, repo := p.GetRepo()
 	repoData, errHead := repo.Head()
-	if errHead != nil{
+	if errHead != nil {
 		err = errHead
 	}
 	if errRepo != nil {
@@ -175,7 +185,9 @@ func (p *Project) GetRemotes() ([]*git.Remote, error) {
 }
 
 func watchDirTeet(path string, fi os.FileInfo, err error) error {
+	print(path)
 
+	return nil
 	// since fsnotify can watch all the files in a directory, watchers only need
 	// to be added to each nested directory
 	if fi.Mode().IsDir() {
@@ -248,19 +260,18 @@ func (p *Project) ImportExceptions(component string, sourceFileName string) erro
 		//u := utils.Utils{}
 		//j
 
-		//o := u.PrintPrettyJson(suurceBson)
+		//o := u.DumpPrettyJson(suurceBson)
 
 		//println(BsonTools)
 
 		//color.Green("%+v", d)  // GET the line string
-
 
 	}
 
 	return nil
 }
 
-func (p *Project) ImportResponseData(url string, sourceFile string)  {
+func (p *Project) ImportResponseData(url string, sourceFile string) {
 	p.LoadConfig()
 
 	currentPath, _ := os.Getwd()
@@ -273,13 +284,10 @@ func (p *Project) ImportResponseData(url string, sourceFile string)  {
 	color.Green("url: %s", url)
 	taskid := md5.Sum([]byte(url))
 	p.LoadServices(interfaces.TyphoonIntegrationsOptions{
-			Redis: interfaces.BaseServiceOptions{
-				Active: true,
-			},
-
-
-
+		Redis: interfaces.BaseServiceOptions{
+			Active: true,
 		},
+	},
 	)
 	redisPath := fmt.Sprintf("%s:%s", p.GetName(), hex.EncodeToString(taskid[:]))
 	err = p.Services.Collections.Redis["main"].Set(redisPath, string(dat))
@@ -290,147 +298,15 @@ func (p *Project) ImportResponseData(url string, sourceFile string)  {
 	color.Green(redisPath)
 }
 
-func (p *Project) TestFunc()  {
+func (p *Project) TestFunc() {
 	data.TestFunc()
 }
 
 func (p *Project) CreateProject() {
-	color.Yellow("creating project...")
-	u := utils.Utils{}
-	fileObject := &interfaces.FileObject{
-		Path: "../builders/v1.1/project",
-	}
-
-	err := u.CopyDir(p.Name, fileObject)
-
-
-	if utils.NotNill(err) {
-
-		color.Red("Error %s", err)
-		os.Exit(0)
-
-	}
-
-	gitIgnore := &interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: ".gitignore",
-	}
-	errCopyIgnore := u.CopyFile(p.Name + "/.gitignore", gitIgnore)
-	if errCopyIgnore != nil {
-		color.Red("Error copy %s", err)
-	}
-
-
-
-	_, confT := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "config.goyaml",
-
-	})
-	goTemplate := interfaces.GoTemplate{
-		Source: confT,
-		ExportPath: p.Name +"/config.local.yaml",
-		Data: map[string]string{
-			"projectName": p.Name,
-			"nsqdAdd": "localhost:4150",
-			"redisHost": "localhost",
-			"mongoHost": "localhost",
-			"redisPort": "6379",
-			"debug": "true",
-		},
-	}
-
-	_= u.GoRunTemplate(&goTemplate)
-	goTemplateCompose := interfaces.GoTemplate{
-		Source: confT,
-		ExportPath: p.Name +"/config.prod.yaml",
-		Data: map[string]string{
-			"projectName": p.Name,
-			"nsqdAdd": "nsqd:4150",
-			"redisHost": "redis",
-			"redisPort": "6379",
-		},
-	}
-
-	_= u.GoRunTemplate(&goTemplateCompose)
-	//color.Green("Teplate status: %b", status)
-
-	_, dataTDockerLocal := u.GetGoTemplate(&interfaces.FileObject{Path: "../builders/v1.1", Name: "docker-compose.local.goyaml"})
-
-	dataConfig := map[string]string{
-		"projectName": p.GetName(),
-		"tag": p.GetTag(),
-	}
-
-	goTemplateComposeLocal := interfaces.GoTemplate{
-		Source: dataTDockerLocal,
-		ExportPath: p.Name +"/docker-compose.local.yaml",
-		Data: dataConfig,
-	}
-
-
-	u.GoRunTemplate(&goTemplateComposeLocal)
-	color.Green("Project %s created !", p.Name)
 
 }
 
 func (p *Project) BuildCIResources() {
-	color.Green("Build CI Resources for %s !", p.Name)
-	u := utils.Utils{}
-	_, confCi := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: ".gitlab-ci.yml",
-
-	})
-	goTemplate := interfaces.GoTemplate{
-		Source: confCi,
-		ExportPath: ".gitlab-ci.yml",
-	}
-
-	_= u.GoRunTemplate(&goTemplate)
-
-	_, dockerFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "Dockerfile",
-
-	})
-	goTemplateDocker := interfaces.GoTemplate{
-		Source: dockerFile,
-		ExportPath: "Dockerfile",
-		Data: map[string]string{
-			"TYPHOON_IMAGE": p.Version,
-		},
-	}
-
-	_= u.GoRunTemplate(&goTemplateDocker)
-
-
-	_, helmFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "helm-review-values.yml",
-
-	})
-	goTemplateHelmValues := interfaces.GoTemplate{
-		Source: helmFile,
-		ExportPath: "helm-review-values.yml",
-	}
-
-	_= u.GoRunTemplate(&goTemplateHelmValues)
-
-	_, configFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "config-stage.goyaml",
-
-	})
-	goTemplateConfig := interfaces.GoTemplate{
-		Source: configFile,
-		ExportPath: "config.kube-stage.yaml",
-		Data: map[string]string{
-			"projectName": p.GetName(),
-		},
-	}
-
-	_= u.GoRunTemplate(&goTemplateConfig)
 
 }
 
@@ -438,50 +314,43 @@ func (p *Project) GetEnvSettings() *environment.Settings {
 	return p.EnvSettings
 }
 
-func (p *Project) AddPromise()  {
-	p.task.wg.Add(1)
+func (p *Project) AddPromise() {
+	p.Add()
 }
-func (p *Project) PromiseDone()  {
-	p.task.wg.Done()
+func (p *Project) PromiseDone() {
+	p.Done()
 }
-func (p *Project) WaitPromises()  {
-	p.task.wg.Wait()
+func (p *Project) WaitPromises() {
+	p.Await()
 }
-func (p *Project) Run()  {
-	p.CheckProject()
-	p.task = &Task{
-		closed: make(chan struct{}),
-		ticker: time.NewTicker(time.Second * 2),
-	}
-	typhoonDir := &Directory{
-		Path: "typhoon",
-	}
+func (p *Project) Run() interfaces.Project {
+	p.folder = &folder.Folder{Path: p.GetProjectPath()}
 
-	if !typhoonDir.IsExistDir("typhoon") {
+	p.CheckProject()
+
+	p.LOG = tyLog.New(tyLog.D{"project": p.Name})
+
+	//println(">>>>>>>> >>>>>>>", p.folder.Path)
+
+	p.LOG.Info(p.folder.Path)
+
+	if !p.folder.IsExist("typhoon") {
+		p.LOG.Info("init typhoon symlink path")
 		_ = p.CreateSymbolicLink()
 	}
 
-
-	color.Magenta("start components")
-	p.AddPromise()
-	go p.StartComponents(true)
 	//
-	p.AddPromise()
-	go p.task.Run()
+	//
+	//color.Magenta("start components")
+	p.LOG.Info("start components ...")
+	//p.AddPromise()
+	p.StartComponents(true)
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go p.Watch()
-	//go Watch(&task.wg, typhoonComponent, project.GetConfigFile())
-	sig := <-c
-	fmt.Printf("Got %s signal. Aborting...\n", sig)
-	p.AddPromise()
-	go p.Close()
-	p.task.Stop()
+	return p
 
 }
 
-func (p *Project) Watch()  {
+func (p *Project) Watch() {
 	color.Green("watch for project ..")
 	watcher, _ = fsnotify.NewWatcher()
 	defer watcher.Close()
@@ -513,7 +382,6 @@ func (p *Project) Watch()  {
 					continue
 				}
 
-
 				componentChanged := ""
 
 				for _, component := range p.SelectedComponent {
@@ -528,12 +396,11 @@ func (p *Project) Watch()  {
 				if _, ok := p.components.ActiveComponents[componentChanged]; ok {
 
 					color.Yellow("Reload %s ...", componentChanged)
-					color.Yellow("event %+v",event)
+					color.Yellow("event %+v", event)
 					component := p.components.ActiveComponents[componentChanged]
 
 					//p.AddPromise()
 					go component.Restart(p)
-
 
 					// "example" is not in the map
 				} else {
@@ -541,7 +408,6 @@ func (p *Project) Watch()  {
 				}
 
 				//
-
 
 				//p.AddPromise()
 				//go component.Restart(p)
@@ -560,26 +426,25 @@ func (p *Project) Watch()  {
 	<-done
 }
 
-func (p *Project) Close()  {
-	defer p.PromiseDone()
+func (p *Project) Close() {
+	color.Yellow("close project ...")
 	for _, component := range p.components.ActiveComponents {
-
 		if component.Active {
-			p.AddPromise()
+			p.Add()
 			go component.Close(p)
 		}
 
-
 	}
-
-
+	color.Yellow("await done...")
+	p.Await()
+	color.Yellow("await done !")
 
 }
 
 func (p *Project) Down() {
 	p.LoadConfig()
 	commandDropProject := fmt.Sprintf("kill -9 $(ps aux | grep \"%s\" | awk '{print $2}')", p.GetName())
-	color.Red("Running: %s: ",commandDropProject)
+	color.Red("Running: %s: ", commandDropProject)
 	ctxP, cancelP := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancelP()
 
@@ -598,7 +463,6 @@ func (p *Project) Down() {
 	}
 }
 
-
 func (p *Project) GetBuilderOptions() *interfaces.BuilderOptions {
 	return p.BuilderOptions
 }
@@ -606,23 +470,11 @@ func (p *Project) GetBuilderOptions() *interfaces.BuilderOptions {
 func (p *Project) GetTag() string {
 	return p.Tag
 }
-func (p *Project) Migrate()  {
+func (p *Project) Migrate() {
 
-	color.Yellow("Migrate project to %s !", p.GetVersion())
-
-	if p.Version == "v1.1" {
-		prMigrates := v1_1.ProjectMigrate{
-			Project: p,
-			Dir: &interfaces.FileObject{
-				Path: "../builders/v1.1",
-			},
-		}
-		prMigrates.MigrateV11()
-	}
 }
 
-
-func (p *Project) Build()  {
+func (p *Project) Build() {
 	color.Yellow("builder run... options %+v", p.BuilderOptions)
 }
 
@@ -630,7 +482,7 @@ func (p *Project) GetSelectedComponent() []string {
 	return p.SelectedComponent
 }
 
-func (p *Project) RunQueues()  {
+func (p *Project) RunQueues() {
 	if len(p.SelectedComponent) == 0 {
 		color.Red("No set components for project")
 		return
@@ -638,7 +490,7 @@ func (p *Project) RunQueues()  {
 	p.Services.RunNSQ()
 }
 
-func (p *Project) initComponents()  {
+func (p *Project) initComponents() {
 	p.components.ActiveComponents = make(map[string]*Component)
 	p.Name = p.Config.ProjectName
 	for _, componentName := range p.SelectedComponent {
@@ -659,18 +511,17 @@ func (p *Project) initComponents()  {
 
 		}
 
-		component := &Component{
-			Name: componentName,
-			file: file{
+		p.components.ActiveComponents[componentName] = &Component{
+			Component: forms.Component{
+				MetaInfo: label.MetaInfo{Name: componentName},
 				Language: interfaces.PYTHON,
-				FileExt: fmt.Sprintf("%s.py", componentFileName),
+				FileExt:  fmt.Sprintf("%s.py", componentFileName),
 			},
 		}
-		p.components.ActiveComponents[componentName] = component
 	}
 }
 
-func (p *Project) StartComponents(promise bool)  {
+func (p *Project) StartComponents(promise bool) {
 
 	fmt.Printf(tyLog.DOG)
 
@@ -678,16 +529,17 @@ func (p *Project) StartComponents(promise bool)  {
 		p.initComponents()
 	}
 
-	if promise {
-		defer p.PromiseDone()
-	}
+	//if promise {
+	//	defer p.PromiseDone()
+	//}
 
 	for _, componentName := range p.SelectedComponent {
-		p.components.ActiveComponents[componentName].Start(p)
+		p.Add()
+		go p.components.ActiveComponents[componentName].Start(p)
 	}
+
+	p.LOG.Debug("Components started")
 }
-
-
 
 func (p *Project) GetVersion() string {
 	return p.Version
@@ -699,10 +551,12 @@ func (p *Project) CreateSymbolicLink() error {
 
 	linkTyphoonPath := fmt.Sprintf("%s/pytyphoon/typhoon", settings.Path)
 	color.Yellow("TYPHOON_PATH=%s", settings.Path)
-	err := os.Symlink(linkTyphoonPath, "typhoon")
+	directLink := filepath.Join(p.GetProjectPath(), "typhoon")
+	color.Yellow(directLink)
+	err := os.Symlink(linkTyphoonPath, directLink)
 
-	if err != nil{
-		fmt.Printf("err %s",  err)
+	if err != nil {
+		fmt.Printf("err %s", err)
 	}
 
 	return nil
@@ -722,6 +576,10 @@ func (p *Project) GetComponents() []string {
 
 func (p *Project) GetConfigFile() string {
 	return p.ConfigFile
+}
+
+func (p *Project) GetConfigPath() string {
+	return filepath.Join(p.GetProjectPath(), p.GetConfigFile())
 }
 
 func (p *Project) GetProjectPath() string {
@@ -753,8 +611,7 @@ func (p *Project) GetLogLevel() string {
 	return p.LogLevel
 }
 
-
-func (p *Project) LoadServices(opts interfaces.TyphoonIntegrationsOptions)  {
+func (p *Project) LoadServices(opts interfaces.TyphoonIntegrationsOptions) {
 	status := false
 	projectServices := services.Services{
 		Project: p,
@@ -787,7 +644,7 @@ func (p *Project) LoadConfig() (configProject *interfaces.ConfigProject) {
 	configPath := fmt.Sprintf("%s/%s", p.GetProjectPath(), p.ConfigFile)
 	color.Yellow("Load config from file: %s", configPath)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		color.Red("Config %s does not exists in project :%s", p.ConfigFile, configPath )
+		color.Red("Config %s does not exists in project :%s", p.ConfigFile, configPath)
 		os.Exit(1)
 	}
 
@@ -800,7 +657,7 @@ func (p *Project) LoadConfig() (configProject *interfaces.ConfigProject) {
 		err = yaml.Unmarshal(yamlFile, &loadedConfig)
 		if err != nil {
 			//log.Fatalf("Unmarshal: %v", err)
-			color.Red("Config load error: %s", err )
+			color.Red("Config load error: %s", err)
 			os.Exit(1)
 		}
 
@@ -819,83 +676,45 @@ func (p *Project) LoadConfig() (configProject *interfaces.ConfigProject) {
 
 	p.EnvSettings = settings
 
-
 	return &loadedConfig
 }
 
 func (p *Project) CheckProject() {
-	var status = true
-	var statuses = make(map[string]bool)
 
-	p.Path = p.GetProjectPath()
+	var status = true
 
 	for _, componentName := range p.SelectedComponent {
 		component := &Component{
-
-			Name: componentName,
+			Component: forms.Component{
+				MetaInfo:    label.MetaInfo{Name: componentName},
+				ProjectPath: p.folder.Path,
+			},
 		}
-		color.Yellow("checking: %s...",componentName)
+		color.Yellow("checking: %s...", componentName)
 
-		componentStatus := component.CheckComponent()
-		statuses[componentName] = componentStatus
-	}
-
-	for componentStatus, statusComponent := range statuses {
-		if !statusComponent {
+		if !component.CheckComponent() {
 			status = false
+			color.Yellow("%s is: false", componentName)
 		}
-		color.Yellow("component %s is: %t", componentStatus, statusComponent)
-	}
 
+	}
 	p.LoadConfig()
 
-
-
-
 	if !status {
-		color.Red("Project does not exists in the current directory :%s", p.Path )
+		color.Red("%s : %s", Errors.ProjectNotFound.Error(), p.Path)
 		os.Exit(1)
 	}
-
 
 	env := &environment.Environment{}
 	_, settings := env.GetSettings()
 
 	if len(settings.Path) == 0 || len(settings.Projects) == 0 {
-		color.Red("We need set valid environment variables like TYPHOON_PATH and TYPHOON_PROJECTS in %s", env.ProfilePath )
+		color.Red("%s in %s", Errors.ProjectInvalidEnv.Error(), env.ProfilePath)
 		os.Exit(1)
 	}
 
 	p.EnvSettings = settings
 
-
-}
-
-func (t *Task) Run() {
-	t.wg.Done()
-	for {
-		select {
-		case <-t.closed:
-			return
-		case <-t.ticker.C:
-			handle()
-		}
-	}
-}
-
-func (t *Task) Stop() {
-	color.Green("Stopping ...")
-	close(t.closed)
-
-	t.wg.Wait()
-	color.Green("All components are closed")
-}
-
-func handle() {
-	for i := 0; i < 5; i++ {
-		//fmt.Print("#")
-		time.Sleep(time.Millisecond * 200)
-	}
 }
 
 func (p *Project) RunArchon(promise bool) {
@@ -905,13 +724,11 @@ func (p *Project) RunArchon(promise bool) {
 	}
 	p.LoadConfig()
 	p.Archon.RunDemons(p)
-	
+
 	p.Archon.RunProjectServers(p)
 
 	if promise {
 		p.Archon.AddPromise()
 	}
-
-
 
 }

@@ -4,3 +4,4 @@ vendor
 venv
 build
 tmp
+main/ci/agent/agent

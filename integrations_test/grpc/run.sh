@@ -1,0 +1,1 @@
+goconvey . -excludedDirs=example-app

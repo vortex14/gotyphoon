@@ -4,6 +4,7 @@ import (
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin"
+	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/graph"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/ping"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
@@ -15,7 +16,7 @@ const (
 	WATERMARK          = "image.typhoon.dev"
 	DESCRIPTION        = "Server for data fakes"
 
-	ResourceName       = "fakers resource"
+	ResourceName       = "data fakers resource"
 
 	FakeUPCPath        = "upc"
 	FakeTaskPath       = "task"
@@ -64,6 +65,7 @@ func Constructor(
 				},
 				Actions: map[string]interfaces.ActionInterface{
 					ping.PATH          : ping.Controller,
+					graph.PATH         : graph.Controller,
 					FakeUPCPath        : CreateUpcAction(),
 					FakeTaskPath       : CreateTaskAction(),
 					FakeProxyPath      : CreateProxyAction(),

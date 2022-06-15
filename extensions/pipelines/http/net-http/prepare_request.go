@@ -14,7 +14,7 @@ func CreatePrepareRequestPipeline() *pipelines.TaskPipeline {
 	return &pipelines.TaskPipeline{
 		BasePipeline: &forms.BasePipeline{
 			MetaInfo: &label.MetaInfo{
-				Name: "prepare",
+				Name: "prepare request",
 			},
 		},
 		Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) (error, context.Context) {

@@ -30,8 +30,35 @@ type ProcessorPipelineInterface interface {
 	Switch()
 }
 
+type PipelineGroupGraph interface {
+
+
+	// /* ignore for building amd64-linux
+
+	SetGraph(graph GraphInterface)
+	InitGraph(parentNode string)
+	SetGraphNodes(nodes map[string]NodeInterface)
+
+	// */
+
+	PipelineGroupInterface
+}
+
 type PipelineGroupInterface interface {
 	Run(ctx context.Context)
+	GetName() string
+	GetFirstPipelineName() string
+	SetLogger(logger LoggerInterface)
+
+	// /* ignore for building amd64-linux
+	SetGraph(graph GraphInterface)
+
+	InitGraph(parentNode string)
+
+	SetGraphNodes(nodes map[string]NodeInterface)
+//
+	// */
+
 }
 
 
