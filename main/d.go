@@ -5,7 +5,7 @@ import (
 	"github.com/fogleman/gg"
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"reflect"
+	//"reflect"
 )
 
 type ReflectFunc func(
@@ -15,20 +15,19 @@ type ReflectFunc func(
 	imgCtx *gg.Context,
 )
 
-func test(args ...interface{})  {
-	for i, arg := range args {
-		println(i,reflect.TypeOf(arg).)
-		println(i,reflect.TypeOf(arg).)
-	}
+func test(args ...interface{}) {
+	//for i, arg := range args {
+	//	//println(i,reflect.TypeOf(arg).)
+	//	//println(i,reflect.TypeOf(arg).)
+	//}
 
 }
-
 
 type User struct {
 	Name string
 }
 
-func main()  {
+func main() {
 	//test(&User{})
 	test(fake.CreateDefaultTask(), &User{})
 }

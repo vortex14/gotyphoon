@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/fatih/color"
-	Solr "github.com/sf9v/solr-go"
+	Solr "github.com/stevenferrer/solr-go"
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
 	"github.com/vortex14/gotyphoon/integrations/solr"
 	"github.com/vortex14/gotyphoon/utils"
@@ -11,22 +11,17 @@ import (
 	"github.com/vortex14/gotyphoon/log"
 )
 
-func init()  {
+func init() {
 	log.InitD()
 }
 
-
-func main()  {
-	options := &solr.ConnectOptions{
-
-	}
-	client := (
-		&solr.Client{Options: options, DOptions: &solr.DockerOptions{MatchName: "bitnami/solr:8-debian-10"}}).
+func main() {
+	options := &solr.ConnectOptions{}
+	client := (&solr.Client{Options: options, DOptions: &solr.DockerOptions{MatchName: "bitnami/solr:8-debian-10"}}).
 		Init()
 
 	//_, _ = client.GetCollectionSchemaFields()
 	client.ConnectToDockerNode()
-
 
 	return
 	//_, res := utils.DumpPrettyJson(fields)
@@ -38,13 +33,11 @@ func main()  {
 	//}
 	//color.Yellow("%s", res)
 
-
 	errR, s2 := client.RemoveAllDocs()
 	if errR != nil {
 		color.Red("%+v", errR)
 		return
 	}
-
 
 	_, s2P := utils.DumpPrettyJson(s2)
 	color.Red("%s", s2P)
@@ -56,8 +49,8 @@ func main()  {
 
 	schema := []Solr.Field{
 		{
-			Name: "description",
-			Type: "string",
+			Name:        "description",
+			Type:        "string",
 			MultiValued: false,
 		},
 		//{
@@ -83,12 +76,9 @@ func main()  {
 	//	color.Red(">>>>>",err.Error())
 	//}
 
-
-
 	errI := client.AddSchemaFields(schema)
 	color.Red(">>>>>> added: %+v", errI)
 	return
-
 
 	//
 	//errI := client.AddSchemaFields([]Solr.Field{
@@ -124,29 +114,20 @@ func main()  {
 	product.Price.ListingPrice = 10.5
 
 	err, s := client.UpdateDocAndCommit(context.Background(), solr.Document{
-		"id":    product.Id,
-		"url":   product.Url,
-		"title": product.Title,
-		"description": product.Description,
-		"upc": product.Upc,
+		"id":            product.Id,
+		"url":           product.Url,
+		"title":         product.Title,
+		"description":   product.Description,
+		"upc":           product.Upc,
 		"price_listing": product.Price.ListingPrice,
-		"price_offer": product.Price.OfferPrice,
+		"price_offer":   product.Price.OfferPrice,
 	})
-
-
 
 	if err != nil {
 		color.Red(">>>>>>>> : %+v", err.Error())
 		//return
 	}
 	color.Yellow("%+v", s.BaseResponse)
-
-
-
-
-
-
-
 
 	return
 	//fields := []Solr.Field{
@@ -158,7 +139,6 @@ func main()  {
 	//status, _ := solrClient.CoreStatus(context.Background(), &Solr.CoreParams{})
 	//
 	//err = solrClient.AddFields(context.Background(), "go_products", fields...)
-
 
 	//color.Red("%s", status, err)
 	//status, qtime, err := client.Ping()
@@ -186,7 +166,6 @@ func main()  {
 	//
 	//
 	//product.Id = "947cb24a-53c0-4078-bbcd-3e4262dc8ae0"
-
 
 	//var docs []Solr.Document
 	//

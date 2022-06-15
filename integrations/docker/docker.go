@@ -306,28 +306,7 @@ func (d *Docker) RunComponent(component string) error {
 }
 
 func (d *Docker) ProjectBuild() {
-	u := utils.Utils{}
-
-	_, dockerFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "ProjectDockerfile",
-	})
-	goTemplateDocker := interfaces.GoTemplate{
-		Source:     dockerFile,
-		ExportPath: "Dockerfile",
-		Data: map[string]string{
-			"TYPHOON_IMAGE": d.Project.GetDockerImageName(),
-		},
-	}
-
-	err := u.GoRunTemplate(&goTemplateDocker)
-	if !err {
-		color.Red("creation Dockerfile was fail")
-		os.Exit(1)
-	}
-
-	color.Green("Dockerfile created!")
-
+	
 	color.Yellow("Typhoon project docker build ...")
 
 	options := &archive.TarOptions{}
@@ -339,10 +318,6 @@ func (d *Docker) ProjectBuild() {
 	}
 
 	_ = d.build(d.Project.GetProjectPath(), options, opts)
-	//if err != nil {
-	//	fmt.Println(err.Error())
-	//	return
-	//}
 
 }
 

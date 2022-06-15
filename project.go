@@ -39,9 +39,7 @@ import (
 	"github.com/vortex14/gotyphoon/integrations/redis"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/interfaces/ghosts"
-	"github.com/vortex14/gotyphoon/migrates/v1.1"
 	"github.com/vortex14/gotyphoon/services"
-	"github.com/vortex14/gotyphoon/utils"
 )
 
 type components = struct {
@@ -102,6 +100,7 @@ func (p *Project) GetLabels() *interfaces.ClusterProjectLabels {
 }
 
 func (p *Project) IsDebug() bool {
+
 	return p.Config.Debug
 }
 func (p *Project) RunFetcherQueues() {
@@ -304,132 +303,10 @@ func (p *Project) TestFunc() {
 }
 
 func (p *Project) CreateProject() {
-	color.Yellow("creating project...")
-	u := utils.Utils{}
-	fileObject := &interfaces.FileObject{
-		Path: "../builders/v1.1/project",
-	}
-
-	err := u.CopyDir(p.Name, fileObject)
-
-	if utils.NotNill(err) {
-
-		color.Red("Error %s", err)
-		os.Exit(0)
-
-	}
-
-	gitIgnore := &interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: ".gitignore",
-	}
-	errCopyIgnore := u.CopyFile(p.Name+"/.gitignore", gitIgnore)
-	if errCopyIgnore != nil {
-		color.Red("Error copy %s", err)
-	}
-
-	_, confT := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "config.goyaml",
-	})
-	goTemplate := interfaces.GoTemplate{
-		Source:     confT,
-		ExportPath: p.Name + "/config.local.yaml",
-		Data: map[string]string{
-			"projectName": p.Name,
-			"nsqdAdd":     "localhost:4150",
-			"redisHost":   "localhost",
-			"mongoHost":   "localhost",
-			"redisPort":   "6379",
-			"debug":       "true",
-		},
-	}
-
-	_ = u.GoRunTemplate(&goTemplate)
-	goTemplateCompose := interfaces.GoTemplate{
-		Source:     confT,
-		ExportPath: p.Name + "/config.prod.yaml",
-		Data: map[string]string{
-			"projectName": p.Name,
-			"nsqdAdd":     "nsqd:4150",
-			"redisHost":   "redis",
-			"redisPort":   "6379",
-		},
-	}
-
-	_ = u.GoRunTemplate(&goTemplateCompose)
-	//color.Green("Teplate status: %b", status)
-
-	_, dataTDockerLocal := u.GetGoTemplate(&interfaces.FileObject{Path: "../builders/v1.1", Name: "docker-compose.local.goyaml"})
-
-	dataConfig := map[string]string{
-		"projectName": p.GetName(),
-		"tag":         p.GetTag(),
-	}
-
-	goTemplateComposeLocal := interfaces.GoTemplate{
-		Source:     dataTDockerLocal,
-		ExportPath: p.Name + "/docker-compose.local.yaml",
-		Data:       dataConfig,
-	}
-
-	u.GoRunTemplate(&goTemplateComposeLocal)
-	color.Green("Project %s created !", p.Name)
 
 }
 
 func (p *Project) BuildCIResources() {
-	color.Green("Build CI Resources for %s !", p.Name)
-	u := utils.Utils{}
-	_, confCi := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: ".gitlab-ci.yml",
-	})
-	goTemplate := interfaces.GoTemplate{
-		Source:     confCi,
-		ExportPath: ".gitlab-ci.yml",
-	}
-
-	_ = u.GoRunTemplate(&goTemplate)
-
-	_, dockerFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "Dockerfile",
-	})
-	goTemplateDocker := interfaces.GoTemplate{
-		Source:     dockerFile,
-		ExportPath: "Dockerfile",
-		Data: map[string]string{
-			"TYPHOON_IMAGE": p.Version,
-		},
-	}
-
-	_ = u.GoRunTemplate(&goTemplateDocker)
-
-	_, helmFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "helm-review-values.yml",
-	})
-	goTemplateHelmValues := interfaces.GoTemplate{
-		Source:     helmFile,
-		ExportPath: "helm-review-values.yml",
-	}
-
-	_ = u.GoRunTemplate(&goTemplateHelmValues)
-
-	_, configFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "config-stage.goyaml",
-	})
-	goTemplateConfig := interfaces.GoTemplate{
-		Source:     configFile,
-		ExportPath: "config.kube-stage.yaml",
-		Data: map[string]string{
-			"projectName": p.GetName(),
-		},
-	}
-
-	_ = u.GoRunTemplate(&goTemplateConfig)
 
 }
 
@@ -468,19 +345,6 @@ func (p *Project) Run() interfaces.Project {
 	p.LOG.Info("start components ...")
 	//p.AddPromise()
 	p.StartComponents(true)
-	////
-	//p.AddPromise()
-	//go p.task.Run()
-	//
-	//c := make(chan os.Signal, 1)
-	//signal.Notify(c, os.Interrupt)
-	//go p.Watch()
-	////go Watch(&task.wg, typhoonComponent, project.GetConfigFile())
-	//sig := <-c
-	//fmt.Printf("Got %s signal. Aborting...\n", sig)
-	//p.AddPromise()
-	//go p.Close()
-	//p.task.Stop()
 
 	return p
 
@@ -608,17 +472,6 @@ func (p *Project) GetTag() string {
 }
 func (p *Project) Migrate() {
 
-	color.Yellow("Migrate project to %s !", p.GetVersion())
-
-	if p.Version == "v1.1" {
-		prMigrates := v1_1.ProjectMigrate{
-			Project: p,
-			Dir: &interfaces.FileObject{
-				Path: "../builders/v1.1",
-			},
-		}
-		prMigrates.MigrateV11()
-	}
 }
 
 func (p *Project) Build() {

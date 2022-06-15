@@ -2,10 +2,12 @@ package python3
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	lessWatcher "github.com/radovskyb/watcher"
 	BaseWatcher "github.com/vortex14/gotyphoon/elements/models/watcher"
 	"github.com/vortex14/gotyphoon/extensions/models/watcher"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,7 +25,6 @@ import (
 	"github.com/vortex14/gotyphoon/integrations/redis"
 	"github.com/vortex14/gotyphoon/interfaces"
 	tyLog "github.com/vortex14/gotyphoon/log"
-	"github.com/vortex14/gotyphoon/migrates/v1.1"
 	"github.com/vortex14/gotyphoon/services"
 	"github.com/vortex14/gotyphoon/utils"
 )
@@ -102,14 +103,20 @@ func (p *Project) Run() interfaces.Project {
 
 }
 
-func (p *Project) CreateProject() {
+//go:embed builders
+var builders embed.FS
+
+func (p *Project) CreateProject() *Project {
 	color.Yellow("creating project...")
-	u := utils.Utils{}
-	fileObject := &interfaces.FileObject{
-		Path: "../builders/v1.1/project",
+
+	dir, err := fs.Sub(builders, "builders/v1.1")
+	if err != nil {
+		panic(err)
 	}
 
-	err := u.CopyDir(p.Name, fileObject)
+	u := utils.Utils{}
+
+	err = u.CopyDir(p.Name, dir)
 
 	if utils.NotNill(err) {
 
@@ -119,18 +126,19 @@ func (p *Project) CreateProject() {
 	}
 
 	gitIgnore := &interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: ".gitignore",
+		Path: ".",
+		Name: "gitignore-.tml",
 	}
-	errCopyIgnore := u.CopyFile(p.Name+"/.gitignore", gitIgnore)
+	errCopyIgnore := u.CopyFile(p.Name+"/.gitignore", gitIgnore, dir)
 	if errCopyIgnore != nil {
-		color.Red("Error copy %s", err)
+		color.Red("Error copy %s")
 	}
 
 	_, confT := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "config.goyaml",
-	})
+		Path: ".",
+		Name: "config-.tml",
+	}, dir)
+
 	goTemplate := interfaces.GoTemplate{
 		Source:     confT,
 		ExportPath: p.Name + "/config.local.yaml",
@@ -159,7 +167,7 @@ func (p *Project) CreateProject() {
 	_ = u.GoRunTemplate(&goTemplateCompose)
 	//color.Green("Teplate status: %b", status)
 
-	_, dataTDockerLocal := u.GetGoTemplate(&interfaces.FileObject{Path: "../builders/v1.1", Name: "docker-compose.local.goyaml"})
+	_, dataTDockerLocal := u.GetGoTemplate(&interfaces.FileObject{Path: ".", Name: "docker-compose.local-.tml"}, dir)
 
 	dataConfig := map[string]string{
 		"projectName": p.GetName(),
@@ -173,17 +181,46 @@ func (p *Project) CreateProject() {
 	}
 
 	u.GoRunTemplate(&goTemplateComposeLocal)
+
+	_, dockerFile := u.GetGoTemplate(&interfaces.FileObject{
+		Path: ".",
+		Name: "ProjectDockerfile-.tml",
+	}, dir)
+
+	color.Red("export to ' %s ' IMAGE >>>>>>>>>> %s: %s", p.Name+"Dockerfile", p.Project.GetDockerImageName(), dockerFile)
+	goTemplateDocker := &interfaces.GoTemplate{
+		Source:     dockerFile,
+		ExportPath: p.Name + "/Dockerfile",
+		Data: map[string]string{
+			"TYPHOON_IMAGE": p.Project.GetDockerImageName(),
+		},
+	}
+
+	errT := u.GoRunTemplate(goTemplateDocker)
+	if !errT {
+		color.Red("creation Dockerfile was fail")
+		os.Exit(1)
+	}
+
 	color.Green("Project %s created !", p.Name)
+
+	return p
 
 }
 
 func (p *Project) BuildCIResources() {
 	color.Green("Build CI Resources for %s !", p.Name)
 	u := utils.Utils{}
+
+	dir, err := fs.Sub(builders, "builders/v1.1")
+	if err != nil {
+		panic(err)
+	}
+
 	_, confCi := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: ".gitlab-ci.yml",
-	})
+		Path: ".",
+		Name: "gitlab-ci-.yml",
+	}, dir)
 	goTemplate := interfaces.GoTemplate{
 		Source:     confCi,
 		ExportPath: ".gitlab-ci.yml",
@@ -192,9 +229,9 @@ func (p *Project) BuildCIResources() {
 	_ = u.GoRunTemplate(&goTemplate)
 
 	_, dockerFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
+		Path: ".",
 		Name: "Dockerfile",
-	})
+	}, dir)
 	goTemplateDocker := interfaces.GoTemplate{
 		Source:     dockerFile,
 		ExportPath: "Dockerfile",
@@ -206,9 +243,9 @@ func (p *Project) BuildCIResources() {
 	_ = u.GoRunTemplate(&goTemplateDocker)
 
 	_, helmFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
+		Path: ".",
 		Name: "helm-review-values.yml",
-	})
+	}, dir)
 	goTemplateHelmValues := interfaces.GoTemplate{
 		Source:     helmFile,
 		ExportPath: "helm-review-values.yml",
@@ -217,9 +254,9 @@ func (p *Project) BuildCIResources() {
 	_ = u.GoRunTemplate(&goTemplateHelmValues)
 
 	_, configFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "config-stage.goyaml",
-	})
+		Path: ".",
+		Name: "config-stage-.tml",
+	}, dir)
 	goTemplateConfig := interfaces.GoTemplate{
 		Source:     configFile,
 		ExportPath: "config.kube-stage.yaml",
@@ -397,15 +434,15 @@ func (p *Project) Migrate() {
 
 	color.Yellow("Migrate project to %s !", p.GetVersion())
 
-	if p.Version == "v1.1" {
-		prMigrates := v1_1.ProjectMigrate{
-			Project: p,
-			Dir: &interfaces.FileObject{
-				Path: "../builders/v1.1",
-			},
-		}
-		prMigrates.MigrateV11()
-	}
+	//if p.Version == "v1.1" {
+	//	prMigrates := ProjectMigrateV11{
+	//		Project: p,
+	//		Dir: &interfaces.FileObject{
+	//			Path: ".",
+	//		},
+	//	}
+	//	prMigrates.MigrateV11()
+	//}
 }
 
 func (p *Project) Build() {

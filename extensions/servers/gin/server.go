@@ -30,7 +30,7 @@ func (s *TyphoonGinServer) InitTracer() interfaces.ServerInterface {
 		s.server.Use(p)
 
 		useBanner := s.TracingOptions.UseBanner
-		useUTC :=  s.TracingOptions.UseUTC
+		useUTC := s.TracingOptions.UseUTC
 
 		s.server.Use(ginlogrus.WithTracing(logrus.StandardLogger(),
 			useBanner,
@@ -38,16 +38,18 @@ func (s *TyphoonGinServer) InitTracer() interfaces.ServerInterface {
 			useUTC,
 			"requestID",
 			[]byte("typhoon-trace-id"), // where jaeger might have put the trace id
-			[]byte("RequestID"),     // where the trace ID might already be populated in the headers
+			[]byte("RequestID"),        // where the trace ID might already be populated in the headers
 			ginlogrus.WithAggregateLogging(false)))
 
-	} else { s.LOG.Error(Errors.TracerContextNotFound.Error()) }
+	} else {
+		s.LOG.Error(Errors.TracerContextNotFound.Error())
+	}
 
 	return s
 }
 
 // requestHandler handle all HTTP request in here
-func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context)  {
+func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 
 	requestContext := NewRequestCtx(ctx.New(), ginCtx)
 	requestLogger := ginlogrus.GetCtxLogger(ginCtx)
@@ -58,10 +60,12 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context)  {
 
 	action := s.GetAction(reservedRequestPath, requestLogger, ginCtx)
 
-	action.OnRequest(ginCtx.Request.Method, reservedRequestPath)
-	if action == nil { s.LOG.Error(Errors.ActionPathNotFound.Error())
-		ginCtx.JSON(404, Gin.H{ "message": "Not Found", "status": false}); return
+	if action == nil {
+		s.LOG.Error(Errors.ActionPathNotFound.Error())
+		ginCtx.JSON(404, Gin.H{"message": "Not Found", "status": false})
+		return
 	}
+	action.OnRequest(ginCtx.Request.Method, reservedRequestPath)
 
 	requestLogger = log.Patch(requestLogger, log.D{"controller": action.GetName()})
 	requestContext = NewServerCtx(requestContext, s)
@@ -72,30 +76,32 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context)  {
 	errStack, statusMiddlewareStack, _ := s.RunMiddlewareStack(requestContext, action)
 	requestLogger.Debug(fmt.Sprintf("status middleware stack: %t", statusMiddlewareStack))
 
-	if statusMiddlewareStack && errStack == nil { action.Run(requestContext, requestLogger) } else {
+	if statusMiddlewareStack && errStack == nil {
+		action.Run(requestContext, requestLogger)
+	} else {
 		requestLogger.Debug(fmt.Sprintf("error middleware stack: %t", errStack.Error()))
 	}
 
 }
 
-func (s *TyphoonGinServer) onServeHandler(method string, path string, resource interfaces.ResourceInterface)  {
+func (s *TyphoonGinServer) onServeHandler(method string, path string, resource interfaces.ResourceInterface) {
 	var routerGroup *Gin.RouterGroup
 	if group := resource.GetRouterGroup(); group != nil {
 		routerGroup = GetGinGroup(group)
 	} else {
 		routerGroup = s.server.Group("/")
 	}
-	s.LOG.Debug(fmt.Sprintf("gin serve %s %s, routerGroup: %+v. Path: %s",method, path, routerGroup, resource.GetPath()))
+	s.LOG.Debug(fmt.Sprintf("gin serve %s %s, routerGroup: %+v. Path: %s", method, path, routerGroup, resource.GetPath()))
 
 	SetServeHandler(method, path, routerGroup, s.onRequestHandler)
 }
 
-func (s *TyphoonGinServer) SetRouterGroup(resource interfaces.ResourceInterface, group interface{})  {
+func (s *TyphoonGinServer) SetRouterGroup(resource interfaces.ResourceInterface, group interface{}) {
 	ginGroup := GetGinGroup(group)
 	resource.SetRouterGroup(ginGroup)
 }
 
-func (s *TyphoonGinServer) onCors()  {
+func (s *TyphoonGinServer) onCors() {
 
 }
 
@@ -106,7 +112,7 @@ func (s *TyphoonGinServer) OnStartGin(port int) error {
 
 func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 
-	s.Construct(func () {
+	s.Construct(func() {
 		s.InitLogger()
 		s.LOG.Debug("init Typhoon Gin Server")
 		s.InitResourcesMap()
@@ -130,7 +136,7 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 	return s
 }
 
-func (s *TyphoonGinServer) Stop() error  {
+func (s *TyphoonGinServer) Stop() error {
 	return nil
 }
 
@@ -159,14 +165,14 @@ func (s *TyphoonGinServer) onInitAction(resource interfaces.ResourceInterface, a
 
 }
 
-func (s *TyphoonGinServer) onInitResource(newResource interfaces.ResourceInterface)  {
+func (s *TyphoonGinServer) onInitResource(newResource interfaces.ResourceInterface) {
 
 	if _, ok := newResource.(interfaces.ResourceGraphInterface); ok {
 		//s.LOG.Info("onInitResource, hasGraph: ", graphResource.HasParentGraph())
 	}
 }
 
-func (s *TyphoonGinServer) onBuildSubResources(subResource interfaces.ResourceInterface)  {
+func (s *TyphoonGinServer) onBuildSubResources(subResource interfaces.ResourceInterface) {
 	s.LOG.Warning("OnBuildSubResources")
 
 	//subGraph := newResource.CreateSubGraph(&interfaces.GraphOptions{
@@ -180,11 +186,11 @@ func (s *TyphoonGinServer) onBuildSubResources(subResource interfaces.ResourceIn
 	//subResource.SetGraphEdges(newResource.GetGraphEdges())
 }
 
-func (s *TyphoonGinServer) onBuildSubAction(resource interfaces.ResourceInterface, action interfaces.ActionInterface)  {
+func (s *TyphoonGinServer) onBuildSubAction(resource interfaces.ResourceInterface, action interfaces.ActionInterface) {
 	s.LOG.Info("onBuildSubAction")
 }
 
-func (s *TyphoonGinServer) onAddResource(resource interfaces.ResourceInterface)  {
+func (s *TyphoonGinServer) onAddResource(resource interfaces.ResourceInterface) {
 	s.LOG.Info("onAddResource", resource)
 	//if resource.IsAuth() { resource.InitAuth(s) }
 
@@ -196,7 +202,7 @@ func (s *TyphoonGinServer) onAddResource(resource interfaces.ResourceInterface) 
 		s.LOG.Error(Errors.GraphResourceContextInvalid.Error())
 	}
 
-   // */
+	// */
 
 }
 

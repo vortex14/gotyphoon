@@ -1,14 +1,14 @@
 package interfaces
 
 import (
-	"github.com/vortex14/gotyphoon/builders"
+	"github.com/vortex14/gotyphoon/extensions/project/python3/builders"
 	"github.com/xanzy/go-gitlab"
 )
 
 type GoTemplate struct {
-	Source string
+	Source     string
 	ExportPath string
-	Data interface{}
+	Data       interface{}
 }
 
 type Discovery struct {
@@ -17,14 +17,13 @@ type Discovery struct {
 	Cluster string `yaml:"cluster,omitempty"`
 }
 
-
 type ClusterLabel struct {
-	Kind string
+	Kind    string
 	Version string
 }
 
 type ClusterGitlab struct {
-	Endpoint string `yaml:"endpoint,omitempty"`
+	Endpoint  string                     `yaml:"endpoint,omitempty"`
 	Variables []*gitlab.PipelineVariable `yaml:"variables,omitempty"`
 }
 
@@ -43,10 +42,7 @@ type ClusterMeta struct {
 	Docker  ClusterDocker  `yaml:"docker,omitempty"`
 }
 
-
-
 type DockerLabel struct {
-
 }
 
 type FileObject struct {
@@ -57,27 +53,29 @@ type FileObject struct {
 	FileSystem
 }
 
+func (f *FileObject) GetPath() string {
+	if f.Path == "." {
+		return f.Name
+	}
+	return f.Path + "/" + f.Name
+}
+
 type Yield struct {
-	Name string
-	Topic string
+	Name    string
+	Topic   string
 	Channel string
 }
 
 type GrafanaConfig struct {
-	Id string `yaml:"id,omitempty"`
-	Name string `yaml:"name,omitempty"`
-	FolderId string `yaml:"folder_id,omitempty"`
+	Id           string `yaml:"id,omitempty"`
+	Name         string `yaml:"name,omitempty"`
+	FolderId     string `yaml:"folder_id,omitempty"`
 	DashboardUrl string `yaml:"dashboard_url,omitempty"`
 }
 
-
-
-
-
-
-type Producers map[string] *Producer
-type Consumers map[string] [] *Consumer
-type Pipelines map[string] BasePipelineInterface
+type Producers map[string]*Producer
+type Consumers map[string][]*Consumer
+type Pipelines map[string]BasePipelineInterface
 
 type ReplaceLabel struct {
 	Label string
@@ -85,7 +83,6 @@ type ReplaceLabel struct {
 }
 
 type ReplaceLabels []*ReplaceLabel
-
 
 type MapFileObjects map[string]*FileObject
 type BuilderOptions builders.BuildOptions
@@ -104,48 +101,46 @@ type ServiceMongo struct {
 	Name    string `yaml:"name"`
 	Details struct {
 		AuthSource string `yaml:"authSource,omitempty"`
-		Username string `yaml:"username,omitempty"`
-		Password string `yaml:"password,omitempty"`
-		Host string `yaml:"host"`
-		Port int    `yaml:"port"`
+		Username   string `yaml:"username,omitempty"`
+		Password   string `yaml:"password,omitempty"`
+		Host       string `yaml:"host"`
+		Port       int    `yaml:"port"`
 	} `yaml:"details"`
 	DbNames []string `yaml:"db_names"`
 	Service
 }
 
-
 type Services struct {
 	Mongo struct {
 		Production []ServiceMongo `yaml:"production"`
-		Debug []ServiceMongo      `yaml:"debug"`
+		Debug      []ServiceMongo `yaml:"debug"`
 	} `yaml:"mongo"`
 	Redis struct {
 		Production []ServiceRedis `yaml:"production"`
-		Debug []ServiceRedis      `yaml:"debug"`
+		Debug      []ServiceRedis `yaml:"debug"`
 	} `yaml:"redis"`
 }
-
 
 type ConfigProject struct {
 	ConfigInterface
 
-	configFile string
-	configPath string
-	ProjectName             string `yaml:"project_name"`
-	Debug                   bool   `yaml:"debug"`
-	DefaultRetriesDelay     int    `yaml:"default_retries_delay"`
-	PriorityDepthCheckDelay int    `yaml:"priority_depth_check_delay"`
-	TaskTimeout             int    `yaml:"task_timeout"`
-	Port                    int    `yaml:"port"`
-	InstancesBucketLimit    int    `yaml:"instances_bucket_limit"`
-	FinishedTasks           int    `yaml:"finished_tasks"`
-	ProxyManagerAPI         string `yaml:"proxy-manager-api"`
-	MaxRetries              int    `yaml:"max_retries"`
-	AutoThrottling          bool   `yaml:"auto_throttling"`
-	IsRunning               bool   `yaml:"is_running"`
-	NsqlookupdIP            string `yaml:"nsqlookupd_ip"`
-	Consolidator			interface{} `yaml:"consolidator,omitempty"`
-	ApiKey					string `yaml:"API_KEY,omitempty"`
+	configFile              string
+	configPath              string
+	ProjectName             string      `yaml:"project_name"`
+	Debug                   bool        `yaml:"debug"`
+	DefaultRetriesDelay     int         `yaml:"default_retries_delay"`
+	PriorityDepthCheckDelay int         `yaml:"priority_depth_check_delay"`
+	TaskTimeout             int         `yaml:"task_timeout"`
+	Port                    int         `yaml:"port"`
+	InstancesBucketLimit    int         `yaml:"instances_bucket_limit"`
+	FinishedTasks           int         `yaml:"finished_tasks"`
+	ProxyManagerAPI         string      `yaml:"proxy-manager-api"`
+	MaxRetries              int         `yaml:"max_retries"`
+	AutoThrottling          bool        `yaml:"auto_throttling"`
+	IsRunning               bool        `yaml:"is_running"`
+	NsqlookupdIP            string      `yaml:"nsqlookupd_ip"`
+	Consolidator            interface{} `yaml:"consolidator,omitempty"`
+	ApiKey                  string      `yaml:"API_KEY,omitempty"`
 	NsqdNodes               []struct {
 		IP string `yaml:"ip"`
 	} `yaml:"nsqd_nodes"`
@@ -158,25 +153,23 @@ type ConfigProject struct {
 	RetryingDelay       int       `yaml:"retrying_delay"`
 	RegisterService     Discovery `yaml:"register_service,omitempty"`
 	TyComponents        struct {
-		Fetcher FetcherSettings `yaml:"fetcher"`
+		Fetcher           FetcherSettings     `yaml:"fetcher"`
 		ResultTransporter TransporterSettings `yaml:"result_transporter"`
-		Scheduler SchedulerSettings `yaml:"scheduler"`
-		Processor ProcessorSettings `yaml:"processor"`
-		Donor DonorSettings `yaml:"donor"`
+		Scheduler         SchedulerSettings   `yaml:"scheduler"`
+		Processor         ProcessorSettings   `yaml:"processor"`
+		Donor             DonorSettings       `yaml:"donor"`
 	} `yaml:"ty_components"`
 	Services Services `yaml:"services"`
-
 
 	Concurrent int    `yaml:"concurrent,omitempty"`
 	Channel    string `yaml:"channel,omitempty"`
 	Topic      string `yaml:"topic,omitempty"`
-
 }
 
 type Queue struct {
 	priority   int    `yaml:"priority,omitempty"`
 	component  string `yaml:"component,omitempty"`
-	group 	   string `yaml:"group,omitempty"`
+	group      string `yaml:"group,omitempty"`
 	Concurrent int    `yaml:"concurrent,omitempty"`
 	MsgTimeout int    `yaml:"msg_timeout,omitempty"`
 	Channel    string `yaml:"channel,omitempty"`

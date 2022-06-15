@@ -3,16 +3,18 @@ package fakes
 import (
 	"bytes"
 	"context"
+	"embed"
 	"fmt"
+	Color "github.com/fatih/color"
 	Fake "github.com/vortex14/gotyphoon/extensions/data/fake"
 	"image"
 	"image/color"
+	"io/fs"
 	"net/http"
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/fogleman/gg"
 	Gin "github.com/gin-gonic/gin"
-	"github.com/gobuffalo/packr"
 	"github.com/golang/freetype/truetype"
 
 	"github.com/vortex14/gotyphoon/elements/forms"
@@ -26,6 +28,10 @@ import (
 	GinExtension "github.com/vortex14/gotyphoon/extensions/servers/gin"
 )
 
+//go:embed assets
+var assets embed.FS
+
+var AssetsDir, _ = fs.Sub(assets, "assets")
 
 func CreateImageAction() interfaces.ActionInterface {
 	return &GinExtension.Action{
@@ -35,7 +41,7 @@ func CreateImageAction() interfaces.ActionInterface {
 				Path:        FakeImagePath,
 				Description: "Fake Image",
 			},
-			Methods:     []string{interfaces.GET},
+			Methods: []string{interfaces.GET},
 
 			Pipeline: &forms.PipelineGroup{
 				MetaInfo: &label.MetaInfo{
@@ -49,9 +55,7 @@ func CreateImageAction() interfaces.ActionInterface {
 								Name:        "Request",
 								Description: "Handle new request",
 							},
-							Middlewares: []interfaces.MiddlewareInterface{
-
-},
+							Middlewares: []interfaces.MiddlewareInterface{},
 						},
 						Fn: func(context context.Context, ginCtx *Gin.Context, logger interfaces.LoggerInterface) (error, context.Context) {
 							logger.Info("new request")
@@ -73,7 +77,7 @@ func CreateImageAction() interfaces.ActionInterface {
 						Fn: func(
 							context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface,
 							client *http.Client, request *http.Request, transport *http.Transport,
-							response *http.Response, data *string) (error, context.Context){
+							response *http.Response, data *string) (error, context.Context) {
 
 							r := bytes.NewReader([]byte(*data))
 							img, _, _ := image.Decode(r)
@@ -95,11 +99,10 @@ func CreateImageAction() interfaces.ActionInterface {
 						Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface, imgCtx *gg.Context) (error, context.Context) {
 							logger.Info("Create watermark")
 							w := float64(imgCtx.Width())
-							h := float64(imgCtx.Height () /4)
+							h := float64(imgCtx.Height() / 4)
 
 							imgCtx.SetColor(color.RGBA{0, 0, 0, 204})
 							imgCtx.DrawRectangle(0, float64(imgCtx.Height()-200), w, h)
-
 
 							return nil, context
 						},
@@ -113,10 +116,14 @@ func CreateImageAction() interfaces.ActionInterface {
 						},
 						Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface, imgCtx *gg.Context) (error, context.Context) {
 
-							box := packr.NewBox(".")
-							source, _ := box.FindString("OpenSans-Bold.ttf")
+							file, err := fs.ReadFile(AssetsDir, "OpenSans-Bold.ttf")
+							if err != nil {
 
-							f, err := truetype.Parse([]byte(source))
+								Color.Red("%+v", err)
+								panic(err)
+							}
+
+							f, err := truetype.Parse(file)
 							if err != nil {
 								return err, nil
 							}
@@ -140,7 +147,7 @@ func CreateImageAction() interfaces.ActionInterface {
 							imgCtx.SetColor(mutedColor)
 							_, _ = imgCtx.MeasureString(WATERMARK)
 							x := float64(70)
-							y := float64(imgCtx.Height ( ) -70)
+							y := float64(imgCtx.Height() - 70)
 							imgCtx.DrawString(WATERMARK, x, y)
 							imgCtx.Fill()
 

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/fatih/color"
@@ -40,7 +41,7 @@ type Command struct {
 func (c *Command) init() {
 	c.Construct(func() {
 		c.status = make(chan bool, 1)
-		c.LOG = log.New(log.D{"cmd": c.Args[0]})
+		c.LOG = log.New(log.D{"cmd": fmt.Sprintf("%s %s", c.Cmd, c.Args)})
 		c.Output = make(chan string)
 		c.OutputErr = make(chan string)
 
@@ -61,10 +62,20 @@ func (c *Command) init() {
 	})
 }
 
+func (c *Command) RunAwait() *cmd.Status {
+	command := cmd.NewCmd(c.Cmd, c.Args...)
+	if len(c.Dir) > 0 {
+		command.Dir = c.Dir
+	}
+	status := <-command.Start()
+	return &status
+}
+
 func (c *Command) readOutputStream() {
 	c.LOG.Debug("tail -f cmd output")
 	for {
 		//c.LOG.Debug(">>>>> -----")
+
 		select {
 		case line, open := <-c.cmd.Stdout:
 			if !open {
@@ -78,7 +89,6 @@ func (c *Command) readOutputStream() {
 				continue
 			}
 			c.OutputErr <- line
-
 		case _ = <-c.status:
 			err := c.cmd.Stop()
 

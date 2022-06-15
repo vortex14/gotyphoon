@@ -3,6 +3,8 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"math"
@@ -16,15 +18,13 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/go-logfmt/logfmt"
-	"github.com/gobuffalo/packd"
-	"github.com/gobuffalo/packr"
 	"github.com/gocarina/gocsv"
 	"github.com/google/uuid"
 	"github.com/olekukonko/tablewriter"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
-type Utils struct {}
+type Utils struct{}
 
 type ErrorLine struct {
 	Error       string      `json:"error"`
@@ -65,7 +65,6 @@ func (u *Utils) ParseLog(object *interfaces.FileObject) error {
 		color.Red("Log file not found")
 		os.Exit(0)
 
-
 	}
 
 	logDataMap := logfmt.NewDecoder(strings.NewReader(string(dat)))
@@ -75,69 +74,100 @@ func (u *Utils) ParseLog(object *interfaces.FileObject) error {
 		}
 	}
 
-
-
 	return nil
 }
 
-func (u *Utils) CopyDir(name string, object *interfaces.FileObject) error {
-	box := packr.NewBox(object.Path)
+func (u *Utils) CopyDir(name string, dir fs.FS) error {
+
 	errC := os.MkdirAll(name, 0755)
-	if errC != nil{
-		color.Red("CopyDir Error : %s",errC)
+	if errC != nil {
+		color.Red("CopyDir Error : %s", errC)
+		panic(errC)
 	}
-	err := box.Walk(func(s string, file packd.File) error {
-		//color.Yellow("s: %s, file: %+f \n", s, file)
-		pathDir := filepath.Dir(s)
-		//color.Yellow("data : %s, info: %s",s, pathDir)
+
+	stat, _ := fs.Stat(dir, ".")
+
+	color.Yellow("copy dir from: %+v", stat.Name())
+
+	err := fs.WalkDir(dir, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			log.Fatal(err)
+			return err
+		}
+
+		pathDir := filepath.Dir(path)
+		fileInfo, err := d.Info()
+
 		if pathDir != "." {
 			_ = os.Mkdir(name+"/"+pathDir, 0755)
 
 		}
 
-		f, err := os.Create(name + "/" + s)
-		if err != nil {
-			log.Println("create err", err)
-		}
-		_, err = f.WriteString(file.String())
-		if err != nil {
-			color.Red("%s", err.Error())
-			return err
-		}
-		_ = f.Close()
+		if !fileInfo.IsDir() && !strings.Contains(fileInfo.Name(), "-.tml") {
+			var exportPath string
 
+			if fileInfo.Name() == "init.py" {
+
+				exportPath = name + "/" + strings.ReplaceAll(path, "init.py", "__init__.py")
+			} else {
+				exportPath = name + "/" + path
+			}
+
+			f, err := os.Create(exportPath)
+			if err != nil {
+				log.Println("create err", err)
+				panic(err)
+			}
+
+			file, err := fs.ReadFile(dir, path)
+			if err != nil {
+
+				return err
+			}
+
+			_, err = f.WriteString(string(file))
+			if err != nil {
+				color.Red("%s", err.Error())
+				return err
+			}
+			_ = f.Close()
+
+		}
 		return nil
 	})
-	return err
+	if err != nil {
+		color.Red("%+v", err)
+		return err
+	}
+
+	return nil
 }
 
-func (u *Utils) CopyFile(ExportPath string, object *interfaces.FileObject) error {
-	box := packr.NewBox(object.Path)
+func (u *Utils) CopyFile(ExportPath string, object *interfaces.FileObject, dir fs.FS) error {
+
 	f, err := os.Create(ExportPath)
 	if err != nil {
 		log.Println("create err", err)
 	}
 
-	dat, err := box.FindString(object.Name)
-
+	file, err := fs.ReadFile(dir, object.GetPath())
 	if err != nil {
 
-		color.Red("Log file not found")
+		color.Red("%+v", err)
 		os.Exit(0)
-
-
 	}
 
-	_, errorWrite := f.WriteString(dat)
+	color.Red("%s: %d : %s", ExportPath, len(string(file)), string(file))
+
+	_, errorWrite := f.WriteString(string(file))
 	if errorWrite != nil {
-		color.Red("Can't write %s", ExportPath )
+		color.Red("Can't write %s", ExportPath)
 		os.Exit(0)
 
 	}
 	_ = f.Close()
 
 	return nil
-
 
 }
 
@@ -147,10 +177,9 @@ func (u *Utils) DumpToFile(object *interfaces.FileObject) error {
 		log.Println("create err", err)
 	}
 
-
 	_, errorWrite := f.WriteString(object.Data)
 	if errorWrite != nil {
-		color.Red("Can't write %s", object.Path )
+		color.Red("Can't write %s", object.Path)
 		os.Exit(0)
 
 	}
@@ -158,17 +187,39 @@ func (u *Utils) DumpToFile(object *interfaces.FileObject) error {
 
 	return nil
 
-
 }
 
-func (u *Utils) CopyFileAndReplaceLabel(name string, label *interfaces.ReplaceLabel, object *interfaces.FileObject) error {
-	box := packr.NewBox(object.Path)
-	templateFile, _ := box.FindString(object.Name)
+func walkDirEmbed(dir fs.FS) {
+	_ = fs.WalkDir(dir, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			log.Fatal(err)
+			return err
+		}
+
+		pathDir := filepath.Dir(path)
+		fileInfo, err := d.Info()
+
+		println(pathDir, fileInfo.Name())
+
+		return nil
+	})
+}
+
+func (u *Utils) CopyFileAndReplaceLabel(name string, label *interfaces.ReplaceLabel, object *interfaces.FileObject, dir fs.FS) error {
+
 	f, err := os.Create(name)
 	if err != nil {
 		log.Println("create err", err)
 	}
-	data := strings.ReplaceAll(templateFile, label.Label, label.Value)
+
+	file, err := fs.ReadFile(dir, object.GetPath())
+	if err != nil {
+
+		color.Red("%+v", err)
+		panic(err)
+	}
+
+	data := strings.ReplaceAll(string(file), label.Label, label.Value)
 	_, err = f.WriteString(data)
 	if err != nil {
 		color.Red("%s", err.Error())
@@ -208,36 +259,48 @@ func (u *Utils) CopyFileAndReplaceLabelsFromHost(name string, labels []interface
 	return nil
 }
 
-func (u *Utils) CopyDirAndReplaceLabel(name string, label *interfaces.ReplaceLabel,object *interfaces.FileObject) error {
-	box := packr.NewBox(object.Path)
-	errC := os.MkdirAll(name, 0755)
-	if errC != nil{
-		color.Red("%s",errC)
+func (u *Utils) CopyDirAndReplaceLabel(name string, label *interfaces.ReplaceLabel, object *interfaces.FileObject, dir fs.FS) error {
+	errC := os.MkdirAll(name+"/templates", 0755)
+	if errC != nil {
+		color.Red("%s", errC)
+		os.Exit(0)
 	}
-	err := box.Walk(func(s string, file packd.File) error {
+
+	err := fs.WalkDir(dir, ".", func(path string, d fs.DirEntry, err error) error {
 		//color.Yellow("s: %s, file: %+f \n", s, file)
-		pathDir := filepath.Dir(s)
+		pathDir := filepath.Dir(path)
 		//color.Yellow("data : %s, info: %s",s, pathDir)
-		if pathDir != "." {
-			_ = os.Mkdir(name+"/"+pathDir, 0755)
 
-		}
+		_ = os.MkdirAll(name+"/"+pathDir, 0755)
 
-		f, err := os.Create(name + "/" + s)
-		defer func(f *os.File) {
-			errD := f.Close()
-			if errD != nil {
-				color.Red("%s", errD.Error())
+		color.Yellow(">>>> %s", name+"/"+pathDir)
+
+		fileInfo, _ := d.Info()
+
+		if !fileInfo.IsDir() {
+
+			f, err := os.Create(name + "/" + path)
+			defer func(f *os.File) {
+				errD := f.Close()
+				if errD != nil {
+					color.Red("%s", errD.Error())
+				}
+			}(f)
+			if err != nil {
+				log.Println("create err", err)
 			}
-		}(f)
-		if err != nil {
-			log.Println("create err", err)
-		}
-		data := file.String()
-		data = strings.ReplaceAll(data, label.Label, label.Value)
-		_, err = f.WriteString(data)
-		if err != nil {
-			return err
+
+			file, err := fs.ReadFile(dir, path)
+			if err != nil {
+
+				return err
+			}
+			data := strings.ReplaceAll(string(file), label.Label, label.Value)
+			_, err = f.WriteString(data)
+			if err != nil {
+				return err
+			}
+
 		}
 
 		return nil
@@ -245,16 +308,16 @@ func (u *Utils) CopyDirAndReplaceLabel(name string, label *interfaces.ReplaceLab
 	return err
 }
 
-func (u *Utils) GetGoTemplate(object *interfaces.FileObject) (error error, data string)  {
-	box := packr.NewBox(object.Path)
+func (u *Utils) GetGoTemplate(object *interfaces.FileObject, dir fs.FS) (error error, data string) {
 
-	data, err := box.FindString(object.Name)
-
+	file, err := fs.ReadFile(dir, object.GetPath())
 	if err != nil {
-		log.Fatal(err)
+
+		color.Red("%+v", err)
+		os.Exit(0)
 	}
 
-	return err, data
+	return err, string(file)
 }
 
 func (u *Utils) CheckSlice(slice []string, val string) (int, bool) {
@@ -266,7 +329,7 @@ func (u *Utils) CheckSlice(slice []string, val string) (int, bool) {
 	return -1, false
 }
 
-func (u *Utils) RemoveFiles(paths []string)  {
+func (u *Utils) RemoveFiles(paths []string) {
 	for _, path := range paths {
 		_ = os.RemoveAll(path)
 	}
@@ -278,7 +341,6 @@ func (u *Utils) RenderTableOutput(header []string, data [][]string) {
 	table.AppendBulk(data)
 	table.Render()
 }
-
 
 //func (u *Utils) print(rd io.Reader) error {
 //	var lastLine string
@@ -313,7 +375,7 @@ func (u *Utils) PrintPrettyJson(f interface{}) string {
 	return string(dump)
 }
 
-func (u *Utils) ReadCSV(object *interfaces.FileObject, bindings interface{})  {
+func (u *Utils) ReadCSV(object *interfaces.FileObject, bindings interface{}) {
 	csvData, err := os.OpenFile(object.Path, os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		panic(err)
@@ -329,7 +391,7 @@ func (u *Utils) ReadCSV(object *interfaces.FileObject, bindings interface{})  {
 
 func GetRandomIntRange(max int, min int) int {
 	rand.Seed(time.Now().UnixNano())
-	return rand.Intn(max - min) + min
+	return rand.Intn(max-min) + min
 
 }
 
@@ -338,7 +400,7 @@ func (u *Utils) GetRandomFromSlice(slice []string) string {
 	return slice[rand.Intn(len(slice))]
 }
 
-func (u *Utils) GetRandomString(length int, sequence string)  string {
+func (u *Utils) GetRandomString(length int, sequence string) string {
 	rand.Seed(time.Now().UnixNano())
 	var letters = []rune(sequence)
 	b := make([]rune, length)
@@ -357,7 +419,7 @@ func (u *Utils) GetRandomFloat() float64 {
 
 	rand.Seed(time.Now().UnixNano())
 
-	roundValue := math.Floor(rand.Float64() * 10000) / 100
+	roundValue := math.Floor(rand.Float64()*10000) / 100
 	return roundValue
 }
 
@@ -367,7 +429,7 @@ func (u *Utils) ConvertStringListToIntList(input []string) []int {
 	for _, i := range input {
 		j, err := strconv.Atoi(i)
 		if err != nil {
-			color.Red("%s",err.Error())
+			color.Red("%s", err.Error())
 			continue
 		}
 		output = append(output, j)

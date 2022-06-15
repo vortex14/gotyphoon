@@ -20,10 +20,10 @@ func fibo1(n int) int64 {
 func fibo2(n int) int {
 	fn := make(map[int]int)
 
-	for i := 0; i<=n; i++ {
+	for i := 0; i <= n; i++ {
 		var f int
-		if i <=2 {
-			f =1
+		if i <= 2 {
+			f = 1
 		} else {
 			f = fn[i-1] + fn[i-2]
 		}
@@ -33,11 +33,11 @@ func fibo2(n int) int {
 	return fn[n]
 }
 
-func N1(n int) bool  {
+func N1(n int) bool {
 
-	k:= math.Floor(float64(n/2 + 1))
-	for i := 2; i<int(k); i++ {
-		if (n%i) == 0 {
+	k := math.Floor(float64(n/2 + 1))
+	for i := 2; i < int(k); i++ {
+		if (n % i) == 0 {
 			return false
 		}
 	}
@@ -45,17 +45,16 @@ func N1(n int) bool  {
 
 }
 
-
-func N2(n int) bool  {
-	for i := 2; i<n; i++ {
-		if (n%i) == 0 {
+func N2(n int) bool {
+	for i := 2; i < n; i++ {
+		if (n % i) == 0 {
 			return false
 		}
 	}
 	return true
 }
 
-func main()  {
+func main2() {
 	cpuFile, err := os.Create("/tmp/cpuProfile.out")
 	if err != nil {
 		fmt.Println(err)
@@ -66,8 +65,8 @@ func main()  {
 	defer pprof.StopCPUProfile()
 
 	total := 0
-	for i:=2;i<100000;i++ {
-		n:=N1(i)
+	for i := 2; i < 100000; i++ {
+		n := N1(i)
 		if n {
 			total++
 		}
@@ -76,21 +75,21 @@ func main()  {
 	fmt.Println("Total primes:", total)
 
 	total = 0
-	for i:=2;i<100000;i++ {
-		n:=N2(i)
+	for i := 2; i < 100000; i++ {
+		n := N2(i)
 		if n {
 			total++
 		}
 	}
 
 	fmt.Println("total primes:", total)
-	for i:=1; i<10;i++ {
-		n:=fibo1(i)
-		fmt.Println(n," ")
+	for i := 1; i < 10; i++ {
+		n := fibo1(i)
+		fmt.Println(n, " ")
 
 	}
 	fmt.Println()
-	for i:=1;i<10;i++ {
+	for i := 1; i < 10; i++ {
 		n := fibo2(i)
 		fmt.Println(n, " ")
 	}

@@ -18,7 +18,6 @@ type Gitlab struct {
 	client *gitlab.Client
 	Token  string
 	Url    string
-
 }
 
 func (g *Gitlab) GetClient() (error, *gitlab.Client) {
@@ -33,14 +32,13 @@ func (g *Gitlab) GetClient() (error, *gitlab.Client) {
 	return errC, g.client
 }
 
-
 //https://docs.gitlab.com/ee/api/container_registry.html#list-registry-repositories
-func (g *Gitlab) ListRegistryRepositories(projectId int)  {
-	_, client := g.GetClient()
-	reps, resp, err := client.ContainerRegistry.ListRegistryRepositories(projectId, nil, nil)
-	color.Yellow(fmt.Sprintf("%+v", reps))
-	color.Yellow(fmt.Sprintf("Response %+v", resp))
-	color.Red(err.Error())
+func (g *Gitlab) ListRegistryRepositories(projectId int) {
+	//_, client := g.GetClient()
+	//reps, resp, err := client.ContainerRegistry.ListRegistryRepositories(projectId, nil, nil)
+	//color.Yellow(fmt.Sprintf("%+v", reps))
+	//color.Yellow(fmt.Sprintf("Response %+v", resp))
+	//color.Red(err.Error())
 
 }
 
@@ -49,7 +47,10 @@ func (s *Gitlab) GetAllProjectsList() []*interfaces.GitlabProject {
 	color.Green("Sync gitlab projects. waiting for %s", s.Url)
 	var scrapedProjects []*interfaces.GitlabProject
 	err, gitlabClient := s.GetClient()
-	if err != nil { color.Red(err.Error()); return nil}
+	if err != nil {
+		color.Red(err.Error())
+		return nil
+	}
 	count := 10
 	bar := pb.StartNew(count)
 	bar.SetMaxWidth(100)
@@ -67,8 +68,8 @@ func (s *Gitlab) GetAllProjectsList() []*interfaces.GitlabProject {
 		for _, project := range projects {
 			scrapedProjects = append(scrapedProjects, &interfaces.GitlabProject{
 				Name: project.Name,
-				Git: project.WebURL + ".git",
-				Id: project.ID,
+				Git:  project.WebURL + ".git",
+				Id:   project.ID,
 			})
 		}
 
@@ -81,9 +82,9 @@ func (s *Gitlab) GetAllProjectsList() []*interfaces.GitlabProject {
 
 func (s *Gitlab) getGitlabProjects(gitlabClient *gitlab.Client, page int) []*gitlab.Project {
 	projects, _, _ := gitlabClient.Projects.ListProjects(&gitlab.ListProjectsOptions{
-		ListOptions:              gitlab.ListOptions{
+		ListOptions: gitlab.ListOptions{
 			PerPage: 100,
-			Page: page,
+			Page:    page,
 		},
 	})
 	return projects
@@ -96,9 +97,9 @@ type Server struct {
 
 func (s *Server) getGitlabProjects(gitlabClient *gitlab.Client, page int) []*gitlab.Project {
 	projects, _, _ := gitlabClient.Projects.ListProjects(&gitlab.ListProjectsOptions{
-		ListOptions:              gitlab.ListOptions{
+		ListOptions: gitlab.ListOptions{
 			PerPage: 100,
-			Page: page,
+			Page:    page,
 		},
 	})
 	return projects
@@ -128,8 +129,8 @@ func (s *Server) GetAllProjectsList() []*interfaces.GitlabProject {
 		for _, project := range projects {
 			scrapedProjects = append(scrapedProjects, &interfaces.GitlabProject{
 				Name: project.Name,
-				Git: project.WebURL + ".git",
-				Id: project.ID,
+				Git:  project.WebURL + ".git",
+				Id:   project.ID,
 			})
 		}
 
@@ -140,8 +141,7 @@ func (s *Server) GetAllProjectsList() []*interfaces.GitlabProject {
 	return scrapedProjects
 }
 
-
-func (s *Server) SyncGitlabProjects()  {
+func (s *Server) SyncGitlabProjects() {
 	scrapedAllProjects := s.GetAllProjectsList()
 	clusterProjects := s.Cluster.GetProjects()
 	meta := s.Cluster.GetMeta()
@@ -162,13 +162,12 @@ func (s *Server) SyncGitlabProjects()  {
 	color.Green("A total of %d projects were found on gitlab. Found %d out of %d projects for this cluster", len(scrapedAllProjects), foundCount, len(clusterProjects))
 }
 
-func (s *Server) GetPipelineHistory(client *gitlab.Client, GitlabId int)  {
+func (s *Server) GetPipelineHistory(client *gitlab.Client, GitlabId int) {
 	pipelines, _, _ := client.Pipelines.ListProjectPipelines(GitlabId, &gitlab.ListProjectPipelinesOptions{
-		ListOptions:   gitlab.ListOptions{},
+		ListOptions: gitlab.ListOptions{},
 	}, func(request *retryablehttp.Request) error {
 		return nil
 	})
-
 
 	for _, pipeline := range pipelines {
 		color.Green("%s", pipeline.String())
@@ -195,18 +194,18 @@ func (s *Server) GetVariables() []*gitlab.PipelineVariable {
 	return meta.Gitlab.Variables
 }
 
-func (s *Server) HistoryPipelines()  {
+func (s *Server) HistoryPipelines() {
 	//s.GetPipelineHistory(gitlabClient, project.GitlabId)
 }
 
-func (s *Server) renderTableOutput(data [][]string)  {
+func (s *Server) renderTableOutput(data [][]string) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"№", "Projects", "Pipeline"})
 	table.AppendBulk(data)
 	table.Render()
 }
 
-func (s *Server) Deploy()  {
+func (s *Server) Deploy() {
 
 	gitlabClient, _ := s.GetClient()
 	var tableData [][]string
@@ -241,7 +240,7 @@ func (s *Server) Deploy()  {
 
 		pipeline, response, errorPipeline := gitlabClient.Pipelines.CreatePipeline(project.Labels.Gitlab.Id, &gitlab.CreatePipelineOptions{
 			Ref:       &project.Labels.Git.Branch,
-			Variables: variables,
+			Variables: &variables,
 		}, func(request *retryablehttp.Request) error {
 			return nil
 		})
@@ -252,7 +251,7 @@ func (s *Server) Deploy()  {
 			os.Exit(1)
 		}
 
-		tableData = append(tableData, []string{strconv.Itoa(i+1),  project.Name,  pipeline.WebURL})
+		tableData = append(tableData, []string{strconv.Itoa(i + 1), project.Name, pipeline.WebURL})
 		bar.Increment()
 	}
 	bar.Finish()

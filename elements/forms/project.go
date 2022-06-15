@@ -27,7 +27,6 @@ import (
 	"github.com/vortex14/gotyphoon/integrations/redis"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/services"
-	"github.com/vortex14/gotyphoon/utils"
 )
 
 type components = struct {
@@ -73,6 +72,9 @@ type Project struct {
 }
 
 func (p *Project) GetDockerImageName() string {
+	if len(p.DockerImageName) == 0 {
+		return "typhoon-lite"
+	}
 	return p.DockerImageName
 }
 
@@ -273,57 +275,6 @@ func (p *Project) CreateProject() {
 }
 
 func (p *Project) BuildCIResources() {
-	color.Green("Build CI Resources for %s !", p.Name)
-	u := utils.Utils{}
-	_, confCi := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: ".gitlab-ci.yml",
-	})
-	goTemplate := interfaces.GoTemplate{
-		Source:     confCi,
-		ExportPath: ".gitlab-ci.yml",
-	}
-
-	_ = u.GoRunTemplate(&goTemplate)
-
-	_, dockerFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "Dockerfile",
-	})
-	goTemplateDocker := interfaces.GoTemplate{
-		Source:     dockerFile,
-		ExportPath: "Dockerfile",
-		Data: map[string]string{
-			"TYPHOON_IMAGE": p.Version,
-		},
-	}
-
-	_ = u.GoRunTemplate(&goTemplateDocker)
-
-	_, helmFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "helm-review-values.yml",
-	})
-	goTemplateHelmValues := interfaces.GoTemplate{
-		Source:     helmFile,
-		ExportPath: "helm-review-values.yml",
-	}
-
-	_ = u.GoRunTemplate(&goTemplateHelmValues)
-
-	_, configFile := u.GetGoTemplate(&interfaces.FileObject{
-		Path: "../builders/v1.1",
-		Name: "config-stage.goyaml",
-	})
-	goTemplateConfig := interfaces.GoTemplate{
-		Source:     configFile,
-		ExportPath: "config.kube-stage.yaml",
-		Data: map[string]string{
-			"projectName": p.GetName(),
-		},
-	}
-
-	_ = u.GoRunTemplate(&goTemplateConfig)
 
 }
 
@@ -452,20 +403,20 @@ func (p *Project) LoadConfig() (configProject *interfaces.ConfigProject) {
 	color.Yellow("Load config from file: %s", configPath)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		color.Red("Config %s does not exists in project :%s", p.ConfigFile, configPath)
-		os.Exit(1)
+		panic("Config does not exists in project")
 	}
 
 	var loadedConfig interfaces.ConfigProject
 	yamlFile, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		log.Printf("config.yaml err   #%v ", err)
-		os.Exit(1)
+		panic("config err")
 	} else {
 		err = yaml.Unmarshal(yamlFile, &loadedConfig)
 		if err != nil {
 			//log.Fatalf("Unmarshal: %v", err)
 			color.Red("Config load error: %s", err)
-			os.Exit(1)
+			panic("Config Unmarshal error")
 		}
 
 	}

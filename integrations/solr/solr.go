@@ -5,14 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/docker/docker/api/types"
 	"github.com/fatih/color"
 	"github.com/vortex14/gotyphoon/integrations/docker"
 	"github.com/vortex14/gotyphoon/utils"
 	"strings"
 
 	JQ "github.com/itchyny/gojq"
-	SolrSF9V "github.com/sf9v/solr-go"
+	SolrSF9V "github.com/stevenferrer/solr-go"
 	SolrVan "github.com/vanng822/go-solr/solr"
 
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
@@ -29,8 +28,8 @@ type DockerOptions struct {
 
 type ConnectOptions struct {
 	RemoteSSHConnectionURL string
-	Collection string
-	Endpoint   string
+	Collection             string
+	Endpoint               string
 }
 
 type SchemaField struct {
@@ -47,49 +46,53 @@ const (
 	MFloat  = "pdoubles"
 
 	SchemaFieldsJQPath = ".schema.fields"
-
 )
 
 type Client struct {
 	singleton.Singleton
-	Options *ConnectOptions
+	Options  *ConnectOptions
 	DOptions *DockerOptions
 
 	clientSF9V SolrSF9V.Client
 	clientVan  *SolrVan.SolrInterface
 
 	LOG interfaces.LoggerInterface
-
-
 }
 
-
-func (c *Client) ConnectToDockerNode()  {
+func (c *Client) ConnectToDockerNode() {
 	d := &docker.Docker{RemoteSSHUrl: c.Options.RemoteSSHConnectionURL}
 	err, containers := d.GetRemoteActiveContainersList()
 	if err != nil {
 		color.Red("%+v", err)
 		return
 	}
-	var matchedContainer types.Container
+	//var matchedContainer types.Container
 	for _, container := range containers {
-		if strings.Contains(container.Image, c.DOptions.MatchName) { matchedContainer = container; break }
+		if strings.Contains(container.Image, c.DOptions.MatchName) {
+			//matchedContainer = container
+			break
+		}
 	}
 
-	d.RunRemoteCommandInContainer(matchedContainer)
+	//d.RunRemoteCommandInContainer(matchedContainer)
 
 }
-
 
 func (c *Client) Init() *Client {
 	c.Construct(func() {
 		c.LOG = log.New(log.D{"connection": "solr"})
-		if c.Options == nil { c.LOG.Error(Errors.SolrConnectionsOptionsNotFound.Error()); return }
+		if c.Options == nil {
+			c.LOG.Error(Errors.SolrConnectionsOptionsNotFound.Error())
+			return
+		}
 		solrUrl := fmt.Sprintf("http://%s", c.Options.Endpoint)
 
-		solrDetailUrl := fmt.Sprintf("%s/solr",solrUrl)
+		solrDetailUrl := fmt.Sprintf("%s/solr", solrUrl)
 		si, err := SolrVan.NewSolrInterface(solrDetailUrl, c.Options.Collection)
-		if err != nil {  c.LOG.Error(Errors.SolrConnectionEndpointError.Error()); return }
+		if err != nil {
+			c.LOG.Error(Errors.SolrConnectionEndpointError.Error())
+			return
+		}
 		c.clientVan = si
 		//baseURL := strings.ReplaceAll(c.Options.Endpoint, "/solr", "/")
 		solrClient := SolrSF9V.NewJSONClient(solrUrl)
@@ -109,9 +112,13 @@ func (c *Client) GetClientSF9V() SolrSF9V.Client {
 
 func (c *Client) GetFullSchema() (error, *SolrVan.SolrResponse) {
 	schema, err := c.clientVan.Schema()
-	if err != nil { return err, nil}
+	if err != nil {
+		return err, nil
+	}
 	dump, errD := schema.All()
-	if errD != nil { return errD, nil}
+	if errD != nil {
+		return errD, nil
+	}
 	return nil, dump
 }
 
@@ -146,20 +153,28 @@ func (c *Client) Commit(context context.Context) error {
 
 func (c *Client) UpdateDocsAndCommit(context context.Context, docs []SolrSF9V.M) (error, *SolrSF9V.UpdateResponse) {
 	err, response := c.UpdateDocs(context, docs)
-	if err != nil { return err, nil }
+	if err != nil {
+		return err, nil
+	}
 
 	errC := c.Commit(context)
-	if errC != nil { return errC, nil }
+	if errC != nil {
+		return errC, nil
+	}
 
 	return nil, response
 }
 
 func (c *Client) UpdateDocAndCommit(context context.Context, doc SolrSF9V.M) (error, *SolrSF9V.UpdateResponse) {
 	err, response := c.UpdateDoc(context, doc)
-	if err != nil { return err, nil }
+	if err != nil {
+		return err, nil
+	}
 
 	errC := c.Commit(context)
-	if errC != nil { return errC, nil }
+	if errC != nil {
+		return errC, nil
+	}
 
 	return nil, response
 }
@@ -167,16 +182,22 @@ func (c *Client) UpdateDocAndCommit(context context.Context, doc SolrSF9V.M) (er
 func (c *Client) RemoveSchema(fields []SolrSF9V.Field) error {
 	// ignore early created fields for creating schema else will be error from solr rest
 	var mFields []SolrSF9V.Field
-	for _, originField := range fields { mFields = append(mFields, SolrSF9V.Field{Name: originField.Name}) }
+	for _, originField := range fields {
+		mFields = append(mFields, SolrSF9V.Field{Name: originField.Name})
+	}
 	return c.clientSF9V.DeleteFields(context.Background(), c.Options.Collection, mFields...)
 }
 
 func (c *Client) GetCollectionSchemaFields() (error, []SolrSF9V.Field) {
 	err, schema := c.GetFullSchema()
-	if err != nil { return err, nil}
+	if err != nil {
+		return err, nil
+	}
 
 	query, err := JQ.Parse(SchemaFieldsJQPath)
-	if err != nil { return err, nil }
+	if err != nil {
+		return err, nil
+	}
 
 	var collectionSchemaFields []SolrSF9V.Field
 	fields, ok := query.Run(schema.Response).Next()
@@ -185,7 +206,9 @@ func (c *Client) GetCollectionSchemaFields() (error, []SolrSF9V.Field) {
 			fieldMap := field.(map[string]interface{})
 			fieldName := fieldMap["name"].(string)
 			fieldType := fieldMap["type"].(string)
-			if utils.IsStrContain(fieldName, "id", "_version_") { continue }
+			if utils.IsStrContain(fieldName, "id", "_version_") {
+				continue
+			}
 
 			collectionSchemaFields = append(collectionSchemaFields,
 				SolrSF9V.Field{
@@ -193,26 +216,36 @@ func (c *Client) GetCollectionSchemaFields() (error, []SolrSF9V.Field) {
 					Type: fieldType,
 				})
 		}
-	} else { err = Errors.JqExecuteQueryError }
+	} else {
+		err = Errors.JqExecuteQueryError
+	}
 
 	return err, collectionSchemaFields
 }
 
 func (c *Client) GetInfoCore(coreName string) (error, *SolrVan.SolrResponse) {
 	admin, err := c.clientVan.CoreAdmin()
-	if err != nil { return err, nil}
+	if err != nil {
+		return err, nil
+	}
 
 	info, err := admin.Status(coreName)
-	if err != nil { return err, nil }
+	if err != nil {
+		return err, nil
+	}
 
 	return nil, info
 }
 
 func (c *Client) RenameCore(lastName string, newName string) (error, *SolrVan.SolrResponse) {
 	admin, err := c.clientVan.CoreAdmin()
-	if err != nil { return err, nil }
+	if err != nil {
+		return err, nil
+	}
 	response, err := admin.Rename(lastName, newName)
-	if err != nil { return err, nil }
+	if err != nil {
+		return err, nil
+	}
 
 	return nil, response
 }
@@ -221,11 +254,11 @@ func (c *Client) CreateNewCore(name string) error {
 	return c.clientSF9V.CreateCore(context.Background(), SolrSF9V.NewCreateCoreParams(name))
 }
 
-func (c *Client) CreateCoreConfig(name string)  {
+func (c *Client) CreateCoreConfig(name string) {
 	//c.clientSF9V.CreateCore()
 }
 
-func (c *Client) CreateCollection()  {
+func (c *Client) CreateCollection() {
 	params := SolrSF9V.NewCollectionParams()
 	params.Name("test-new-collections")
 	//err := c.clientSF9V.CreateCollection(context.Background(), params)
