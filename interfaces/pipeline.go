@@ -32,54 +32,46 @@ type ProcessorPipelineInterface interface {
 
 type PipelineGroupGraph interface {
 
-
 	// /* ignore for building amd64-linux
-
-	SetGraph(graph GraphInterface)
-	InitGraph(parentNode string)
-	SetGraphNodes(nodes map[string]NodeInterface)
-
+//
+//	SetGraph(graph GraphInterface)
+//	InitGraph(parentNode string)
+//	SetGraphNodes(nodes map[string]NodeInterface)
+//
 	// */
 
 	PipelineGroupInterface
 }
 
 type PipelineGroupInterface interface {
-	Run(ctx context.Context)
+	Run(ctx context.Context) error
 	GetName() string
 	GetFirstPipelineName() string
 	SetLogger(logger LoggerInterface)
 
 	// /* ignore for building amd64-linux
-	SetGraph(graph GraphInterface)
-
-	InitGraph(parentNode string)
-
-	SetGraphNodes(nodes map[string]NodeInterface)
+//	SetGraph(graph GraphInterface)
 //
+//	InitGraph(parentNode string)
+//
+//	SetGraphNodes(nodes map[string]NodeInterface)
+//	//
 	// */
 
 }
-
 
 type CallbackPipelineInterface interface {
 	Call(ctx context.Context, data interface{})
 }
 
-
-
 type ConsumerInterface interface {
-
 }
 
 type LambdaInterface interface {
-
 }
 
 type HandlerInterface interface {
-	
 }
 
 type ResponseInterface interface {
-	
 }

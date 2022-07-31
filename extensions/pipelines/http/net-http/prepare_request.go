@@ -20,9 +20,11 @@ func CreatePrepareRequestPipeline() *pipelines.TaskPipeline {
 		Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) (error, context.Context) {
 
 			transport, client := GetHttpClientTransport(task)
-			request, err := http.NewRequest(task.GetFetcherMethod(), task.GetFetcherUrl(), nil)
+			request, err := http.NewRequest(task.GetFetcherMethod(), task.GetFetcherUrl(), task.GetRequestBody())
 
-			if err != nil { return err, nil }
+			if err != nil {
+				return err, nil
+			}
 
 			httpContext := NewClientCtx(context, client)
 			httpContext = NewRequestCtx(httpContext, request)

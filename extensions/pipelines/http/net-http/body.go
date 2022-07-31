@@ -13,10 +13,15 @@ import (
 
 func GetBody(client *http.Client, request *http.Request) (error, *string, *http.Response) {
 	response, err := client.Do(request)
-	if err != nil { color.Red("%s", err); return Errors.ResponseReadError, nil, nil }
+	if err != nil {
+		color.Red("get Body: %s", err)
+		return err, nil, nil
+	}
 	defer func(Body io.ReadCloser) {
 		errC := Body.Close()
-		if errC != nil { color.Red("%s", errC.Error()) }
+		if errC != nil {
+			color.Red("%s", errC.Error())
+		}
 	}(response.Body)
 
 	var reader io.ReadCloser
@@ -29,7 +34,7 @@ func GetBody(client *http.Client, request *http.Request) (error, *string, *http.
 		defer func(reader io.ReadCloser) {
 			errR := reader.Close()
 			if errR != nil {
-				color.Red("%s", errR.Error())
+				color.Red("gzip: %s", errR.Error())
 			}
 		}(reader)
 	default:

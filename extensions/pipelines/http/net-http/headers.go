@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	NAME = "Request Header Middleware"
+	NAME        = "Request Header Middleware"
 	DESCRIPTION = "Setting request header for Typhoon task"
 )
 
@@ -27,6 +27,7 @@ func ConstructorRequestHeaderMiddleware(required bool) interfaces.MiddlewareInte
 		Fn: func(context context.Context, task *task.TyphoonTask, request *http.Request,
 			logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context),
 		) {
+
 			for key, element := range task.Fetcher.Headers {
 				request.Header.Add(
 					key,

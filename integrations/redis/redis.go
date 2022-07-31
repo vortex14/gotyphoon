@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/go-redis/redis/v8"
@@ -11,19 +12,19 @@ import (
 
 type Service struct {
 	Project interfaces.Project
-	client *redis.Client
-	Config *interfaces.ServiceRedis
+	client  *redis.Client
+	Config  *interfaces.ServiceRedis
 	//*interfaces.ServiceRedis
 }
 
-func (s *Service) initClient()  {
+func (s *Service) initClient() {
 	if s.client == nil {
 		redisString := fmt.Sprintf("%s:%d", s.Config.GetHost(), s.Config.GetPort())
 		//color.Yellow("init Redis Service %s", redisString)
 		rdb := redis.NewClient(&redis.Options{
 			Addr:     redisString, // use default Addr
-			Password: "",               // no password set
-			DB:       0,                // use default DB
+			Password: "",          // no password set
+			DB:       0,           // use default DB
 		})
 		s.client = rdb
 		conn := s.connect()
@@ -55,7 +56,36 @@ func (s *Service) Set(key string, value interface{}) error {
 	return status.Err()
 }
 
-func (s *Service) Init()  {
+func (s *Service) Get(key string) string {
+	var ctx = context.Background()
+	defer ctx.Done()
+	status := s.client.Get(ctx, key)
+	return status.Val()
+}
+
+func (s *Service) Remove(key string) error {
+	var ctx = context.Background()
+	defer ctx.Done()
+	status := s.client.Del(ctx, key)
+	return status.Err()
+}
+
+func (s *Service) Count(term string) int {
+	var ctx = context.Background()
+	defer ctx.Done()
+	status := s.client.Keys(ctx, term)
+	return len(status.Val())
+
+}
+
+func (s *Service) SetExp(key string, value interface{}, expireSecond int) error {
+	var ctx = context.Background()
+	defer ctx.Done()
+	status := s.client.Set(ctx, key, value, time.Second*time.Duration(expireSecond))
+	return status.Err()
+}
+
+func (s *Service) Init() {
 	if !s.Ping() {
 		color.Red("Redis connection failed. %s:%s", s.Config.GetHost(), s.Config.GetPort())
 	}

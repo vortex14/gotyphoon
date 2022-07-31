@@ -1,7 +1,7 @@
 package interfaces
 
 // /* ignore for building amd64-linux
-
+//
 // */
 
 const (
@@ -67,5 +67,5 @@ const (
 //	CloseEnvironment()
 //	InitModules()
 //}
-
+//
 // */
