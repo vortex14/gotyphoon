@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/elements/models/task"
@@ -14,7 +13,7 @@ import (
 )
 
 const (
-	InstallingProxyMiddleware = "Proxy middleware"
+	InstallingProxyMiddleware   = "Proxy middleware"
 	DescriptionDProxyMiddleware = "Proxy Middleware"
 )
 
@@ -35,12 +34,18 @@ func ConstructorProxyRequestSettingsMiddleware(required bool) interfaces.Middlew
 			next func(ctx context.Context)) {
 
 			ok, transport := GetTransportCtx(context)
-			if !ok { reject(Errors.MiddlewareContextFailed); return }
-			if !task.IsProxyRequired() { reject(Errors.ProxyTaskRequired); return}
-			logrus.Debug("init proxy address ...", task.GetProxyAddress())
+			if !ok {
+				reject(Errors.MiddlewareContextFailed)
+				return
+			}
+			if !task.IsProxyRequired() {
+				reject(Errors.ProxyTaskRequired)
+				return
+			}
+			logger.Debug("init proxy address ...", task.GetProxyAddress())
 			proxyURL, err := url.Parse(task.GetProxyAddress())
 			if err != nil || proxyURL == nil {
-				logrus.Error(err.Error())
+				logger.Error(err.Error())
 				reject(Errors.ProxyUrlWrong)
 				return
 			}

@@ -6,7 +6,7 @@ tmp_dir = "tmp"
   bin = "./tmp/main"
 #   cmd = "go build -o ./tmp/main ./main/project/python3"
 
-  cmd = "go build -o ./tmp/main ./main/project/python3"
+  cmd = "go build -o ./tmp/main ./main/proxy-rotator"
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []

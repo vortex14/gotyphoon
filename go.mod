@@ -6,6 +6,9 @@ require (
 	github.com/Bose/go-gin-logrus v1.0.3
 	github.com/Bose/go-gin-opentracing v1.0.5
 	github.com/EDDYCJY/fake-useragent v0.2.0
+	github.com/PuerkitoBio/goquery v1.8.0
+	github.com/ahl5esoft/golang-underscore v2.0.0+incompatible
+	github.com/avast/retry-go/v4 v4.1.0
 	github.com/banzaicloud/logrus-runtime-formatter v0.0.0-20190729070250-5ae5475bae5e
 	github.com/brianvoe/gofakeit/v6 v6.16.0
 	github.com/bxcodec/faker v2.0.1+incompatible
@@ -16,6 +19,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/cli v20.10.17+incompatible
 	github.com/docker/docker v20.10.17+incompatible
+	github.com/elazarl/goproxy v0.0.0-20210801061803-8e322dfb79c4
 	github.com/fatih/color v1.12.0
 	github.com/fatih/structs v1.1.0
 	github.com/fogleman/gg v1.3.0
@@ -64,7 +68,6 @@ require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/Microsoft/hcsshim v0.9.3 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
-	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/VividCortex/ewma v1.1.1 // indirect
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
