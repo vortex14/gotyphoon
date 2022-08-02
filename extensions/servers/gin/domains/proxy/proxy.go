@@ -150,7 +150,7 @@ func (c *ProxyCollection) unblockingProxy() {
 
 		}
 
-		c.PrintStats()
+		//c.PrintStats()
 	}
 }
 
@@ -352,11 +352,9 @@ func Constructor(redisHost string) interfaces.ServerInterface {
 
 						err, proxyValue := proxyCollection.GetProxy()
 						if err != nil {
-							logger.Debug(err.Error(), "______")
+							logger.Debug(err.Error())
 							proxy.Success = false
 							proxy.Proxy = err.Error()
-						} else {
-							println("____-----____")
 						}
 
 						proxy.Proxy = proxyValue
