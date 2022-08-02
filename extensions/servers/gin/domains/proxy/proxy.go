@@ -41,6 +41,7 @@ const (
 type Settings struct {
 	BlockedTime int
 	CheckTime   int
+	RedisHost   string
 }
 
 type ProxyCollection struct {
@@ -255,7 +256,7 @@ func (c *ProxyCollection) Init() *ProxyCollection {
 					Host     string
 					Port     int
 					Password interface{}
-				}{Host: "localhost", Port: 6379}),
+				}{Host: c.Settings.RedisHost, Port: 6379}),
 			},
 		}
 
@@ -306,13 +307,14 @@ func (c *ProxyCollection) getLists(proxyList []string) ([]string, []string, []st
 	return allowed, locked, banned
 }
 
-func Constructor() interfaces.ServerInterface {
+func Constructor(redisHost string) interfaces.ServerInterface {
 
 	proxyCollection := ProxyCollection{
 		PrefixNamespace: "domain_",
 		Settings: &Settings{
 			BlockedTime: 45, //second
 			CheckTime:   3,
+			RedisHost:   redisHost,
 		},
 	}
 
