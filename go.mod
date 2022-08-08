@@ -43,6 +43,7 @@ require (
 	github.com/kbinani/screenshot v0.0.0-20210720154843-7d3a670d8329
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mongodb/mongo-tools v0.0.0-20220607155009-3da22b5c5531
+	github.com/nuveo/anticaptcha v0.0.0-20190826134530-79fc5eb9f34a
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/osamingo/checkdigit v1.0.0
@@ -55,6 +56,7 @@ require (
 	github.com/stevenferrer/solr-go v0.3.2
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/vanng822/go-solr v0.10.0
+	github.com/vortex14/2captcha-go v1.0.1
 	github.com/xanzy/go-gitlab v0.68.0
 	go.mongodb.org/mongo-driver v1.9.1
 	golang.org/x/crypto v0.0.0-20210915214749-c084706c2272
@@ -65,6 +67,7 @@ require (
 )
 
 require (
+	github.com/2captcha/2captcha-go v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/Microsoft/hcsshim v0.9.3 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
