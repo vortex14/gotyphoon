@@ -51,6 +51,14 @@ func GetNotRetribleOptions() *Options {
 	}
 }
 
+func GetCustomRetryOptions(count int) *Options {
+	return &Options{
+		Retry: RetryOptions{
+			MaxCount: count,
+		},
+	}
+}
+
 type BasePipeline struct {
 	*label.MetaInfo
 	*awaitabler.Object

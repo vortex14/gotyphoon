@@ -59,7 +59,7 @@ func CreateProxyRequestPipeline() *HttpRequestPipeline {
 			},
 			Middlewares: []interfaces.MiddlewareInterface{
 				ConstructorRequestHeaderMiddleware(true),
-				ConstructorProxyRequestSettingsMiddleware(true),
+				ConstructorProxySettingMiddleware(true),
 			},
 		},
 
