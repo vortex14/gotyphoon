@@ -32,14 +32,14 @@ const (
 	WATERMARK = "image.typhoon.dev"
 )
 
-func main()  {
+func main() {
 	err := (&gin.TyphoonGinServer{
 		TyphoonServer: &forms.TyphoonServer{
 			MetaInfo: &label.MetaInfo{
 				Name:        "Server image generator",
 				Description: "Generator images",
 			},
-			Port: 17667,
+			Port:    17667,
 			IsDebug: true,
 		},
 	}).Init().InitLogger().AddResource(home.Constructor("/").AddAction(&gin.Action{
@@ -68,7 +68,6 @@ func main()  {
 							return nil, context
 						},
 					},
-					netHttp.CreatePrepareRequestPipeline(),
 					netHttp.CreateRequestPipeline(),
 					&netHttp.HttpResponsePipeline{
 						BasePipeline: &forms.BasePipeline{
@@ -79,7 +78,7 @@ func main()  {
 						Fn: func(
 							context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface,
 							client *http.Client, request *http.Request, transport *http.Transport,
-							response *http.Response, data *string) (error, context.Context){
+							response *http.Response, data *string) (error, context.Context) {
 
 							r := bytes.NewReader([]byte(*data))
 							img, _, _ := image.Decode(r)
@@ -101,11 +100,10 @@ func main()  {
 						Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface, imgCtx *gg.Context) (error, context.Context) {
 							logger.Info("Create watermark")
 							w := float64(imgCtx.Width())
-							h := float64(imgCtx.Height()/4)
+							h := float64(imgCtx.Height() / 4)
 
 							imgCtx.SetColor(color.RGBA{0, 0, 0, 204})
 							imgCtx.DrawRectangle(0, float64(imgCtx.Height()-200), w, h)
-
 
 							return nil, context
 						},
@@ -139,7 +137,7 @@ func main()  {
 							imgCtx.SetColor(mutedColor)
 							_, _ = imgCtx.MeasureString(WATERMARK)
 							x := float64(70)
-							y := float64(imgCtx.Height()-70)
+							y := float64(imgCtx.Height() - 70)
 							imgCtx.DrawString(WATERMARK, x, y)
 							imgCtx.Fill()
 
@@ -163,11 +161,9 @@ func main()  {
 
 							_, _ = ginCtx.Writer.Write(wr.Bytes())
 
-
 							return nil, context
 						},
 					},
-
 				},
 			},
 		},

@@ -50,16 +50,19 @@ func FetchData(task *task.TyphoonTask) (error, *string) {
 	return err, data
 }
 
-func CreateProxyRequestPipeline() *HttpRequestPipeline {
+func CreateProxyRequestPipeline(opts *forms.Options) *HttpRequestPipeline {
 
 	return &HttpRequestPipeline{
 		BasePipeline: &forms.BasePipeline{
 			MetaInfo: &label.MetaInfo{
 				Name: "http-request",
 			},
+			Options: opts,
 			Middlewares: []interfaces.MiddlewareInterface{
+				ConstructorPrepareRequestMiddleware(true),
 				ConstructorRequestHeaderMiddleware(true),
 				ConstructorProxySettingMiddleware(true),
+				ConstructorProxyRequestSettingsMiddleware(true),
 			},
 		},
 
@@ -138,6 +141,7 @@ func CreateRequestPipeline() *HttpRequestPipeline {
 				Name: "http-request",
 			},
 			Middlewares: []interfaces.MiddlewareInterface{
+				ConstructorPrepareRequestMiddleware(true),
 				ConstructorRequestHeaderMiddleware(true),
 			},
 		},
