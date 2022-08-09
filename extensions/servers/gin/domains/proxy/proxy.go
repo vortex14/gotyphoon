@@ -401,6 +401,12 @@ func (c *Collection) IsBannedProxy(proxy string) bool {
 	return len(c.redisService.Get(c.getBanKey(proxy))) > 0
 }
 
+func (c *Collection) IsAllowed(proxy string) bool {
+	return u_.Chain(c.allowed).FindIndex(func(r string, _ int) bool {
+		return r == proxy
+	}) > -1
+}
+
 func (c *Collection) getBanKey(value string) string {
 	return fmt.Sprintf("%s:%s", "bans", c.GetFullKeyPath(value))
 }
