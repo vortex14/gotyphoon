@@ -402,11 +402,9 @@ func (c *Collection) IsBannedProxy(proxy string) bool {
 }
 
 func (c *Collection) IsAllowed(proxy string) bool {
-	indexAllowed := u_.Chain(c.allowed).FindIndex(func(r string, _ int) bool {
+	return u_.Chain(c.allowed).FindIndex(func(r string, _ int) bool {
 		return r == proxy
-	})
-
-	return indexAllowed > -1
+	}) > -1
 }
 
 func (c *Collection) getBanKey(value string) string {
