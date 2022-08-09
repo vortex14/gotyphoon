@@ -66,7 +66,6 @@ func CreateImageAction() interfaces.ActionInterface {
 							return nil, context
 						},
 					},
-					netHttp.CreatePrepareRequestPipeline(),
 					netHttp.CreateRequestPipeline(),
 					&netHttp.HttpResponsePipeline{
 						BasePipeline: &forms.BasePipeline{

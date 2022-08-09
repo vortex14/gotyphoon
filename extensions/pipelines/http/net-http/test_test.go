@@ -31,20 +31,14 @@ func TestRetryHttpPipeline(t *testing.T) {
 
 		_task.SetFetcherUrl("https://2ip2.ru")
 
-		ctxt := task.PatchCtx(ctxl, _task)
-
-		p0 := CreatePrepareRequestPipeline()
+		preparedCtx := task.PatchCtx(ctxl, _task)
 
 		var errP error
-		var preparedCtx context.Context
-		p0.Run(ctxt, func(pipeline interfaces.BasePipelineInterface, err error) {
-			errP = err
-		}, func(ctx context.Context) {
-			preparedCtx = ctx
-		})
-
 		p1 := &HttpRequestPipeline{
 			BasePipeline: &forms.BasePipeline{
+				Middlewares: []interfaces.MiddlewareInterface{
+					ConstructorPrepareRequestMiddleware(true),
+				},
 				NotIgnorePanic: true,
 				MetaInfo: &label.MetaInfo{
 					Name: "http-request",
@@ -79,6 +73,16 @@ func TestRetryHttpPipeline(t *testing.T) {
 			},
 		}
 
+		var errM error
+		p1.RunMiddlewareStack(preparedCtx, func(middleware interfaces.MiddlewareInterface, err error) {
+			errM = err
+			p1.Cancel(preparedCtx, l, err)
+		}, func(ctx context.Context) {
+			preparedCtx = ctx
+		})
+
+		So(errM, ShouldBeNil)
+
 		p1.Run(preparedCtx, func(pipeline interfaces.BasePipelineInterface, err error) {
 			errP = err
 		}, func(ctx context.Context) {
@@ -107,18 +111,14 @@ func TestRetryHttpPipeline(t *testing.T) {
 
 		ctxt := task.PatchCtx(ctxl, _task)
 
-		p0 := CreatePrepareRequestPipeline()
-
 		var errP error
 		var preparedCtx context.Context
-		p0.Run(ctxt, func(pipeline interfaces.BasePipelineInterface, err error) {
-			errP = err
-		}, func(ctx context.Context) {
-			preparedCtx = ctx
-		})
 
 		p1 := &HttpRequestPipeline{
 			BasePipeline: &forms.BasePipeline{
+				Middlewares: []interfaces.MiddlewareInterface{
+					ConstructorPrepareRequestMiddleware(true),
+				},
 				NotIgnorePanic: true,
 				Options:        forms.GetNotRetribleOptions(),
 				MetaInfo: &label.MetaInfo{
@@ -153,6 +153,16 @@ func TestRetryHttpPipeline(t *testing.T) {
 				logger.Error("--- ", err.Error())
 			},
 		}
+
+		var errM error
+		p1.RunMiddlewareStack(ctxt, func(middleware interfaces.MiddlewareInterface, err error) {
+			errM = err
+			p1.Cancel(ctxt, l, err)
+		}, func(ctx context.Context) {
+			preparedCtx = ctx
+		})
+
+		So(errM, ShouldBeNil)
 
 		p1.Run(preparedCtx, func(pipeline interfaces.BasePipelineInterface, err error) {
 			errP = err
@@ -185,26 +195,21 @@ func TestRetryHttpPipeline(t *testing.T) {
 
 		ctxt := task.PatchCtx(ctxl, _task)
 
-		p0 := CreatePrepareRequestPipeline()
-
 		var errP error
 		var preparedCtx context.Context
-		p0.Run(ctxt, func(pipeline interfaces.BasePipelineInterface, err error) {
-			errP = err
-		}, func(ctx context.Context) {
-			preparedCtx = ctx
-		})
 
 		So(errP, ShouldBeNil)
 
 		p1 := &HttpRequestPipeline{
 			BasePipeline: &forms.BasePipeline{
+
 				NotIgnorePanic: true,
 				Options:        forms.GetNotRetribleOptions(),
 				MetaInfo: &label.MetaInfo{
 					Name: "http-request",
 				},
 				Middlewares: []interfaces.MiddlewareInterface{
+					ConstructorPrepareRequestMiddleware(true),
 					ConstructorProxyRequestSettingsMiddleware(true),
 				},
 			},
@@ -237,9 +242,9 @@ func TestRetryHttpPipeline(t *testing.T) {
 			},
 		}
 		var errM error
-		p1.RunMiddlewareStack(preparedCtx, func(middleware interfaces.MiddlewareInterface, err error) {
+		p1.RunMiddlewareStack(ctxt, func(middleware interfaces.MiddlewareInterface, err error) {
 			errM = err
-			p1.Cancel(preparedCtx, l, err)
+			p1.Cancel(ctxt, l, err)
 		}, func(ctx context.Context) {
 			preparedCtx = ctx
 		})

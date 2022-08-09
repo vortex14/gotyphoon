@@ -18,16 +18,16 @@ import (
 )
 
 const (
-	ARROWBox       = "box"
-	ARROWVee       = "vee"
-	ARROWNone      = "none"
-	ARROWNormal    = "normal"
+	ARROWBox    = "box"
+	ARROWVee    = "vee"
+	ARROWNone   = "none"
+	ARROWNormal = "normal"
 
-	COLORRed       = "red"
-	COLORNavy      = "navy"
-	COLORBlack     = "black"
-	COLORGreen     = "green"
-	COLORTomato    = "tomato"
+	COLORRed    = "red"
+	COLORNavy   = "navy"
+	COLORBlack  = "black"
+	COLORGreen  = "green"
+	COLORTomato = "tomato"
 
 	SHAPEBox3D     = "box3d"
 	SHAPEFolder    = "folder"
@@ -53,7 +53,7 @@ func CreatePipeline(graph *cgraph.Graph, name string) *cgraph.Node {
 func CreateTestPipelineGroup(graph *cgraph.Graph) *cgraph.Node {
 	var prevStage *cgraph.Node
 
-	for i:=0; i<5; i++  {
+	for i := 0; i < 5; i++ {
 		cP := CreatePipeline(graph, fmt.Sprintf("Pipeline :: %s", strconv.Itoa(i)))
 
 		if prevStage != nil {
@@ -65,7 +65,7 @@ func CreateTestPipelineGroup(graph *cgraph.Graph) *cgraph.Node {
 	return prevStage
 }
 
-func main()  {
+func main2() {
 	tmpl := []byte(`digraph G {
 
 subgraph cluster_0 {
@@ -96,9 +96,8 @@ end [shape=Msquare];
 	gl, err := graphviz.ParseBytes(tmpl)
 	gl.SetBackgroundColor(COLORTomato)
 
-
-	for i := 0; i< gl.NumberSubGraph(); i ++ {
-		println("subgraph",i, gl.SubGraph("cluster_0", 1).
+	for i := 0; i < gl.NumberSubGraph(); i++ {
+		println("subgraph", i, gl.SubGraph("cluster_0", 1).
 			SetStyle("filled").
 			SetFontColor(COLORNavy).
 			SetBackgroundColor(COLORBlack),
@@ -110,16 +109,14 @@ end [shape=Msquare];
 	g := graphviz.New()
 
 	mainG, _ := g.Graph()
-	
 
-	
 	newS := mainG.SubGraph("test", -1)
 	newS.SetBackground(COLORTomato)
 	newS.SetColorScheme(COLORNavy)
 	newS.SetBackgroundColor(COLORBlack)
 	newS.SetStyle("filled")
 	CreateTestPipelineGroup(newS)
-	
+
 	//newS2 := mainG.SubGraph("test2", 1)
 	//newS2.SetBackground(COLORTomato)
 	//newS2.SetColorScheme(COLORNavy)
@@ -210,10 +207,9 @@ end [shape=Msquare];
 				Name:        "Graph Schema Generator",
 				Description: "Generator Server Schema",
 			},
-			Port: 17668,
+			Port:    17668,
 			IsDebug: true,
 		},
-
 	}).Init().InitLogger().AddResource(home.Constructor("/").AddAction(&gin.Action{
 		Action: &forms.Action{
 			MetaInfo: &label.MetaInfo{

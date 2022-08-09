@@ -1,8 +1,7 @@
 package sftp
 
 import (
-	"github.com/fsnotify/fsnotify"
-	. "github.com/vortex14/gotyphoon/extensions/models/watcher"
+	//. "github.com/vortex14/gotyphoon/extensions/models/watcher"
 
 	"github.com/vortex14/gotyphoon/elements/models/awaitabler"
 	"github.com/vortex14/gotyphoon/elements/models/label"
@@ -56,20 +55,20 @@ func (a *Agent) Watch(options Mirror) {
 		return
 	}
 
-	w := Watcher{
-		ExcludeMatch: options.ExcludeMatch,
-		Path:         options.HostPath,
-		Callback: func(logger interfaces.LoggerInterface, event *fsnotify.Event) {
-			logger.Debug(event.Name)
-
-			err := a.CopyFileFromHost(Mirror{HostPath: event.Name, DestinationPath: "/var/test00000100101010.txt"})
-			if err != nil {
-				return
-			}
-		},
-	}
-	a.Add()
-	go w.Watch()
+	//w := Watcher{
+	//	ExcludeMatch: options.ExcludeMatch,
+	//	Path:         options.HostPath,
+	//	Callback: func(logger interfaces.LoggerInterface, event *fsnotify.Event) {
+	//		logger.Debug(event.Name)
+	//
+	//		err := a.CopyFileFromHost(Mirror{HostPath: event.Name, DestinationPath: "/var/test00000100101010.txt"})
+	//		if err != nil {
+	//			return
+	//		}
+	//	},
+	//}
+	//a.Add()
+	//go w.Watch()
 }
 
 func (a *Agent) CopyFileFromHost(options Mirror) error {

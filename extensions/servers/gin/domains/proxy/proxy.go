@@ -1,9 +1,15 @@
 package proxy
 
 import (
+	Context "context"
 	Errors "errors"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
+	Task "github.com/vortex14/gotyphoon/elements/models/task"
+	net_http "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
+	"github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	"math/rand"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -39,16 +45,20 @@ const (
 )
 
 type Settings struct {
-	BlockedTime int
-	CheckTime   int
-	RedisHost   string
+	BlockedTime     int
+	CheckTime       int
+	RedisHost       string
+	ConcurrentCheck int
+	Port            int
+	PrefixNamespace string
+	CheckHosts      []string
 }
 
-type ProxyCollection struct {
+type Collection struct {
 	singleton.Singleton
-	mu              sync.Mutex
-	Settings        *Settings
-	PrefixNamespace string
+	mu sync.Mutex
+
+	Settings *Settings
 
 	redisService *redis.Service
 
@@ -60,15 +70,15 @@ type ProxyCollection struct {
 	banned  []string
 }
 
-func (c *ProxyCollection) GetFullKeyPath(key string) string {
-	return fmt.Sprintf("%s:%s", c.PrefixNamespace, key)
+func (c *Collection) GetFullKeyPath(key string) string {
+	return fmt.Sprintf("%s:%s", c.Settings.PrefixNamespace, key)
 }
 
-func (c *ProxyCollection) GetFullBanPathByKey(key string) string {
-	return fmt.Sprintf("%s:%s:%s", BanKey, c.PrefixNamespace, key)
+func (c *Collection) GetFullBanPathByKey(key string) string {
+	return fmt.Sprintf("%s:%s:%s", BanKey, c.Settings.PrefixNamespace, key)
 }
 
-func (c *ProxyCollection) Clear() error {
+func (c *Collection) Clear() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	err := c.RemoveBanHistory()
@@ -77,7 +87,7 @@ func (c *ProxyCollection) Clear() error {
 	return err
 }
 
-func (c *ProxyCollection) blockAvailableProxyByIndex(index int) error {
+func (c *Collection) blockAvailableProxyByIndex(index int) error {
 	logrus.Debug("block proxy by index ", index)
 	proxy := c.allowed[index]
 	c.allowed = append(c.allowed[:index], c.allowed[index+1:]...)
@@ -85,11 +95,11 @@ func (c *ProxyCollection) blockAvailableProxyByIndex(index int) error {
 	return c.redisService.SetExp(c.GetFullKeyPath(proxy), "-", c.Settings.BlockedTime)
 }
 
-func (c *ProxyCollection) IsLocked(proxy string) bool {
+func (c *Collection) IsLocked(proxy string) bool {
 	return len(c.redisService.Get(c.GetFullKeyPath(proxy))) > 0
 }
 
-func (c *ProxyCollection) unblockProxyByValue(proxyAddress string) {
+func (c *Collection) unblockProxyByValue(proxyAddress string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -107,7 +117,7 @@ func (c *ProxyCollection) unblockProxyByValue(proxyAddress string) {
 	c.allowed = append(c.allowed, proxy)
 }
 
-func (c *ProxyCollection) RemoveHistory() error {
+func (c *Collection) RemoveHistory() error {
 	for _, value := range c.list {
 		err := c.redisService.Remove(c.GetFullKeyPath(value))
 		if err != nil {
@@ -118,7 +128,7 @@ func (c *ProxyCollection) RemoveHistory() error {
 	return nil
 }
 
-func (c *ProxyCollection) RemoveBanHistory() error {
+func (c *Collection) RemoveBanHistory() error {
 	for _, value := range c.list {
 		err := c.redisService.Remove(c.GetFullBanPathByKey(value))
 		if err != nil {
@@ -129,15 +139,29 @@ func (c *ProxyCollection) RemoveBanHistory() error {
 	return nil
 }
 
-func (c *ProxyCollection) CountByLocked() int {
-	return c.redisService.Count(fmt.Sprintf("%s:*", c.PrefixNamespace))
+func (c *Collection) RemoveProxyBan(proxy string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	err := c.redisService.Remove(c.GetFullBanPathByKey(proxy))
+	indexBanned := u_.Chain(c.banned).FindIndex(func(r string, _ int) bool {
+		return r == proxy
+	})
+	if err == nil && indexBanned > -1 {
+		c.banned = append(c.banned[:indexBanned], c.banned[indexBanned+1:]...)
+	}
+
+	return err
 }
 
-func (c *ProxyCollection) CountByBans() int {
+func (c *Collection) CountByLocked() int {
+	return c.redisService.Count(fmt.Sprintf("%s:*", c.Settings.PrefixNamespace))
+}
+
+func (c *Collection) CountByBans() int {
 	return c.redisService.Count(fmt.Sprintf("%s:*", BanKey))
 }
 
-func (c *ProxyCollection) unblockingProxy() {
+func (c *Collection) unblockingProxy() {
 	for {
 		time.Sleep(time.Duration(c.Settings.CheckTime) * time.Second)
 		logrus.Debug("checking blocked timeout proxy")
@@ -154,7 +178,97 @@ func (c *ProxyCollection) unblockingProxy() {
 	}
 }
 
-func (c *ProxyCollection) Block(proxy string) error {
+func (c *Collection) MakeRequestThroughProxy(proxy string, group *sync.WaitGroup) error {
+	taskTest := fake.CreateDefaultTask()
+
+	taskTest.SetFetcherUrl(c.Settings.CheckHosts[0])
+	taskTest.SetProxyAddress(proxy)
+
+	ctxGroup := Task.NewTaskCtx(taskTest)
+
+	return (&forms.PipelineGroup{
+		MetaInfo: &label.MetaInfo{
+			Name:     "Http strategy",
+			Required: true,
+		},
+		Stages: []interfaces.BasePipelineInterface{
+			net_http.CreateProxyRequestPipeline(&forms.Options{Retry: forms.RetryOptions{MaxCount: 2}}),
+			&html.ResponseHtmlPipeline{
+				BasePipeline: &forms.BasePipeline{
+					MetaInfo: &label.MetaInfo{
+						Name: "Response pipeline",
+					},
+				},
+				Fn: func(context Context.Context,
+					task interfaces.TaskInterface, logger interfaces.LoggerInterface,
+					request *http.Request, response *http.Response,
+					data *string, doc *goquery.Document) (error, Context.Context) {
+
+					group.Done()
+
+					return nil, context
+				},
+				Cn: func(err error, context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) {
+					logger.Error("pipeline error")
+					group.Done()
+				},
+			},
+		},
+	}).Run(ctxGroup)
+}
+
+func (c *Collection) checkingBlocked() {
+	lastIndex := 0
+	for {
+		wg := sync.WaitGroup{}
+
+		if lastIndex == len(c.banned) {
+			lastIndex = 0
+		}
+
+		step := lastIndex + c.Settings.ConcurrentCheck
+		residue := len(c.banned) - lastIndex
+
+		if step > residue {
+			step = residue
+		}
+
+		if len(c.banned) == 0 {
+			time.Sleep(time.Duration(c.Settings.CheckTime) * time.Second)
+			continue
+		}
+
+		for i, proxy := range c.banned[lastIndex : lastIndex+step] {
+			logrus.Debug(fmt.Sprintf("check %s", proxy))
+			if (i + 1) >= c.Settings.ConcurrentCheck {
+				break
+			}
+
+			wg.Add(1)
+
+			go func() {
+				err := c.MakeRequestThroughProxy(proxy, &wg)
+				if err == nil {
+					ansE := c.RemoveProxyBan(proxy)
+					if ansE == nil {
+						logrus.Debug(fmt.Sprintf("proxy %s is available", proxy))
+					} else {
+						logrus.Error(ansE)
+					}
+				} else {
+					logrus.Error(err)
+				}
+			}()
+			lastIndex += 1
+		}
+		wg.Wait()
+
+		time.Sleep(time.Duration(c.Settings.CheckTime) * time.Second)
+
+	}
+}
+
+func (c *Collection) Block(proxy string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -193,7 +307,7 @@ func (c *ProxyCollection) Block(proxy string) error {
 
 }
 
-func (c *ProxyCollection) GetProxy() (error, string) {
+func (c *Collection) GetProxy() (error, string) {
 	c.Init()
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -220,7 +334,7 @@ func (c *ProxyCollection) GetProxy() (error, string) {
 	return nil, selected
 }
 
-func (c *ProxyCollection) PrintStats() {
+func (c *Collection) PrintStats() {
 	println("--------")
 	fmt.Printf("Count available: %d , blocked: %d ", len(c.allowed), len(c.locked))
 	println("")
@@ -229,7 +343,7 @@ func (c *ProxyCollection) PrintStats() {
 	}
 }
 
-func (c *ProxyCollection) init() {
+func (c *Collection) init() {
 	proxyEnvList := os.Getenv("PROXY_LIST")
 	if len(proxyEnvList) == 0 {
 		logrus.Fatal("env PROXY_LIST not found")
@@ -240,7 +354,7 @@ func (c *ProxyCollection) init() {
 	c.allowed, c.locked, c.banned = c.getLists(proxyList)
 }
 
-func (c *ProxyCollection) Init() *ProxyCollection {
+func (c *Collection) Init() *Collection {
 	c.Construct(func() {
 
 		c.stats = make(map[string]int)
@@ -276,12 +390,22 @@ func (c *ProxyCollection) Init() *ProxyCollection {
 
 		go c.unblockingProxy()
 
+		go c.checkingBlocked()
+
 	})
 
 	return c
 }
 
-func (c *ProxyCollection) getLists(proxyList []string) ([]string, []string, []string) {
+func (c *Collection) IsBannedProxy(proxy string) bool {
+	return len(c.redisService.Get(c.getBanKey(proxy))) > 0
+}
+
+func (c *Collection) getBanKey(value string) string {
+	return fmt.Sprintf("%s:%s", "bans", c.GetFullKeyPath(value))
+}
+
+func (c *Collection) getLists(proxyList []string) ([]string, []string, []string) {
 	var allowed []string
 	var locked []string
 	var banned []string
@@ -291,7 +415,7 @@ func (c *ProxyCollection) getLists(proxyList []string) ([]string, []string, []st
 			continue
 		}
 
-		banKey := fmt.Sprintf("%s:%s", "bans", c.GetFullKeyPath(value))
+		banKey := c.getBanKey(value)
 
 		switch {
 		case len(c.redisService.Get(banKey)) == 0 && len(c.redisService.Get(c.GetFullKeyPath(value))) == 0:
@@ -307,20 +431,17 @@ func (c *ProxyCollection) getLists(proxyList []string) ([]string, []string, []st
 	return allowed, locked, banned
 }
 
-func Constructor(redisHost string) interfaces.ServerInterface {
+func Constructor(opts *Settings) interfaces.ServerInterface {
 
-	proxyCollection := ProxyCollection{
-		PrefixNamespace: "domain_",
-		Settings: &Settings{
-			BlockedTime: 45, //second
-			CheckTime:   3,
-			RedisHost:   redisHost,
-		},
+	proxyCollection := Collection{
+		Settings: opts,
 	}
+
+	proxyCollection.Init()
 
 	return (&gin.TyphoonGinServer{
 		TyphoonServer: &forms.TyphoonServer{
-			Port:  PORT,
+			Port:  opts.Port,
 			Level: interfaces.INFO,
 			MetaInfo: &label.MetaInfo{
 				Name:        NAME,
