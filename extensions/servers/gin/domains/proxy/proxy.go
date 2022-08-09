@@ -183,6 +183,7 @@ func (c *Collection) MakeRequestThroughProxy(proxy string, group *sync.WaitGroup
 
 	taskTest.SetFetcherUrl(c.Settings.CheckHosts[0])
 	taskTest.SetProxyAddress(proxy)
+	taskTest.SetSaveData("SKIP_CN", "skip")
 
 	ctxGroup := Task.NewTaskCtx(taskTest)
 

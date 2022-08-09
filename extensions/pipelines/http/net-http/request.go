@@ -88,6 +88,10 @@ func CreateProxyRequestPipeline(opts *forms.Options) *HttpRequestPipeline {
 			task interfaces.TaskInterface,
 			logger interfaces.LoggerInterface) {
 
+			if task.GetSaveData("SKIP_CN") == "skip" {
+				return
+			}
+
 			// Block current proxy
 			proxy := task.GetProxyAddress()
 			logger.Error("block proxy: %s", proxy)
