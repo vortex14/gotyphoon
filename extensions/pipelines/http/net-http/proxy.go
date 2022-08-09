@@ -106,7 +106,7 @@ func ConstructorProxyRequestSettingsMiddleware(required bool) interfaces.Middlew
 				reject(Errors.MiddlewareContextFailed)
 				return
 			}
-			if !task.IsProxyRequired() {
+			if !task.IsProxyRequired() && len(task.GetProxyAddress()) == 0 {
 				reject(Errors.ProxyTaskRequired)
 				return
 			}

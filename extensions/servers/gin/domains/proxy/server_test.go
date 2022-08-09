@@ -280,6 +280,7 @@ func TestAvailableProxy(t *testing.T) {
 		for {
 			if count > 5 {
 				So(coll.IsBannedProxy(validProxyAddress), ShouldBeFalse)
+				So(coll.IsAllowed(validProxyAddress), ShouldBeTrue)
 				break
 			}
 
