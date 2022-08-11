@@ -34,7 +34,7 @@ func Patch(logger *logrus.Entry, values map[string]interface{}) *logrus.Entry {
 func PatchCtx(ctx context.Context, values map[string]interface{}) context.Context {
 	s, logger := Get(ctx)
 	if !s {
-		return ctx
+		logger = New(map[string]interface{}{})
 	}
 
 	return NewCtx(ctx, PatchLogI(logger, values))

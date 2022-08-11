@@ -42,16 +42,17 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 
 	middlewareContext, mainContext = context, context
 
-	mainContext = log.NewCtxValues(mainContext, log.D{"group": g.GetName()})
+	mainContext = log.PatchCtx(mainContext, log.D{"group": g.GetName()})
 
 	var errStack error
 	for _, pipeline := range g.Stages {
 		if failedFlow {
 			break
 		}
-		logger := log.New(log.D{"pipeline": pipeline.GetName(), "group": g.GetName()})
 
-		middlewareContext = log.NewCtx(mainContext, logger)
+		middlewareContext = log.PatchCtx(mainContext, log.D{"pipeline": pipeline.GetName(), "group": g.GetName()})
+
+		_, logger := log.Get(middlewareContext)
 
 		{
 			var failed bool
@@ -67,7 +68,7 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 			}
 		}
 
-		mainContext = log.NewCtx(middlewareContext, logger)
+		mainContext = middlewareContext
 
 		{
 			pipeline.Run(mainContext, func(p interfaces.BasePipelineInterface, err error) {
