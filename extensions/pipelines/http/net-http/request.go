@@ -50,6 +50,45 @@ func FetchData(task *task.TyphoonTask) (error, *string) {
 	return err, data
 }
 
+func MakeBlockRequest(logger interfaces.LoggerInterface, task interfaces.TaskInterface) error {
+	// Block current proxy
+	proxy := task.GetProxyAddress()
+	logger.Error("block proxy: %s", proxy)
+	urlSupported := fmt.Sprintf("%s/block?url=%s&proxy=%s&code=599",
+		task.GetProxyServerUrl(),
+		task.GetFetcherUrl(), proxy,
+	)
+	logger.Info("block proxy :", urlSupported)
+
+	return retry.Do(func() error {
+		client := GetHttpClient(task)
+		request, errR := http.NewRequest(http.MethodGet, urlSupported, nil)
+		if errR != nil {
+			return errR
+		}
+		errR, body, _ := GetBody(client, request)
+		if errR != nil || body == nil {
+			return Errors.ProxyServerError
+		}
+
+		var proxyResponse models.Proxy
+		err := utils.JsonLoad(&proxyResponse, *body)
+		if err != nil {
+			color.Red("JsonLoad has Error: %s", err.Error())
+			return err
+		}
+		if !proxyResponse.Success {
+			return Errors.ResponseNotOkError
+
+		}
+
+		color.Green(fmt.Sprintf("proxy %s was be blocked ", proxy))
+
+		return nil
+
+	})
+}
+
 func CreateProxyRequestPipeline(opts *forms.Options) *HttpRequestPipeline {
 
 	return &HttpRequestPipeline{
@@ -93,43 +132,7 @@ func CreateProxyRequestPipeline(opts *forms.Options) *HttpRequestPipeline {
 			}
 
 			// Block current proxy
-			proxy := task.GetProxyAddress()
-			logger.Error("block proxy: %s", proxy)
-			urlSupported := fmt.Sprintf("%s/block?url=%s&proxy=%s&code=599",
-				task.GetProxyServerUrl(),
-				task.GetFetcherUrl(), proxy,
-			)
-			logger.Info("block proxy :", urlSupported)
-
-			errBlockRequest := retry.Do(func() error {
-				client := GetHttpClient(task)
-				request, errR := http.NewRequest(http.MethodGet, urlSupported, nil)
-				if errR != nil {
-					return errR
-				}
-				errR, body, _ := GetBody(client, request)
-				if errR != nil || body == nil {
-					return Errors.ProxyServerError
-				}
-
-				var proxyResponse models.Proxy
-				err = utils.JsonLoad(&proxyResponse, *body)
-				if err != nil {
-					color.Red("JsonLoad has Error: %s", err.Error())
-					return err
-				}
-				if !proxyResponse.Success {
-					return Errors.ResponseNotOkError
-
-				}
-
-				color.Green(fmt.Sprintf("proxy %s was be blocked ", proxy))
-
-				return nil
-
-			})
-
-			if errBlockRequest != nil {
+			if MakeBlockRequest(logger, task) != nil {
 				logger.Error("Fatal exception. Impossible block proxy.")
 				os.Exit(1)
 			}
