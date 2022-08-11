@@ -15,7 +15,6 @@ var logOnce sync.Once
 // D is data custom log data for logger. Logrus.Field{} is equivalent D, but shorty for import
 type D map[string]interface{}
 
-
 func New(values map[string]interface{}) *logrus.Entry {
 	return logrus.WithFields(values)
 }
@@ -32,18 +31,30 @@ func Patch(logger *logrus.Entry, values map[string]interface{}) *logrus.Entry {
 	return logger.WithFields(values)
 }
 
-func PatchLogI (logger interfaces.LoggerInterface, values map[string]interface{}) *logrus.Entry  {
+func PatchCtx(ctx context.Context, values map[string]interface{}) context.Context {
+	s, logger := Get(ctx)
+	if !s {
+		return ctx
+	}
+
+	return NewCtx(ctx, PatchLogI(logger, values))
+
+}
+
+func PatchLogI(logger interfaces.LoggerInterface, values map[string]interface{}) *logrus.Entry {
 	return Patch(logger.(*logrus.Entry), values)
 }
 
 func Get(context context.Context) (bool, interfaces.LoggerInterface) {
 	log, ok := ctx.Get(context, interfaces.LOGGER).(*logrus.Entry)
-	if !ok { log = New(D{"unstable context": true})}
+	if !ok {
+		log = New(D{"unstable context": true})
+	}
 	return ok, log
 }
 
 // InitD is debug logger configuration
-func InitD()  {
+func InitD() {
 	logOnce.Do(func() {
 		(&TyphoonLogger{
 			Name: "App",
