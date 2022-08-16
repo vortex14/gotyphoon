@@ -133,7 +133,7 @@ func CreateProxyRequestPipeline(opts *forms.Options) *HttpRequestPipeline {
 
 			// Block current proxy
 			if MakeBlockRequest(logger, task) != nil {
-				logger.Error("Fatal exception. Impossible block proxy.")
+				logger.Error("Fatal exception. Impossible to block the proxy.")
 				os.Exit(1)
 			}
 

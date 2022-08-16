@@ -10,6 +10,6 @@ func init() {
 }
 
 func main() {
-	_ = proxy.Constructor("localhost").Run()
+	_ = proxy.Constructor(&proxy.Settings{}).Run()
 
 }
