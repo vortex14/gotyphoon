@@ -395,6 +395,11 @@ func GetRandomIntRange(max int, min int) int {
 
 }
 
+func GetRandomFromSlice(slice []string) string {
+	rand.Seed(time.Now().UnixNano())
+	return slice[rand.Intn(len(slice))]
+}
+
 func (u *Utils) GetRandomFromSlice(slice []string) string {
 	rand.Seed(time.Now().UnixNano())
 	return slice[rand.Intn(len(slice))]
@@ -409,6 +414,10 @@ func (u *Utils) GetRandomString(length int, sequence string) string {
 	}
 
 	return string(b)
+}
+
+func GetUUID() string {
+	return uuid.NewString()
 }
 
 func (u *Utils) GetUUID() string {
