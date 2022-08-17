@@ -27,29 +27,33 @@ import (
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
-var validProxyAddress = "http://localhost:11316"
+var (
+	validProxyAddress = "http://localhost:11316"
 
-var proxyList = []string{
-	"http://E2Wr4v:f3perf@78.76.190.53:9965",
-	"http://E2Wr4v:f3perf@78.76.202.52:9034",
-	"http://E2Wr4v:f3perf@78.76.200.55:9349",
-	"http://E2Wr4v:f3perf@78.76.233.60:9878",
-	"http://E2Wr4v:f3perf@78.76.222.60:9878",
-	validProxyAddress,
-}
+	proxyList = []string{
+		"http://E2Wr4v:f3perf@78.76.190.53:9965",
+		"http://E2Wr4v:f3perf@78.76.202.52:9034",
+		"http://E2Wr4v:f3perf@78.76.200.55:9349",
+		"http://E2Wr4v:f3perf@78.76.233.60:9878",
+		"http://E2Wr4v:f3perf@78.76.222.60:9878",
+		validProxyAddress,
+	}
 
-var BlockedTime = 6
-var CheckTime = 3
+	BlockedTime      = 6
+	CheckTime        = 3
+	CheckBlockedTime = 50
 
-var settings = &Settings{
-	PrefixNamespace: "domain",
-	CheckHosts:      []string{"https://2ip.ru"},
-	BlockedTime:     BlockedTime,
-	CheckTime:       CheckTime,
-	RedisHost:       "localhost",
-	ConcurrentCheck: 3,
-	Port:            11222,
-}
+	settings = &Settings{
+		PrefixNamespace:  "domain",
+		CheckHosts:       []string{"https://2ip.ru"},
+		BlockedTime:      BlockedTime,
+		CheckTime:        CheckTime,
+		CheckBlockedTime: CheckBlockedTime,
+		RedisHost:        "localhost",
+		ConcurrentCheck:  3,
+		Port:             11222,
+	}
+)
 
 func init() {
 	log.InitD()

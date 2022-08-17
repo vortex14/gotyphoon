@@ -34,7 +34,6 @@ func (g *PipelineGroup) GetFirstPipelineName() string {
 }
 
 func (g *PipelineGroup) Run(context Context.Context) error {
-	println("run pipeline group !")
 
 	var failedFlow bool
 	var mainContext Context.Context
@@ -45,7 +44,7 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 	mainContext = log.PatchCtx(mainContext, log.D{"group": g.GetName()})
 
 	var errStack error
-	for _, pipeline := range g.Stages {
+	for index, pipeline := range g.Stages {
 		if failedFlow {
 			break
 		}
@@ -53,6 +52,10 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 		middlewareContext = log.PatchCtx(mainContext, log.D{"pipeline": pipeline.GetName(), "group": g.GetName()})
 
 		_, logger := log.Get(middlewareContext)
+
+		if skipFlag, numberStage := GetGOTOCtx(mainContext); skipFlag && numberStage > index+1 {
+			continue
+		}
 
 		{
 			var failed bool

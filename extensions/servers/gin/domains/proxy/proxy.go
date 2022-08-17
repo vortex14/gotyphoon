@@ -43,13 +43,14 @@ const (
 )
 
 type Settings struct {
-	BlockedTime     int
-	CheckTime       int
-	RedisHost       string
-	ConcurrentCheck int
-	Port            int
-	PrefixNamespace string
-	CheckHosts      []string
+	BlockedTime      int
+	CheckTime        int
+	CheckBlockedTime int
+	RedisHost        string
+	ConcurrentCheck  int
+	Port             int
+	PrefixNamespace  string
+	CheckHosts       []string
 }
 
 type Collection struct {
@@ -217,7 +218,7 @@ func (c *Collection) MakeRequestThroughProxy(proxy string) error {
 func (c *Collection) checkingBlocked() {
 	lastIndex := 0
 	for {
-		c.LOG.Debug(fmt.Sprintf("checking blocked ... every %ds Count: %d", c.Settings.CheckTime, len(c.banned)))
+		c.LOG.Debug(fmt.Sprintf("checking blocked ... every %ds Count: %d", c.Settings.CheckBlockedTime, len(c.banned)))
 		wg := &sync.WaitGroup{}
 
 		if lastIndex == len(c.banned) || lastIndex > len(c.banned) {
@@ -233,7 +234,7 @@ func (c *Collection) checkingBlocked() {
 
 		if len(c.banned) == 0 {
 			c.LOG.Debug("not found proxies for checking")
-			time.Sleep(time.Duration(c.Settings.CheckTime) * time.Second)
+			time.Sleep(time.Duration(c.Settings.CheckBlockedTime) * time.Second)
 			continue
 		}
 		c.LOG.Debug(fmt.Sprintf("lastIndex: %d ; Step: %d; residue: %d", lastIndex, step, residue))
@@ -267,7 +268,7 @@ func (c *Collection) checkingBlocked() {
 		c.LOG.Debug("waiting for checked")
 		wg.Wait()
 
-		time.Sleep(time.Duration(c.Settings.CheckTime) * time.Second)
+		time.Sleep(time.Duration(c.Settings.CheckBlockedTime) * time.Second)
 		c.LOG.Debug("next list step to check")
 
 	}

@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	"time"
 
 	"github.com/fatih/color"
@@ -11,6 +12,8 @@ import (
 )
 
 type Service struct {
+	singleton.Singleton
+
 	Project interfaces.Project
 	client  *redis.Client
 	Config  *interfaces.ServiceRedis
@@ -18,9 +21,9 @@ type Service struct {
 }
 
 func (s *Service) initClient() {
-	if s.client == nil {
+	s.Construct(func() {
 		redisString := fmt.Sprintf("%s:%d", s.Config.GetHost(), s.Config.GetPort())
-		//color.Yellow("init Redis Service %s", redisString)
+		color.Yellow("init Redis Service %s", redisString)
 		rdb := redis.NewClient(&redis.Options{
 			Addr:     redisString, // use default Addr
 			Password: "",          // no password set
@@ -31,14 +34,12 @@ func (s *Service) initClient() {
 		if conn {
 			color.Green("Redis client success %s", redisString)
 		}
-	}
-
+	})
 }
 
 func (s *Service) connect() bool {
-	s.initClient()
-	var ctx = context.Background()
-	defer ctx.Done()
+	var ctx, fc = context.WithTimeout(context.Background(), time.Duration(3)*time.Second)
+	defer fc()
 	status := false
 	_, err := s.client.Ping(ctx).Result()
 	if err != nil {
@@ -63,6 +64,13 @@ func (s *Service) Get(key string) string {
 	return status.Val()
 }
 
+func (s *Service) GetList(key string) []string {
+	var ctx = context.Background()
+	defer ctx.Done()
+	status := s.client.Keys(ctx, key)
+	return status.Val()
+}
+
 func (s *Service) Remove(key string) error {
 	var ctx = context.Background()
 	defer ctx.Done()
@@ -76,6 +84,18 @@ func (s *Service) Count(term string) int {
 	status := s.client.Keys(ctx, term)
 	return len(status.Val())
 
+}
+
+func (s *Service) Decr(key string) int64 {
+	var ctx = context.Background()
+	defer ctx.Done()
+	return s.client.Decr(ctx, key).Val()
+}
+
+func (s *Service) Incr(key string) int64 {
+	var ctx = context.Background()
+	defer ctx.Done()
+	return s.client.Incr(ctx, key).Val()
 }
 
 func (s *Service) SetExp(key string, value interface{}, expireSecond int) error {
@@ -92,5 +112,6 @@ func (s *Service) Init() {
 }
 
 func (s *Service) Ping() bool {
+	s.initClient()
 	return s.connect()
 }
