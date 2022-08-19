@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"github.com/vortex14/gotyphoon/log"
 	"net/http"
 	"net/url"
 
@@ -122,6 +123,10 @@ func ConstructorProxyRequestSettingsMiddleware(required bool) interfaces.Middlew
 			} else if proxyURL.Host == "" || proxyURL.Port() == "" {
 				reject(Errors.ProxyTaskNotFound)
 			}
+
+			context = log.PatchCtx(context, map[string]interface{}{"proxy": task.GetProxyAddress()})
+			next(context)
+
 		},
 	}
 }
