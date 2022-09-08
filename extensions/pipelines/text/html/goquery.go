@@ -59,20 +59,26 @@ func (t *ResponseHtmlPipeline) Run(
 		return
 	}
 
-	doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(*data)))
-	if err != nil {
-		reject(t, err)
-		return
-	}
+	t.SafeRun(func() error {
+		doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(*data)))
+		if err != nil {
+			return err
+		}
 
-	context = NewHtmlCtx(context, doc)
+		context = NewHtmlCtx(context, doc)
 
-	err, newContext := t.Fn(context, taskInstance, logger, request, response, data, doc)
-	if err != nil {
+		err, newContext := t.Fn(context, taskInstance, logger, request, response, data, doc)
+		if err != nil {
+			return err
+		}
+		next(newContext)
+		return nil
+
+	}, func(err error) {
 		reject(t, err)
-		return
-	}
-	next(newContext)
+		t.Cancel(context, logger, err)
+	})
+
 }
 
 func (t *ResponseHtmlPipeline) Cancel(
