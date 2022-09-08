@@ -77,7 +77,6 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 
 		{
 			pipeline.Run(mainContext, func(p interfaces.BasePipelineInterface, err error) {
-
 				switch err {
 				case Errors.ForceSkipPipelines:
 					forceSkip = true

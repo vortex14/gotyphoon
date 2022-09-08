@@ -126,13 +126,15 @@ func (p *BasePipeline) SafeRun(run func() error, catch func(err error)) {
 		}
 
 	}()
-	err := retry.Do(func() error {
+	var err error
+	_ = retry.Do(func() error {
 		return run()
 	},
 		retry.Attempts(uint(p.Options.Retry.MaxCount)),
-		retry.RetryIf(func(err error) bool {
+		retry.RetryIf(func(_err error) bool {
 			var status bool
-			switch err {
+			err = _err
+			switch _err {
 			case Errors.ForceSkipPipelines:
 				status = false
 			case Errors.ForceSkipMiddlewares:
@@ -165,10 +167,9 @@ func (p *BasePipeline) Run(
 	} else {
 		logCtx = logger
 	}
-
+	var pError error
 	p.SafeRun(func() error {
 
-		var pError error
 		p.run(context, logCtx, func(pipeline interfaces.BasePipelineInterface, err error) {
 			pError = err
 		}, next)
@@ -176,8 +177,8 @@ func (p *BasePipeline) Run(
 		return pError
 
 	}, func(err error) {
-		reject(p, err)
-		p.Cancel(context, logCtx, err)
+		reject(p, pError)
+		p.Cancel(context, logCtx, pError)
 	})
 
 }
