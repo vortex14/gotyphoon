@@ -131,8 +131,16 @@ func (p *BasePipeline) SafeRun(run func() error, catch func(err error)) {
 	},
 		retry.Attempts(uint(p.Options.Retry.MaxCount)),
 		retry.RetryIf(func(err error) bool {
+			var status bool
+			switch err {
+			case Errors.ForceSkipPipelines:
+				status = false
+			case Errors.ForceSkipMiddlewares:
+				status = false
+			default:
+				status = true
 
-			return true
+			return status
 		}),
 	)
 	if err != nil {
