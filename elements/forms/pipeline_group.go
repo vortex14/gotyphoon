@@ -3,6 +3,7 @@ package forms
 import (
 	Context "context"
 	"github.com/vortex14/gotyphoon/elements/models/label"
+	Errors "github.com/vortex14/gotyphoon/errors"
 
 	// /* ignore for building amd64-linux
 	//	"fmt"
@@ -35,6 +36,7 @@ func (g *PipelineGroup) GetFirstPipelineName() string {
 
 func (g *PipelineGroup) Run(context Context.Context) error {
 
+	var forceSkip bool
 	var failedFlow bool
 	var mainContext Context.Context
 	var middlewareContext Context.Context
@@ -45,7 +47,7 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 
 	var errStack error
 	for index, pipeline := range g.Stages {
-		if failedFlow {
+		if failedFlow || forceSkip {
 			break
 		}
 
@@ -60,9 +62,17 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 		{
 			var failed bool
 			pipeline.RunMiddlewareStack(middlewareContext, func(middleware interfaces.MiddlewareInterface, err error) {
-				errStack = err
-				failed = true
-				logger.Error("exit from middleware stack . Error: ", errStack.Error())
+
+				switch err {
+				case Errors.ForceSkipPipelines:
+					forceSkip = true
+					logger.Warning(Errors.ForceSkipPipelines.Error())
+				default:
+					errStack = err
+					logger.Error("exit from middleware stack . Error: ", errStack.Error())
+					failed = true
+				}
+
 			}, func(returnedContext Context.Context) {
 				middlewareContext = returnedContext
 			})
