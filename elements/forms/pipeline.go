@@ -139,6 +139,7 @@ func (p *BasePipeline) SafeRun(run func() error, catch func(err error)) {
 				status = false
 			default:
 				status = true
+			}
 
 			return status
 		}),
