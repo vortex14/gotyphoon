@@ -205,6 +205,9 @@ func (c *Collection) MakeRequestThroughProxy(proxy string) error {
 					request *http.Request, response *http.Response,
 					data *string, doc *goquery.Document) (error, Context.Context) {
 
+					if response.StatusCode > 400 {
+						return Errors.New("not ready "), context
+					}
 					return nil, context
 				},
 				Cn: func(err error, context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) {

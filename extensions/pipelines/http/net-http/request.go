@@ -82,7 +82,7 @@ func MakeBlockRequest(logger interfaces.LoggerInterface, task interfaces.TaskInt
 
 		}
 
-		color.Green(fmt.Sprintf("proxy %s was be blocked ", proxy))
+		logger.Debug(fmt.Sprintf("proxy %s was be blocked ", proxy))
 
 		return nil
 
