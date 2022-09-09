@@ -512,6 +512,36 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						ctx.JSON(200, proxyCollection.banned)
 					},
 				},
+				"locked": &gin.Action{
+					Action: &forms.Action{
+						MetaInfo: &label.MetaInfo{
+							Name:        "locked-proxy",
+							Path:        "locked",
+							Description: "locked proxies",
+						},
+						Methods: []string{interfaces.GET},
+					},
+					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
+						logger.Debug("Received request for get stats of locked proxies")
+
+						ctx.JSON(200, proxyCollection.locked)
+					},
+				},
+				"active": &gin.Action{
+					Action: &forms.Action{
+						MetaInfo: &label.MetaInfo{
+							Name:        "proxy",
+							Path:        "active",
+							Description: "Active list",
+						},
+						Methods: []string{interfaces.GET},
+					},
+					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
+						logger.Debug("Received request for get active proxies")
+
+						ctx.JSON(200, append(proxyCollection.locked, proxyCollection.allowed...))
+					},
+				},
 				"block": &gin.Action{
 					Action: &forms.Action{
 						MetaInfo: &label.MetaInfo{
@@ -575,7 +605,19 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
 						logger.Debug("Check stats.")
-						ctx.JSON(200, proxyCollection.stats)
+						ctx.JSON(200, struct {
+							Stats   interface{}
+							Active  interface{}
+							Blocked interface{}
+							Locked  interface{}
+							List    interface{}
+						}{
+							Stats:   proxyCollection.stats,
+							Active:  append(proxyCollection.locked, proxyCollection.allowed...),
+							Blocked: proxyCollection.banned,
+							Locked:  proxyCollection.locked,
+							List:    proxyCollection.list,
+						})
 					},
 				},
 				"clear": &gin.Action{

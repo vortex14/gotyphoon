@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	"github.com/vortex14/gotyphoon/extensions/models"
+	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"
 	"net/http"
 	"os"
@@ -113,8 +114,13 @@ func CreateProxyRequestPipeline(opts *forms.Options) *HttpRequestPipeline {
 			transport *http.Transport) (error, context.Context) {
 
 			err, response, data := Request(client, request, logger)
+
+			if response != nil {
+				context = log.PatchCtx(context, map[string]interface{}{"response_code": response.StatusCode})
+			}
+
 			if err != nil {
-				return err, nil
+				return err, context
 			}
 			context = NewResponseCtx(context, response)
 			context = NewResponseDataCtx(context, data)
