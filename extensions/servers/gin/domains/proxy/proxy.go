@@ -148,6 +148,7 @@ func (c *Collection) RemoveProxyBan(proxy string) error {
 	})
 	if err == nil && indexBanned > -1 {
 		c.banned = append(c.banned[:indexBanned], c.banned[indexBanned+1:]...)
+		c.allowed = append(c.allowed, proxy)
 	}
 
 	return err
@@ -360,7 +361,7 @@ func (c *Collection) init() {
 
 	proxyList := strings.Split(proxyEnvList, "\n")
 	c.list = proxyList
-	c.allowed, c.locked, c.banned = c.getLists(proxyList)
+	c.allowed, c.locked, c.banned = c.getLists()
 }
 
 func (c *Collection) Init() *Collection {
@@ -420,12 +421,12 @@ func (c *Collection) getBanKey(value string) string {
 	return fmt.Sprintf("%s:%s", "bans", c.GetFullKeyPath(value))
 }
 
-func (c *Collection) getLists(proxyList []string) ([]string, []string, []string) {
-	var allowed []string
-	var locked []string
-	var banned []string
+func (c *Collection) getLists() ([]string, []string, []string) {
+	allowed := make([]string, 0)
+	locked := make([]string, 0)
+	banned := make([]string, 0)
 
-	for _, value := range proxyList {
+	for _, value := range c.list {
 		if len(value) == 0 {
 			continue
 		}
