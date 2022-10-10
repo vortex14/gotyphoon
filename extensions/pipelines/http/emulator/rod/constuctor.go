@@ -4,20 +4,21 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/devices"
-	net_http "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
-	"github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	"os"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
+	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/devices"
+
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
+	net_http "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
+	"github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
-func CreateProxyRodRequestPipeline(opts *forms.Options, evopts *EventOptions) *HttpRodRequestPipeline {
+func CreateProxyRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOptions) *HttpRodRequestPipeline {
 
 	return &HttpRodRequestPipeline{
 		BasePipeline: &forms.BasePipeline{
@@ -41,14 +42,22 @@ func CreateProxyRodRequestPipeline(opts *forms.Options, evopts *EventOptions) *H
 				MustConnect().
 				MustPage(task.GetFetcherUrl())
 
-			if evopts != nil {
-				evopts.Wait()
+			if detailOptions != nil {
+				if detailOptions.EventOptions.NetworkResponseReceived {
+					detailOptions.EventOptions.Wait()
+				}
+
 			}
 
 			logger.Debug("page opened")
 			page.MustWaitLoad()
 			logger.Debug("the page loaded")
 			context = NewPageCtx(context, page)
+
+			if detailOptions != nil && detailOptions.SleepAfter > 0 {
+				logger.Debug(fmt.Sprintf("Sleep after load: %d", detailOptions.SleepAfter))
+				time.Sleep(time.Duration(detailOptions.SleepAfter) * time.Second)
+			}
 
 			body := page.MustHTML()
 

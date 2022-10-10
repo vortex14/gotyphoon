@@ -2,6 +2,7 @@ package rod
 
 import (
 	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/devices"
 	"github.com/go-rod/rod/lib/proto"
 )
 
@@ -18,4 +19,10 @@ func (e *EventOptions) Wait() {
 		wait()
 	}
 
+}
+
+type DetailsOptions struct {
+	EventOptions EventOptions
+	Device       devices.Device
+	SleepAfter   int
 }

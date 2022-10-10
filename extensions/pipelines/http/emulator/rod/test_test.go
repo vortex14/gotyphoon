@@ -27,7 +27,7 @@ func TestHttpRodRequestPipeline_Run(t *testing.T) {
 				Name: "Rod group",
 			},
 			Stages: []interfaces.BasePipelineInterface{
-				CreateProxyRodRequestPipeline(forms.GetCustomRetryOptions(1), nil),
+				CreateProxyRodRequestPipeline(forms.GetCustomRetryOptions(1), &DetailsOptions{SleepAfter: 20}),
 				&HttpRodResponsePipeline{
 					BasePipeline: &forms.BasePipeline{
 						Options: forms.GetNotRetribleOptions(),
