@@ -549,7 +549,7 @@ func (p *Project) CreateSymbolicLink() error {
 	env := &environment.Environment{}
 	_, settings := env.GetSettings()
 
-	linkTyphoonPath := fmt.Sprintf("%s/pytyphoon/typhoon", settings.Path)
+	linkTyphoonPath := fmt.Sprintf("%s/typhoon", settings.Path)
 	color.Yellow("TYPHOON_PATH=%s", settings.Path)
 	directLink := filepath.Join(p.GetProjectPath(), "typhoon")
 	color.Yellow(directLink)

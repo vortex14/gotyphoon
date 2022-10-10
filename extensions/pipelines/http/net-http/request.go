@@ -54,7 +54,7 @@ func FetchData(task *task.TyphoonTask) (error, *string) {
 func MakeBlockRequest(logger interfaces.LoggerInterface, task interfaces.TaskInterface) error {
 	// Block current proxy
 	proxy := task.GetProxyAddress()
-	logger.Error("block proxy: %s", proxy)
+	logger.Error(fmt.Sprintf("block proxy: %s", proxy))
 	urlSupported := fmt.Sprintf("%s/block?url=%s&proxy=%s&code=599",
 		task.GetProxyServerUrl(),
 		task.GetFetcherUrl(), proxy,

@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"github.com/vortex14/gotyphoon/extensions/middlewares"
 	"github.com/vortex14/gotyphoon/log"
 	"net/http"
 	"net/url"
-
-	"github.com/fatih/color"
 
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
@@ -28,15 +27,15 @@ const (
 )
 
 func ConstructorProxySettingMiddleware(required bool) interfaces.MiddlewareInterface {
-	return &HttpMiddleware{
+	return &middlewares.TaskMiddleware{
 		Middleware: &forms.Middleware{
 			MetaInfo: &label.MetaInfo{
-				Required:    required,
-				Name:        NAMEProxyMiddleware,
-				Description: DescriptionProxyMiddleware,
+				Required: required,
+				Name:     "get proxy for rod request",
 			},
 		},
-		Fn: func(context context.Context, task *task.TyphoonTask, request *http.Request, logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
+		Fn: func(context context.Context, task *task.TyphoonTask,
+			logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
 
 			if len(task.GetProxyAddress()) > 0 {
 				next(context)
@@ -71,7 +70,7 @@ func ConstructorProxySettingMiddleware(required bool) interfaces.MiddlewareInter
 			var proxyResponse models.Proxy
 			err = utils.JsonLoad(&proxyResponse, *body)
 			if err != nil {
-				color.Red("JsonLoad has Error: %s", err.Error())
+				logger.Debug(fmt.Sprintf("JsonLoad has Error: %s", err.Error()))
 				reject(err)
 				return
 			}
@@ -81,6 +80,8 @@ func ConstructorProxySettingMiddleware(required bool) interfaces.MiddlewareInter
 			}
 			task.SetUserAgent(proxyResponse.Agent)
 			task.SetProxyAddress(proxyResponse.Proxy)
+
+			next(context)
 
 		},
 	}

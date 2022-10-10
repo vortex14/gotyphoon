@@ -31,6 +31,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logfmt/logfmt v0.5.1
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/go-rod/rod v0.111.0
 	github.com/gocarina/gocsv v0.0.0-20220531201732-5f969b02b902
 	github.com/goccy/go-graphviz v0.0.9
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
@@ -161,6 +162,9 @@ require (
 	github.com/xdg-go/scram v1.0.2 // indirect
 	github.com/xdg-go/stringprep v1.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
+	github.com/ysmood/goob v0.4.0 // indirect
+	github.com/ysmood/gson v0.7.1 // indirect
+	github.com/ysmood/leakless v0.8.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/image v0.0.0-20200119044424-58c23975cae1 // indirect

@@ -2,6 +2,7 @@ package forms
 
 import (
 	Context "context"
+	"fmt"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
 
@@ -83,7 +84,7 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 					logger.Warning(Errors.ForceSkipPipelines.Error())
 				default:
 					errStack = err
-					logger.Error("Exit from group. Error: ", err.Error(), p.GetName())
+					logger.Error(fmt.Sprintf("Pipeline name: %s ; Exit from group. Error: %s", p.GetName(), err.Error()))
 					failedFlow = true
 				}
 
