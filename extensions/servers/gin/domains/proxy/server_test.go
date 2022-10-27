@@ -5,6 +5,7 @@ import (
 	"fmt"
 	underscore "github.com/ahl5esoft/golang-underscore"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -361,6 +362,16 @@ func TestBlockAllProxies(t *testing.T) {
 
 		So(count, ShouldEqual, 0)
 	})
+}
+
+func TestParseProxyAddress(t *testing.T) {
+	proxyUrl := proxyList[0]
+	LOG := log.New(map[string]interface{}{"proxy": "parse"})
+
+	proxyURL, _ := url.Parse(proxyUrl)
+	LOG.Debug(proxyURL.Host)
+	//proxyUrl.
+	//	LOG.Debug(proxyUrl)
 }
 
 func TestBlockProxyByExpiration(t *testing.T) {

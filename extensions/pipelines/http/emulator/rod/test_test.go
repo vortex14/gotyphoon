@@ -27,10 +27,14 @@ func TestHttpRodRequestPipeline_Run(t *testing.T) {
 				Name: "Rod group",
 			},
 			Stages: []interfaces.BasePipelineInterface{
-				CreateProxyRodRequestPipeline(forms.GetCustomRetryOptions(1), &DetailsOptions{SleepAfter: 20}),
+				CreateProxyRodRequestPipeline(
+					forms.GetCustomRetryOptions(1),
+					&DetailsOptions{SleepAfter: 1, MustElement: "#shitcoin > .message"},
+				),
 				&HttpRodResponsePipeline{
 					BasePipeline: &forms.BasePipeline{
-						Options: forms.GetNotRetribleOptions(),
+						NotIgnorePanic: true,
+						Options:        forms.GetNotRetribleOptions(),
 						MetaInfo: &label.MetaInfo{
 							Name: "http response from rod emulator",
 						},
@@ -38,7 +42,16 @@ func TestHttpRodRequestPipeline_Run(t *testing.T) {
 					Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface,
 						browser *rod.Browser, page *rod.Page, body *string, doc *goquery.Document) (error, context.Context) {
 
-						logger.Warning(doc.Html())
+						html, err := doc.Find("#shitcoin").Html()
+						if err != nil {
+							return err, context
+						}
+						logger.Debug(html)
+
+						//logger.Warning(doc.Html())
+
+						//defer page.MustClose()
+						//defer browser.MustClose()
 
 						return nil, context
 					},
@@ -55,7 +68,7 @@ func TestHttpRodRequestPipeline_Run(t *testing.T) {
 
 		newTask := fake.CreateDefaultTask()
 
-		newTask.SetFetcherUrl("https://httpbin.org/ip")
+		newTask.SetFetcherUrl("https://honeypot.is/ethereum?address=0x879c61c813147627fe3ddb824f681f65550f2139")
 		newTask.SetFetcherMethod("GET")
 		newTask.Fetcher.Timeout = 60
 		newTask.SetProxyServerUrl("http://localhost:8987")

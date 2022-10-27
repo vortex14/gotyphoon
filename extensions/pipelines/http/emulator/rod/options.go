@@ -25,4 +25,5 @@ type DetailsOptions struct {
 	EventOptions EventOptions
 	Device       devices.Device
 	SleepAfter   int
+	MustElement  string
 }

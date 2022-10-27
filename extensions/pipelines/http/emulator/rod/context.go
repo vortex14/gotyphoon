@@ -3,15 +3,12 @@ package rod
 import (
 	Context "context"
 	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/launcher"
-
 	"github.com/vortex14/gotyphoon/ctx"
 )
 
 const (
 	BROWSER  = "browser"
 	PAGE     = "page"
-	LAUNCHER = "launcher"
 	RESPONSE = "response"
 )
 
@@ -40,13 +37,4 @@ func NewPageCtx(context Context.Context, page *rod.Page) Context.Context {
 func GetPageCtx(context Context.Context) (bool, *rod.Page) {
 	page, ok := ctx.Get(context, PAGE).(*rod.Page)
 	return ok, page
-}
-
-func NewLauncherCtx(context Context.Context, launcher *launcher.Launcher) Context.Context {
-	return ctx.Update(context, LAUNCHER, launcher)
-}
-
-func GetLauncherCtx(context Context.Context) (bool, *launcher.Launcher) {
-	launcher, ok := ctx.Get(context, LAUNCHER).(*launcher.Launcher)
-	return ok, launcher
 }
