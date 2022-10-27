@@ -24,19 +24,17 @@ import (
 	mongoTools "github.com/mongodb/mongo-tools/common/options"
 	exportOptions "github.com/mongodb/mongo-tools/mongoexport"
 	importOptions "github.com/mongodb/mongo-tools/mongoimport"
-
 )
 
 type Service struct {
 	singleton.Singleton
 
-	LOG interfaces.LoggerInterface
-	client *mongo.Client
-	Project interfaces.Project
+	LOG      interfaces.LoggerInterface
+	client   *mongo.Client
+	Project  interfaces.Project
 	Settings interfaces.ServiceMongo
-	dbs map[string] *mongo.Database
+	dbs      map[string]*mongo.Database
 }
-
 
 func (s *Service) GetPort() int {
 	return s.Settings.GetPort()
@@ -46,9 +44,19 @@ func (s *Service) GetHost() string {
 	return s.Settings.GetHost()
 }
 
-func (s *Service) initClient()  {
+func (s *Service) initClient() {
 	s.Construct(func() {
-		connectionString := fmt.Sprintf("mongodb://%s:%d", s.Settings.GetHost(), s.Settings.GetPort())
+		var connectionString string
+		if len(s.Settings.Details.Username) > 0 && len(s.Settings.Details.Password) > 0 {
+			connectionString = fmt.Sprintf("mongodb://%s:%s@%s:%d/?", s.Settings.Details.Username,
+				s.Settings.Details.Password,
+				s.Settings.GetHost(),
+				s.Settings.GetPort())
+
+		} else {
+			connectionString = fmt.Sprintf("mongodb://%s:%d", s.Settings.GetHost(), s.Settings.GetPort())
+		}
+
 		ctx := context.Background()
 		client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionString))
 		if err == nil {
@@ -62,20 +70,26 @@ func (s *Service) initClient()  {
 	})
 }
 
-func (s *Service) initDbs()  {
+func (s *Service) initDbs() {
 	s.dbs = map[string]*mongo.Database{}
 	for _, dbName := range s.Settings.DbNames {
 		s.dbs[dbName] = s.client.Database(dbName)
 	}
 }
 
+func (s *Service) GetMongoCollection(dbName, collectionName string) *mongo.Collection {
+	if s.client == nil {
+		s.initClient()
+	}
+	if s.dbs == nil {
+		s.LOG.Error(Errors.MongoNotFoundDBMap.Error())
+		return nil
+	}
 
-
-func (s *Service) GetMongoCollection(dbName, collectionName string) *mongo.Collection  {
-	if s.client == nil { s.initClient() }
-	if s.dbs == nil { s.LOG.Error(Errors.MongoNotFoundDBMap.Error()); return nil }
-
-	if mongoDB, ok := s.dbs[dbName]; !ok { s.LOG.Error(Errors.MongoNotFoundDB.Error()); return nil } else {
+	if mongoDB, ok := s.dbs[dbName]; !ok {
+		s.LOG.Error(Errors.MongoNotFoundDB.Error())
+		return nil
+	} else {
 		return mongoDB.Collection(collectionName)
 	}
 }
@@ -96,7 +110,7 @@ func (s *Service) GetIncUpdateOptions(incValues bson.D, updateValues bson.D) bso
 	return bson.D{{"$inc", incValues}, {"$set", updateValues}}
 }
 
-func (s *Service) GetUpsertOptions() *MongoOptions.UpdateOptions  {
+func (s *Service) GetUpsertOptions() *MongoOptions.UpdateOptions {
 	upsert := true
 	return &MongoOptions.UpdateOptions{Upsert: &upsert}
 }
@@ -129,14 +143,11 @@ func (s *Service) GetCollections() []*Collection {
 		for _, collection := range collections {
 			mongoData := &Collection{
 				Name: collection,
-				Db: dbName,
+				Db:   dbName,
 			}
 
 			results = append(results, mongoData)
 		}
-
-
-
 
 	}
 
@@ -156,7 +167,6 @@ func (s *Service) GetCountDocuments(query *interfaces.MongoQuery) int64 {
 	if err != nil {
 		color.Red("GetCountDocuments error: %s", err.Error())
 	}
-
 
 	return count
 }
@@ -179,7 +189,7 @@ func (s *Service) Ping() bool {
 	return s.connect()
 }
 
-func (s *Service) Init()  {
+func (s *Service) Init() {
 	s.connect()
 }
 
@@ -187,7 +197,7 @@ func (s *Service) GetConnectionString() string {
 	return fmt.Sprintf("mongodb://%s:%d", s.Settings.GetHost(), s.Settings.GetPort())
 }
 
-func (s *Service) Import(Database string, collection string, inputFile string) (error, uint64)  {
+func (s *Service) Import(Database string, collection string, inputFile string) (error, uint64) {
 	color.Yellow("Import mongo data")
 	toolOptions := s.GetToolOptions(Database, collection)
 	inputOptions := &importOptions.InputOptions{
@@ -213,8 +223,6 @@ func (s *Service) Import(Database string, collection string, inputFile string) (
 
 	return err, numInserted
 
-
-
 }
 
 func (s *Service) GetToolOptions(Database string, collection string) *mongoTools.ToolOptions {
@@ -228,12 +236,12 @@ func (s *Service) GetToolOptions(Database string, collection string) *mongoTools
 		Port: strconv.Itoa(s.Settings.GetPort()),
 	}
 	toolOptions = &mongoTools.ToolOptions{
-		General: &mongoTools.General{},
+		General:    &mongoTools.General{},
 		Connection: connection,
 		Verbosity:  &mongoTools.Verbosity{},
 		URI:        &mongoTools.URI{},
-		Auth: 		&mongoTools.Auth{},
-		SSL:		&mongoTools.SSL{
+		Auth:       &mongoTools.Auth{},
+		SSL: &mongoTools.SSL{
 			UseSSL: false,
 		},
 		Namespace: namespace,
@@ -272,6 +280,6 @@ func (s *Service) Export(Database string, collection string, outFile string) (*b
 	}
 	defer me.Close()
 	count, err := me.Export(writer)
-	return writer,f, count, err
+	return writer, f, count, err
 
 }

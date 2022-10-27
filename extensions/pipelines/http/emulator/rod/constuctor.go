@@ -50,7 +50,7 @@ func CreateProxyRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOp
 			}
 
 			logger.Debug("page opened")
-			page.MustWaitLoad()
+
 			logger.Debug("the page loaded")
 			context = NewPageCtx(context, page)
 
@@ -59,17 +59,22 @@ func CreateProxyRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOp
 				time.Sleep(time.Duration(detailOptions.SleepAfter) * time.Second)
 			}
 
+			if detailOptions != nil && len(detailOptions.MustElement) > 0 {
+				page.MustElement(detailOptions.MustElement)
+			}
+
+			page.MustWaitLoad()
 			body := page.MustHTML()
 
 			doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(body)))
 			if err != nil {
-				return err, context
+				return fmt.Errorf("goquery: %s", err.Error()), context
 			}
 
 			context = html.NewHtmlCtx(context, doc)
 			context = NewBodyResponse(context, &body)
 
-			page.MustClose()
+			defer page.MustClose()
 
 			return nil, context
 		},

@@ -31,7 +31,7 @@ func ConstructorProxySettingMiddleware(required bool) interfaces.MiddlewareInter
 		Middleware: &forms.Middleware{
 			MetaInfo: &label.MetaInfo{
 				Required: required,
-				Name:     "get proxy for rod request",
+				Name:     "get proxy for request",
 			},
 		},
 		Fn: func(context context.Context, task *task.TyphoonTask,
