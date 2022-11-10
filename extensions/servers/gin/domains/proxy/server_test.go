@@ -1,9 +1,7 @@
 package proxy
 
 import (
-	Context "context"
 	"fmt"
-	underscore "github.com/ahl5esoft/golang-underscore"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,20 +14,19 @@ import (
 	"github.com/elazarl/goproxy"
 	. "github.com/smartystreets/goconvey/convey"
 
-	"github.com/vortex14/gotyphoon/log"
-
-	"github.com/vortex14/gotyphoon/elements/forms"
-	"github.com/vortex14/gotyphoon/elements/models/label"
-	Task "github.com/vortex14/gotyphoon/elements/models/task"
 	"github.com/vortex14/gotyphoon/elements/models/timer"
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
-	"github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
-	"github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
+	net_http "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
+	net_html "github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
+	"github.com/vortex14/gotyphoon/utils"
 )
 
 var (
 	validProxyAddress = "http://localhost:11316"
+
+	proxyServiceURL = "http://localhost:11222"
 
 	proxyList = []string{
 		"http://E2Wr4v:f3perf@78.76.190.53:9965",
@@ -42,7 +39,13 @@ var (
 
 	BlockedTime      = 6
 	CheckTime        = 3
-	CheckBlockedTime = 50
+	CheckBlockedTime = 3
+
+	validURL = "https://2ip.ru/"
+
+	endpointURL, _ = url.Parse(validURL)
+
+	LOG interfaces.LoggerInterface
 
 	settings = &Settings{
 		PrefixNamespace:  "domain",
@@ -58,7 +61,34 @@ var (
 
 func init() {
 	log.InitD()
+	LOG = log.New(map[string]interface{}{"service": "proxy"})
+
 	_ = os.Setenv("PROXY_LIST", strings.Join(proxyList, "\n"))
+
+	availableMap := map[string]string{
+		"2ip.ru": "https://2ip.ru",
+	}
+
+	_, s := utils.DumpPrettyJson(availableMap)
+
+	_ = os.Setenv("AVAILABLE_LIST", s)
+
+}
+
+func TestUrl(t *testing.T) {
+	Convey("test url", t, func() {
+		So(endpointURL.Hostname(), ShouldEqual, "2ip.ru")
+		So(endpointURL.String(), ShouldEqual, "https://2ip.ru/")
+	})
+}
+
+func TestIp(t *testing.T) {
+	Convey("get raw ip address without auth", t, func() {
+		v, e := url.Parse(proxyList[0])
+		So(e, ShouldBeNil)
+		So(v.Hostname(), ShouldEqual, "78.76.190.53")
+		So(v.Host, ShouldEqual, "78.76.190.53:9965")
+	})
 }
 
 func TestReadPart(t *testing.T) {
@@ -133,110 +163,27 @@ func TestRunProxyServer(t *testing.T) {
 
 		taskTest.SetFetcherUrl("https://2ip.ru/")
 		taskTest.SetProxyAddress(proxyAddress)
-		taskTest.SetProxyServerUrl("")
 
-		ctxGroup := Task.NewTaskCtx(taskTest)
+		err := net_html.MakeRequestThroughProxy(taskTest, func(logger interfaces.LoggerInterface,
+			response *http.Response, doc *goquery.Document) bool {
 
-		err := (&forms.PipelineGroup{
-			MetaInfo: &label.MetaInfo{
-				Name:     "Http strategy",
-				Required: true,
-			},
-			Stages: []interfaces.BasePipelineInterface{
-				net_http.CreateRequestPipeline(),
-				&html.ResponseHtmlPipeline{
-					BasePipeline: &forms.BasePipeline{
-						MetaInfo: &label.MetaInfo{
-							Name: "Response pipeline",
-						},
-					},
-					Fn: func(context Context.Context,
-						task interfaces.TaskInterface, logger interfaces.LoggerInterface,
-						request *http.Request, response *http.Response,
-						data *string, doc *goquery.Document) (error, Context.Context) {
+			resp := doc.Find(".ip").Text()
+			return len(resp) > 0
 
-						resp := doc.Find(".ip").Text()
-
-						logger.Info(resp)
-
-						Convey("check response 2ip.ru", func(c C) {
-							c.So(len(resp) > 0, ShouldBeTrue)
-						})
-
-						return nil, context
-					},
-					Cn: func(err error, context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) {
-						logger.Error("pipeline error")
-					},
-				},
-			},
-		}).Run(ctxGroup)
+		})
 
 		So(err, ShouldBeNil)
 
 	})
 }
 
-func MakeRequestThroughProxy() error {
-	taskTest := fake.CreateDefaultTask()
-
-	taskTest.SetFetcherUrl("https://2ip.ru/")
-	taskTest.SetProxyAddress(validProxyAddress)
-	taskTest.SetProxyServerUrl(fmt.Sprintf("http://localhost:%d", settings.Port))
-
-	ctxGroup := Task.NewTaskCtx(taskTest)
-
-	return (&forms.PipelineGroup{
-		MetaInfo: &label.MetaInfo{
-			Name:     "Http strategy",
-			Required: true,
-		},
-		Stages: []interfaces.BasePipelineInterface{
-			net_http.CreateProxyRequestPipeline(&forms.Options{Retry: forms.RetryOptions{MaxCount: 2}}),
-			&html.ResponseHtmlPipeline{
-				BasePipeline: &forms.BasePipeline{
-					MetaInfo: &label.MetaInfo{
-						Name: "Response pipeline",
-					},
-				},
-				Fn: func(context Context.Context,
-					task interfaces.TaskInterface, logger interfaces.LoggerInterface,
-					request *http.Request, response *http.Response,
-					data *string, doc *goquery.Document) (error, Context.Context) {
-
-					resp := doc.Find(".ip").Text()
-
-					logger.Info(resp)
-
-					Convey("check response 2ip.ru", func(c C) {
-						c.So(len(resp) > 0, ShouldBeTrue)
-					})
-
-					return nil, context
-				},
-				Cn: func(err error, context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) {
-					logger.Error("pipeline error")
-				},
-			},
-		},
-	}).Run(ctxGroup)
-}
-
 func TestAvailableProxy(t *testing.T) {
-
-	logger := log.New(log.D{"test": "test"})
-
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = true
 
-	coll := (&Collection{
-		Settings: settings,
-	}).Init()
-	_ = coll.RemoveBanHistory()
-
-	proxyService := Constructor(settings)
-
 	go func() {
+
+		proxyService := Constructor(settings)
 		_ = proxyService.Run()
 	}()
 
@@ -244,32 +191,39 @@ func TestAvailableProxy(t *testing.T) {
 
 	Convey("create a new request to unavailable proxy", t, func() {
 
-		So(MakeRequestThroughProxy(), ShouldBeError)
+		taskTest := fake.CreateDefaultTask()
+
+		taskTest.SetFetcherUrl(validURL)
+		taskTest.SetProxyAddress(validProxyAddress)
+		taskTest.SetProxyServerUrl(fmt.Sprintf("http://localhost:%d", settings.Port))
+
+		So(net_html.MakeRequestThroughProxy(taskTest, func(logger interfaces.LoggerInterface,
+			response *http.Response, doc *goquery.Document) bool {
+
+			resp := doc.Find(".ip").Text()
+
+			logger.Info(resp)
+
+			return len(resp) > 0
+
+		}), ShouldBeError)
 
 	})
 
+	time.Sleep(4 * time.Second)
+
 	Convey("checking blocked proxy", t, func() {
+		checkURL := fmt.Sprintf("%s/is_blocked?url=%s&proxy=%s", proxyServiceURL, validURL, validProxyAddress)
+		LOG.Debug("check proxy by url: ", checkURL)
+		e, _, data := net_http.MakeBasicRequest(checkURL)
+		So(e, ShouldBeNil)
+		So(len(*data) > 1, ShouldBeTrue)
+		LOG.Debug(*data)
+		So(strings.Contains(*data, "true"), ShouldBeTrue)
 
-		coll2 := (&Collection{
-			Settings: settings,
-		}).Init()
-
-		println(coll2.banned)
-
-		index := underscore.Chain(coll2.banned).FindIndex(func(r string, _ int) bool {
-			return validProxyAddress == r
-		})
-
-		So(index > -1, ShouldBeTrue)
 	})
 
 	Convey("Run proxy server", t, func() {
-
-		coll2 := (&Collection{
-			Settings: settings,
-		}).Init()
-
-		logger.Debug(fmt.Sprintf("%+v", coll2.banned))
 
 		go func() {
 			_ = http.ListenAndServe(":11316", proxy)
@@ -279,13 +233,19 @@ func TestAvailableProxy(t *testing.T) {
 
 	Convey("check unbanning proxy", t, func() {
 
-		So(coll.IsBannedProxy(validProxyAddress), ShouldBeTrue)
-
 		count := 0
 		for {
 			if count > 5 {
-				So(coll.IsBannedProxy(validProxyAddress), ShouldBeFalse)
-				So(coll.IsAllowed(validProxyAddress), ShouldBeTrue)
+				checkURL := fmt.Sprintf("%s/is_blocked?url=%s&proxy=%s", proxyServiceURL, validURL, validProxyAddress)
+				err, _, data := net_http.MakeBasicRequest(checkURL)
+
+				LOG.Debug("check proxy by url: ", checkURL)
+
+				So(err, ShouldBeNil)
+				So(len(*data) > 1, ShouldBeTrue)
+				LOG.Debug(*data)
+				So(strings.Contains(*data, "false"), ShouldBeTrue)
+
 				break
 			}
 
@@ -309,20 +269,20 @@ func TestBlockProxyPermanently(t *testing.T) {
 		err := coll.Clear()
 		So(err, ShouldBeNil)
 
-		e := coll.RemoveBanHistory()
+		e := coll.RemoveBanHistory(endpointURL.Hostname())
 		So(e, ShouldBeNil)
-		count := coll.CountByBans()
+		count := coll.CountByBans(endpointURL.Hostname())
 		So(count, ShouldEqual, 0)
 
-		err = coll.Block(proxyList[0])
+		err = coll.Block(proxyList[0], endpointURL)
 		So(err, ShouldBeNil)
 
-		count = coll.CountByBans()
+		count = coll.CountByBans(endpointURL.Hostname())
 		So(count, ShouldEqual, 1)
-		e = coll.RemoveBanHistory()
+		e = coll.RemoveBanHistory(endpointURL.Hostname())
 		So(e, ShouldBeNil)
 
-		count = coll.CountByBans()
+		count = coll.CountByBans(endpointURL.Hostname())
 		So(count, ShouldEqual, 0)
 
 	})
@@ -334,15 +294,15 @@ func TestBlockAllProxies(t *testing.T) {
 		Settings: settings,
 	}).Init()
 
-	_ = coll.RemoveBanHistory()
+	_ = coll.RemoveBanHistory(endpointURL.Hostname())
 
 	Convey("Block all proxy", t, func() {
 		for _, proxy := range proxyList {
-			err := coll.Block(proxy)
+			err := coll.Block(proxy, endpointURL)
 			So(err, ShouldBeNil)
 		}
 
-		count := coll.CountByBans()
+		count := coll.CountByBans(endpointURL.Hostname())
 
 		So(count, ShouldEqual, len(proxyList))
 
@@ -353,25 +313,15 @@ func TestBlockAllProxies(t *testing.T) {
 			Settings: settings,
 		}).Init()
 
-		So(coll2.CountByBans(), ShouldEqual, len(proxyList))
+		So(coll2.CountByBans(endpointURL.Hostname()), ShouldEqual, len(proxyList))
 
-		err := coll.RemoveBanHistory()
+		err := coll.RemoveBanHistory(endpointURL.Hostname())
 		So(err, ShouldBeNil)
 
-		count := coll.CountByBans()
+		count := coll.CountByBans(endpointURL.Hostname())
 
 		So(count, ShouldEqual, 0)
 	})
-}
-
-func TestParseProxyAddress(t *testing.T) {
-	proxyUrl := proxyList[0]
-	LOG := log.New(map[string]interface{}{"proxy": "parse"})
-
-	proxyURL, _ := url.Parse(proxyUrl)
-	LOG.Debug(proxyURL.Host)
-	//proxyUrl.
-	//	LOG.Debug(proxyUrl)
 }
 
 func TestBlockProxyByExpiration(t *testing.T) {
@@ -383,21 +333,21 @@ func TestBlockProxyByExpiration(t *testing.T) {
 		e := coll.Clear()
 		So(e, ShouldBeNil)
 
-		println(coll.CountByLocked(), coll.CountByBans())
+		println(coll.CountByLocked(endpointURL.Hostname()), coll.CountByBans(endpointURL.Hostname()))
 
-		err, proxy := coll.GetProxy()
+		err, proxy := coll.GetProxy(endpointURL)
 		So(err, ShouldBeNil)
 
 		st0 := timer.SetTimeout(func(args ...interface{}) {
-			println(proxy, " ", coll.IsLocked(proxy))
-			c.So(coll.IsLocked(proxy), ShouldBeTrue)
+			println(proxy, " ", coll.IsLocked(endpointURL.Hostname(), proxy))
+			c.So(coll.IsLocked(endpointURL.Hostname(), proxy), ShouldBeTrue)
 		}, BlockedTime+1)
 
 		st0.Await()
 
 		st := timer.SetTimeout(func(args ...interface{}) {
-			println(proxy, " ", coll.IsLocked(proxy))
-			c.So(coll.IsLocked(proxy), ShouldBeFalse)
+			println(proxy, " ", coll.IsLocked(endpointURL.Hostname(), proxy))
+			c.So(coll.IsLocked(endpointURL.Hostname(), proxy), ShouldBeFalse)
 		}, (BlockedTime+1)*1000)
 
 		st.Await()
@@ -411,11 +361,11 @@ func TestRemoveRedisCollection(t *testing.T) {
 			Settings: settings,
 		}).Init()
 
-		err := coll.RemoveHistory()
+		err := coll.RemoveHistory(endpointURL.Hostname())
 
 		So(err, ShouldBeNil)
 
-		So(coll.CountByLocked(), ShouldEqual, 0)
+		So(coll.CountByLocked(endpointURL.Hostname()), ShouldEqual, 0)
 
 	})
 
@@ -426,11 +376,13 @@ func TestGetConcurrentProxyCollection(t *testing.T) {
 		coll := (&Collection{
 			Settings: settings,
 		}).Init()
+		hostname := endpointURL.Hostname()
 
-		_ = coll.RemoveBanHistory()
-		_ = coll.RemoveHistory()
+		LOG.Debug(hostname)
 
-		So(len(coll.allowed), ShouldEqual, len(proxyList))
+		_ = coll.RemoveBanHistory(hostname)
+		_ = coll.RemoveHistory(hostname)
+
 		g := sync.WaitGroup{}
 		g.Add(4)
 		resultProxyEnv := make(map[string]string)
@@ -438,28 +390,29 @@ func TestGetConcurrentProxyCollection(t *testing.T) {
 		Convey("locking all proxy", func(c C) {
 
 			go func() {
-				err, proxy := coll.GetProxy()
+				err, proxy := coll.GetProxy(endpointURL)
+				LOG.Debug(err, proxy)
 				resultProxyEnv[proxy] = "-"
 				c.So(err, ShouldBeNil)
 				g.Done()
 			}()
 
 			go func() {
-				err, proxy := coll.GetProxy()
+				err, proxy := coll.GetProxy(endpointURL)
 				resultProxyEnv[proxy] = "-"
 				c.So(err, ShouldBeNil)
 				g.Done()
 			}()
 
 			go func() {
-				err, proxy := coll.GetProxy()
+				err, proxy := coll.GetProxy(endpointURL)
 				resultProxyEnv[proxy] = "-"
 				c.So(err, ShouldBeNil)
 				g.Done()
 			}()
 
 			go func() {
-				err, proxy := coll.GetProxy()
+				err, proxy := coll.GetProxy(endpointURL)
 				resultProxyEnv[proxy] = "-"
 				c.So(err, ShouldBeNil)
 				g.Done()
@@ -477,11 +430,11 @@ func TestGetConcurrentProxyCollection(t *testing.T) {
 			So(existCount, ShouldEqual, len(proxyList)-2)
 
 			coll.PrintStats()
-			err := coll.RemoveHistory()
+			err := coll.RemoveHistory(hostname)
 
 			So(err, ShouldBeNil)
 
-			So(coll.CountByLocked(), ShouldEqual, 0)
+			So(coll.CountByLocked(endpointURL.Hostname()), ShouldEqual, 0)
 
 		})
 	})

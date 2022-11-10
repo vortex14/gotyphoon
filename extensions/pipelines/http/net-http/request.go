@@ -54,12 +54,12 @@ func FetchData(task *task.TyphoonTask) (error, *string) {
 func MakeBlockRequest(logger interfaces.LoggerInterface, task interfaces.TaskInterface) error {
 	// Block current proxy
 	proxy := task.GetProxyAddress()
-	logger.Error(fmt.Sprintf("block proxy: %s", proxy))
+	logger.Error(fmt.Sprintf("block proxy: %s; Proxy Server: %s", proxy, task.GetProxyServerUrl()))
 	urlSupported := fmt.Sprintf("%s/block?url=%s&proxy=%s&code=599",
 		task.GetProxyServerUrl(),
 		task.GetFetcherUrl(), proxy,
 	)
-	logger.Info("block proxy :", urlSupported)
+	logger.Info(fmt.Sprintf("block proxy : %s Proxy Server: %s", urlSupported, task.GetProxyServerUrl()))
 
 	return retry.Do(func() error {
 		client := GetHttpClient(task)
@@ -133,7 +133,7 @@ func CreateProxyRequestPipeline(opts *forms.Options) *HttpRequestPipeline {
 			task interfaces.TaskInterface,
 			logger interfaces.LoggerInterface) {
 
-			if task.GetSaveData("SKIP_CN") == "skip" {
+			if task.GetSaveData("SKIP_CN") == "skip" || len(task.GetProxyServerUrl()) == 0 {
 				return
 			}
 

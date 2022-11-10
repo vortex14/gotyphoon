@@ -512,11 +512,11 @@ func (p *Project) CreateSymbolicLink() error {
 	env := &environment.Environment{}
 	_, settings := env.GetSettings()
 
-	linkTyphoonPath := filepath.Join("typhoon", settings.Path)
+	linkTyphoonPath := filepath.Join(settings.Path, "typhoon")
 	color.Yellow("TYPHOON_PATH=%s", settings.Path)
-	directLink := filepath.Join(p.GetProjectPath(), "typhoon")
-	color.Yellow(directLink)
-	err := os.Symlink(linkTyphoonPath, directLink)
+	targetLink := filepath.Join(p.GetProjectPath(), "typhoon")
+	color.Yellow("Target link: %s", targetLink)
+	err := os.Symlink(linkTyphoonPath, targetLink)
 
 	if err != nil {
 		fmt.Printf("err %s", err)

@@ -87,26 +87,30 @@ type ReplaceLabels []*ReplaceLabel
 type MapFileObjects map[string]*FileObject
 type BuilderOptions builders.BuildOptions
 
+type RedisDetails struct {
+	Host     string      `yaml:"host"`
+	Port     int         `yaml:"port"`
+	Password interface{} `yaml:"password"`
+}
+
 type ServiceRedis struct {
-	Name    string `yaml:"name"`
-	Details struct {
-		Host     string      `yaml:"host"`
-		Port     int         `yaml:"port"`
-		Password interface{} `yaml:"password"`
-	} `yaml:"details"`
+	Name    string       `yaml:"name"`
+	Details RedisDetails `yaml:"details"`
 	Service
 }
 
+type MongoDetails struct {
+	AuthSource string `yaml:"authSource,omitempty"`
+	Username   string `yaml:"username,omitempty"`
+	Password   string `yaml:"password,omitempty"`
+	Host       string `yaml:"host"`
+	Port       int    `yaml:"port"`
+}
+
 type ServiceMongo struct {
-	Name    string `yaml:"name"`
-	Details struct {
-		AuthSource string `yaml:"authSource,omitempty"`
-		Username   string `yaml:"username,omitempty"`
-		Password   string `yaml:"password,omitempty"`
-		Host       string `yaml:"host"`
-		Port       int    `yaml:"port"`
-	} `yaml:"details"`
-	DbNames []string `yaml:"db_names"`
+	Name    string       `yaml:"name"`
+	Details MongoDetails `yaml:"details"`
+	DbNames []string     `yaml:"db_names"`
 	Service
 }
 
