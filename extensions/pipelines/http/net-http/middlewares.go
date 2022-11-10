@@ -1,16 +1,15 @@
-package proxy
+package net_http
 
 import (
-	"context"
-	"errors"
-	"net/url"
-
 	Gin "github.com/gin-gonic/gin"
-
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin"
 	"github.com/vortex14/gotyphoon/interfaces"
+
+	"context"
+	"errors"
+	"net/url"
 )
 
 var (

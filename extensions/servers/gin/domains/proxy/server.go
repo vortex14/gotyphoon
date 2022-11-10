@@ -3,11 +3,14 @@ package proxy
 import (
 	Errors "errors"
 	"fmt"
+
 	u_ "github.com/ahl5esoft/golang-underscore"
 	Gin "github.com/gin-gonic/gin"
+	
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
+	net_http "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/graph"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/ping"
@@ -50,7 +53,7 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						},
 						Methods: []string{interfaces.GET},
 						Middlewares: []interfaces.MiddlewareInterface{
-							UrlRequiredMiddleware,
+							net_http.UrlRequiredMiddleware,
 						},
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
@@ -94,7 +97,7 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						},
 						Methods: []string{interfaces.GET},
 						Middlewares: []interfaces.MiddlewareInterface{
-							UrlRequiredMiddleware,
+							net_http.UrlRequiredMiddleware,
 						},
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
@@ -161,7 +164,7 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						},
 						Methods: []string{interfaces.GET},
 						Middlewares: []interfaces.MiddlewareInterface{
-							UrlRequiredMiddleware,
+							net_http.UrlRequiredMiddleware,
 						},
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
@@ -181,7 +184,7 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						},
 						Methods: []string{interfaces.GET},
 						Middlewares: []interfaces.MiddlewareInterface{
-							UrlRequiredMiddleware,
+							net_http.UrlRequiredMiddleware,
 						},
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
@@ -237,7 +240,7 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						},
 						Methods: []string{interfaces.GET},
 						Middlewares: []interfaces.MiddlewareInterface{
-							UrlRequiredMiddleware,
+							net_http.UrlRequiredMiddleware,
 						},
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
