@@ -1,6 +1,7 @@
 package gin
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -48,7 +49,7 @@ func (s *TyphoonGinServer) InitTracer() interfaces.ServerInterface {
 	return s
 }
 
-// requestHandler handle all HTTP request in here
+// requestHandler handle all HTTP request is here
 func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 
 	requestContext := NewRequestCtx(ctx.New(), ginCtx)
@@ -110,6 +111,11 @@ func (s *TyphoonGinServer) OnStartGin(port int) error {
 	return s.server.Run(fmt.Sprintf(":%d", port))
 }
 
+func (s *TyphoonGinServer) onResponse(ctx context.Context, status int, data interfaces.Response) {
+	_, ginCtx := GetRequestCtx(ctx)
+	ginCtx.JSON(status, data)
+}
+
 func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 
 	s.Construct(func() {
@@ -126,6 +132,7 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 
 		s.OnCors = s.onCors
 		s.OnStart = s.OnStartGin
+		s.OnResponse = s.onResponse
 		s.OnServeHandler = s.onServeHandler
 		s.OnBuildSubResources = s.onBuildSubResources
 		s.OnBuildSubAction = s.onBuildSubAction
