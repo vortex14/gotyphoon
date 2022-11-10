@@ -3,7 +3,6 @@ package proxy
 import (
 	Context "context"
 	"fmt"
-	underscore "github.com/ahl5esoft/golang-underscore"
 	"net/http"
 	"net/url"
 	"os"
@@ -31,6 +30,8 @@ import (
 var (
 	validProxyAddress = "http://localhost:11316"
 
+	proxyServiceURL = "http://localhost:11222"
+
 	proxyList = []string{
 		"http://E2Wr4v:f3perf@78.76.190.53:9965",
 		"http://E2Wr4v:f3perf@78.76.202.52:9034",
@@ -43,6 +44,12 @@ var (
 	BlockedTime      = 6
 	CheckTime        = 3
 	CheckBlockedTime = 50
+
+	validURL = "https://2ip.ru/"
+
+	endpointURL, _ = url.Parse(validURL)
+
+	LOG interfaces.LoggerInterface
 
 	settings = &Settings{
 		PrefixNamespace:  "domain",
@@ -58,7 +65,18 @@ var (
 
 func init() {
 	log.InitD()
+	LOG = log.New(map[string]interface{}{"service": "proxy"})
+
 	_ = os.Setenv("PROXY_LIST", strings.Join(proxyList, "\n"))
+}
+
+func TestIp(t *testing.T) {
+	Convey("get raw ip address without auth", t, func() {
+		v, e := url.Parse(proxyList[0])
+		So(e, ShouldBeNil)
+		So(v.Hostname(), ShouldEqual, "78.76.190.53")
+		So(v.Host, ShouldEqual, "78.76.190.53:9965")
+	})
 }
 
 func TestReadPart(t *testing.T) {
@@ -180,7 +198,7 @@ func TestRunProxyServer(t *testing.T) {
 func MakeRequestThroughProxy() error {
 	taskTest := fake.CreateDefaultTask()
 
-	taskTest.SetFetcherUrl("https://2ip.ru/")
+	taskTest.SetFetcherUrl(validURL)
 	taskTest.SetProxyAddress(validProxyAddress)
 	taskTest.SetProxyServerUrl(fmt.Sprintf("http://localhost:%d", settings.Port))
 
@@ -232,7 +250,7 @@ func TestAvailableProxy(t *testing.T) {
 	coll := (&Collection{
 		Settings: settings,
 	}).Init()
-	_ = coll.RemoveBanHistory()
+	_ = coll.RemoveBanHistory(endpointURL.Hostname())
 
 	proxyService := Constructor(settings)
 
@@ -248,19 +266,27 @@ func TestAvailableProxy(t *testing.T) {
 
 	})
 
+	time.Sleep(4 * time.Second)
+
 	Convey("checking blocked proxy", t, func() {
 
-		coll2 := (&Collection{
-			Settings: settings,
-		}).Init()
+		taskTest := fake.CreateDefaultTask()
 
-		println(coll2.banned)
+		checkURL := fmt.Sprintf("%s/is_blocked?url=%s&proxy=%s", proxyServiceURL, validURL, validProxyAddress)
+		LOG.Debug("check proxy by url: ", checkURL)
+		taskTest.SetFetcherUrl(checkURL)
+		req, e := net_http.NewRequest(taskTest)
+		So(e, ShouldBeNil)
 
-		index := underscore.Chain(coll2.banned).FindIndex(func(r string, _ int) bool {
-			return validProxyAddress == r
-		})
+		client := net_http.GetHttpClient(taskTest)
 
-		So(index > -1, ShouldBeTrue)
+		er, data, _ := net_http.GetBody(client, req)
+
+		So(er, ShouldBeNil)
+		So(len(*data) > 1, ShouldBeTrue)
+		LOG.Debug(*data)
+		So(strings.Contains(*data, "true"), ShouldBeTrue)
+
 	})
 
 	Convey("Run proxy server", t, func() {
@@ -269,7 +295,7 @@ func TestAvailableProxy(t *testing.T) {
 			Settings: settings,
 		}).Init()
 
-		logger.Debug(fmt.Sprintf("%+v", coll2.banned))
+		logger.Debug(fmt.Sprintf("%+v", coll2.banned[endpointURL.Hostname()]))
 
 		go func() {
 			_ = http.ListenAndServe(":11316", proxy)
@@ -279,13 +305,28 @@ func TestAvailableProxy(t *testing.T) {
 
 	Convey("check unbanning proxy", t, func() {
 
-		So(coll.IsBannedProxy(validProxyAddress), ShouldBeTrue)
+		So(coll.IsBannedProxy(endpointURL.Hostname(), validProxyAddress), ShouldBeTrue)
 
 		count := 0
 		for {
 			if count > 5 {
-				So(coll.IsBannedProxy(validProxyAddress), ShouldBeFalse)
-				So(coll.IsAllowed(validProxyAddress), ShouldBeTrue)
+
+				taskTest := fake.CreateDefaultTask()
+				checkURL := fmt.Sprintf("%s/is_blocked?url=%s&proxy=%s", proxyServiceURL, validURL, validProxyAddress)
+				LOG.Debug("check proxy by url: ", checkURL)
+				taskTest.SetFetcherUrl(checkURL)
+				req, e := net_http.NewRequest(taskTest)
+				So(e, ShouldBeNil)
+
+				client := net_http.GetHttpClient(taskTest)
+
+				er, data, _ := net_http.GetBody(client, req)
+
+				So(er, ShouldBeNil)
+				So(len(*data) > 1, ShouldBeTrue)
+				LOG.Debug(*data)
+				So(strings.Contains(*data, "false"), ShouldBeTrue)
+
 				break
 			}
 
@@ -309,17 +350,17 @@ func TestBlockProxyPermanently(t *testing.T) {
 		err := coll.Clear()
 		So(err, ShouldBeNil)
 
-		e := coll.RemoveBanHistory()
+		e := coll.RemoveBanHistory(endpointURL.Hostname())
 		So(e, ShouldBeNil)
 		count := coll.CountByBans()
 		So(count, ShouldEqual, 0)
 
-		err = coll.Block(proxyList[0])
+		err = coll.Block(proxyList[0], endpointURL.Hostname())
 		So(err, ShouldBeNil)
 
 		count = coll.CountByBans()
 		So(count, ShouldEqual, 1)
-		e = coll.RemoveBanHistory()
+		e = coll.RemoveBanHistory(endpointURL.Hostname())
 		So(e, ShouldBeNil)
 
 		count = coll.CountByBans()
@@ -334,11 +375,11 @@ func TestBlockAllProxies(t *testing.T) {
 		Settings: settings,
 	}).Init()
 
-	_ = coll.RemoveBanHistory()
+	_ = coll.RemoveBanHistory(endpointURL.Hostname())
 
 	Convey("Block all proxy", t, func() {
 		for _, proxy := range proxyList {
-			err := coll.Block(proxy)
+			err := coll.Block(proxy, endpointURL.Hostname())
 			So(err, ShouldBeNil)
 		}
 
@@ -355,7 +396,7 @@ func TestBlockAllProxies(t *testing.T) {
 
 		So(coll2.CountByBans(), ShouldEqual, len(proxyList))
 
-		err := coll.RemoveBanHistory()
+		err := coll.RemoveBanHistory(endpointURL.Hostname())
 		So(err, ShouldBeNil)
 
 		count := coll.CountByBans()
@@ -385,19 +426,19 @@ func TestBlockProxyByExpiration(t *testing.T) {
 
 		println(coll.CountByLocked(), coll.CountByBans())
 
-		err, proxy := coll.GetProxy()
+		err, proxy := coll.GetProxy(endpointURL.Hostname())
 		So(err, ShouldBeNil)
 
 		st0 := timer.SetTimeout(func(args ...interface{}) {
-			println(proxy, " ", coll.IsLocked(proxy))
-			c.So(coll.IsLocked(proxy), ShouldBeTrue)
+			println(proxy, " ", coll.IsLocked(endpointURL.Hostname(), proxy))
+			c.So(coll.IsLocked(endpointURL.Hostname(), proxy), ShouldBeTrue)
 		}, BlockedTime+1)
 
 		st0.Await()
 
 		st := timer.SetTimeout(func(args ...interface{}) {
-			println(proxy, " ", coll.IsLocked(proxy))
-			c.So(coll.IsLocked(proxy), ShouldBeFalse)
+			println(proxy, " ", coll.IsLocked(endpointURL.Hostname(), proxy))
+			c.So(coll.IsLocked(endpointURL.Hostname(), proxy), ShouldBeFalse)
 		}, (BlockedTime+1)*1000)
 
 		st.Await()
@@ -411,7 +452,7 @@ func TestRemoveRedisCollection(t *testing.T) {
 			Settings: settings,
 		}).Init()
 
-		err := coll.RemoveHistory()
+		err := coll.RemoveHistory(endpointURL.Hostname())
 
 		So(err, ShouldBeNil)
 
@@ -426,11 +467,13 @@ func TestGetConcurrentProxyCollection(t *testing.T) {
 		coll := (&Collection{
 			Settings: settings,
 		}).Init()
+		hostname := endpointURL.Hostname()
 
-		_ = coll.RemoveBanHistory()
-		_ = coll.RemoveHistory()
+		LOG.Debug(hostname)
 
-		So(len(coll.allowed), ShouldEqual, len(proxyList))
+		_ = coll.RemoveBanHistory(hostname)
+		_ = coll.RemoveHistory(hostname)
+
 		g := sync.WaitGroup{}
 		g.Add(4)
 		resultProxyEnv := make(map[string]string)
@@ -438,28 +481,29 @@ func TestGetConcurrentProxyCollection(t *testing.T) {
 		Convey("locking all proxy", func(c C) {
 
 			go func() {
-				err, proxy := coll.GetProxy()
+				err, proxy := coll.GetProxy(hostname)
+				LOG.Debug(err, proxy)
 				resultProxyEnv[proxy] = "-"
 				c.So(err, ShouldBeNil)
 				g.Done()
 			}()
 
 			go func() {
-				err, proxy := coll.GetProxy()
+				err, proxy := coll.GetProxy(hostname)
 				resultProxyEnv[proxy] = "-"
 				c.So(err, ShouldBeNil)
 				g.Done()
 			}()
 
 			go func() {
-				err, proxy := coll.GetProxy()
+				err, proxy := coll.GetProxy(hostname)
 				resultProxyEnv[proxy] = "-"
 				c.So(err, ShouldBeNil)
 				g.Done()
 			}()
 
 			go func() {
-				err, proxy := coll.GetProxy()
+				err, proxy := coll.GetProxy(hostname)
 				resultProxyEnv[proxy] = "-"
 				c.So(err, ShouldBeNil)
 				g.Done()
@@ -477,7 +521,7 @@ func TestGetConcurrentProxyCollection(t *testing.T) {
 			So(existCount, ShouldEqual, len(proxyList)-2)
 
 			coll.PrintStats()
-			err := coll.RemoveHistory()
+			err := coll.RemoveHistory(hostname)
 
 			So(err, ShouldBeNil)
 

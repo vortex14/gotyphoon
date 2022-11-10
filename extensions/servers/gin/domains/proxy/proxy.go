@@ -10,6 +10,7 @@ import (
 	"github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -62,48 +63,56 @@ type Collection struct {
 
 	redisService *redis.Service
 
-	stats map[string]int
+	stats map[string]map[string]int
 
 	list    []string
-	locked  []string
-	allowed []string
-	banned  []string
+	locked  map[string][]string
+	allowed map[string][]string
+	banned  map[string][]string
 }
 
-func (c *Collection) GetFullKeyPath(key string) string {
-	return fmt.Sprintf("%s:%s", c.Settings.PrefixNamespace, key)
+func (c *Collection) GetFullKeyPath(host string, key string) string {
+	return fmt.Sprintf("%s:%s:%s", c.Settings.PrefixNamespace, host, key)
 }
 
-func (c *Collection) GetFullBanPathByKey(key string) string {
-	return fmt.Sprintf("%s:%s:%s", BanKey, c.Settings.PrefixNamespace, key)
+func (c *Collection) GetFullBanPathByKey(host string, key string) string {
+	return fmt.Sprintf("%s:%s:%s:%s", BanKey, c.Settings.PrefixNamespace, host, key)
 }
 
 func (c *Collection) Clear() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	err := c.RemoveBanHistory()
-	err = c.RemoveHistory()
+	var err error
+	for domain, _ := range c.stats {
+		err = c.RemoveBanHistory(domain)
+		c.LOG.Debug("remove history for ", domain)
+		err = c.RemoveHistory(domain)
+		if err != nil {
+			break
+		}
+	}
+
 	c.init()
 	return err
 }
 
-func (c *Collection) blockAvailableProxyByIndex(index int) error {
+func (c *Collection) blockAvailableProxyByIndex(host string, index int) error {
 	c.LOG.Debug("block proxy by index ", index)
-	proxy := c.allowed[index]
-	c.allowed = append(c.allowed[:index], c.allowed[index+1:]...)
-	c.locked = append(c.locked, proxy)
-	return c.redisService.SetExp(c.GetFullKeyPath(proxy), "-", c.Settings.BlockedTime)
+	proxy := c.allowed[host][index]
+	c.allowed[host] = append(c.allowed[host][:index], c.allowed[host][index+1:]...)
+	c.locked[host] = append(c.locked[host], proxy)
+	return c.redisService.SetExp(c.GetFullKeyPath(host, proxy), "-", c.Settings.BlockedTime)
 }
 
-func (c *Collection) IsLocked(proxy string) bool {
-	return len(c.redisService.Get(c.GetFullKeyPath(proxy))) > 0
+func (c *Collection) IsLocked(host string, proxy string) bool {
+	return len(c.redisService.Get(c.GetFullKeyPath(host, proxy))) > 0
 }
 
-func (c *Collection) unblockProxyByValue(proxyAddress string) {
+func (c *Collection) unblockProxyByValue(host string, proxyAddress string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	index := u_.Chain(c.locked).FindIndex(func(r string, _ int) bool {
+	index := u_.Chain(c.locked[host]).FindIndex(func(r string, _ int) bool {
 		return proxyAddress == r
 	})
 
@@ -111,15 +120,16 @@ func (c *Collection) unblockProxyByValue(proxyAddress string) {
 		return
 	}
 
-	proxy := c.locked[index]
-	c.LOG.Debug(fmt.Sprintf("unblock proxy by index: %d , proxy: %s", index, proxy))
-	c.locked = append(c.locked[:index], c.locked[index+1:]...)
-	c.allowed = append(c.allowed, proxy)
+	proxy := c.locked[host][index]
+	c.LOG.Debug(fmt.Sprintf("unblock proxy for %s by index: %d , proxy: %s", host, index, proxy))
+	c.locked[host] = append(c.locked[host][:index], c.locked[host][index+1:]...)
+	c.allowed[host] = append(c.allowed[host], proxy)
 }
 
-func (c *Collection) RemoveHistory() error {
+func (c *Collection) RemoveHistory(host string) error {
+
 	for _, value := range c.list {
-		err := c.redisService.Remove(c.GetFullKeyPath(value))
+		err := c.redisService.Remove(c.GetFullKeyPath(host, value))
 		if err != nil {
 			return err
 		}
@@ -128,9 +138,9 @@ func (c *Collection) RemoveHistory() error {
 	return nil
 }
 
-func (c *Collection) RemoveBanHistory() error {
+func (c *Collection) RemoveBanHistory(host string) error {
 	for _, value := range c.list {
-		err := c.redisService.Remove(c.GetFullBanPathByKey(value))
+		err := c.redisService.Remove(c.GetFullBanPathByKey(host, value))
 		if err != nil {
 			return err
 		}
@@ -139,16 +149,16 @@ func (c *Collection) RemoveBanHistory() error {
 	return nil
 }
 
-func (c *Collection) RemoveProxyBan(proxy string) error {
+func (c *Collection) RemoveProxyBan(host string, proxy string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	err := c.redisService.Remove(c.GetFullBanPathByKey(proxy))
-	indexBanned := u_.Chain(c.banned).FindIndex(func(r string, _ int) bool {
+	err := c.redisService.Remove(c.GetFullBanPathByKey(host, proxy))
+	indexBanned := u_.Chain(c.banned[host]).FindIndex(func(r string, _ int) bool {
 		return r == proxy
 	})
 	if err == nil && indexBanned > -1 {
-		c.banned = append(c.banned[:indexBanned], c.banned[indexBanned+1:]...)
-		c.allowed = append(c.allowed, proxy)
+		c.banned[host] = append(c.banned[host][:indexBanned], c.banned[host][indexBanned+1:]...)
+		c.allowed[host] = append(c.allowed[host], proxy)
 	}
 
 	return err
@@ -162,15 +172,15 @@ func (c *Collection) CountByBans() int {
 	return c.redisService.Count(fmt.Sprintf("%s:*", BanKey))
 }
 
-func (c *Collection) unblockingProxy() {
+func (c *Collection) unblockingProxy(host string) {
 	for {
 		time.Sleep(time.Duration(c.Settings.CheckTime) * time.Second)
 		c.LOG.Debug("checking locked timeout proxy")
-		for _, value := range c.locked {
-			proxyData := c.redisService.Get(c.GetFullKeyPath(value))
+		for _, value := range c.locked[host] {
+			proxyData := c.redisService.Get(c.GetFullKeyPath(host, value))
 			if len(proxyData) == 0 {
 				c.LOG.Debug("Unblocked proxy by timeout: ", value)
-				c.unblockProxyByValue(value)
+				c.unblockProxyByValue(host, value)
 			}
 
 		}
@@ -179,10 +189,10 @@ func (c *Collection) unblockingProxy() {
 	}
 }
 
-func (c *Collection) MakeRequestThroughProxy(proxy string) error {
+func (c *Collection) MakeRequestThroughProxy(availableUrl string, proxy string) error {
 	taskTest := fake.CreateDefaultTask()
 
-	taskTest.SetFetcherUrl(c.Settings.CheckHosts[0])
+	taskTest.SetFetcherUrl(availableUrl)
 	taskTest.SetProxyAddress(proxy)
 	taskTest.SetSaveData("SKIP_CN", "skip")
 
@@ -219,30 +229,30 @@ func (c *Collection) MakeRequestThroughProxy(proxy string) error {
 	}).Run(ctxGroup)
 }
 
-func (c *Collection) checkingBlocked() {
+func (c *Collection) checkingBlocked(host string, availableUrl string) {
 	lastIndex := 0
 	for {
-		c.LOG.Debug(fmt.Sprintf("checking blocked ... every %ds Count: %d", c.Settings.CheckBlockedTime, len(c.banned)))
+		c.LOG.Debug(fmt.Sprintf("checking blocked for %s ... every %ds Count: %d", host, c.Settings.CheckBlockedTime, len(c.banned)))
 		wg := &sync.WaitGroup{}
 
-		if lastIndex == len(c.banned) || lastIndex > len(c.banned) {
+		if lastIndex == len(c.banned[host]) || lastIndex > len(c.banned[host]) {
 			lastIndex = 0
 		}
 
 		step := lastIndex + c.Settings.ConcurrentCheck
-		residue := len(c.banned) - lastIndex
+		residue := len(c.banned[host]) - lastIndex
 
-		if step > len(c.banned) {
+		if step > len(c.banned[host]) {
 			step = lastIndex + residue
 		}
 
-		if len(c.banned) == 0 {
+		if len(c.banned[host]) == 0 {
 			c.LOG.Debug("not found proxies for checking")
 			time.Sleep(time.Duration(c.Settings.CheckBlockedTime) * time.Second)
 			continue
 		}
 		c.LOG.Debug(fmt.Sprintf("lastIndex: %d ; Step: %d; residue: %d", lastIndex, step, residue))
-		for i, proxy := range c.banned[lastIndex:step] {
+		for i, proxy := range c.banned[host][lastIndex:step] {
 			c.LOG.Debug(fmt.Sprintf("check %s", proxy))
 			if (i + 1) >= c.Settings.ConcurrentCheck {
 				break
@@ -251,11 +261,11 @@ func (c *Collection) checkingBlocked() {
 			wg.Add(1)
 
 			go func(wg *sync.WaitGroup, proxy string) {
-				err := c.MakeRequestThroughProxy(proxy)
+				err := c.MakeRequestThroughProxy(availableUrl, proxy)
 				if err == nil {
-					ansE := c.RemoveProxyBan(proxy)
+					ansE := c.RemoveProxyBan(host, proxy)
 					if ansE == nil {
-						c.LOG.Debug(fmt.Sprintf("proxy %s is available", proxy))
+						c.LOG.Debug(fmt.Sprintf("proxy %s is available for domain %s throught %s", proxy, host, availableUrl))
 					} else {
 						c.LOG.Error(ansE)
 					}
@@ -278,11 +288,11 @@ func (c *Collection) checkingBlocked() {
 	}
 }
 
-func (c *Collection) Block(proxy string) error {
+func (c *Collection) Block(proxy string, host string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	indexBanned := u_.Chain(c.banned).FindIndex(func(r string, _ int) bool {
+	indexBanned := u_.Chain(c.banned[host]).FindIndex(func(r string, _ int) bool {
 		return r == proxy
 	})
 
@@ -290,53 +300,61 @@ func (c *Collection) Block(proxy string) error {
 		return nil
 	}
 
-	c.banned = append(c.banned, proxy)
+	c.banned[host] = append(c.banned[host], proxy)
 
-	err := c.redisService.Set(c.GetFullBanPathByKey(proxy), "-")
+	err := c.redisService.Set(c.GetFullBanPathByKey(host, proxy), "-")
 	if err != nil {
 		return err
 	}
 
-	indexLocked := u_.Chain(c.locked).FindIndex(func(r string, _ int) bool {
+	indexLocked := u_.Chain(c.locked[host]).FindIndex(func(r string, _ int) bool {
 		return r == proxy
 	})
 
 	if indexLocked != -1 {
-		c.locked = append(c.locked[:indexLocked], c.locked[indexLocked+1:]...)
+		c.locked[host] = append(c.locked[host][:indexLocked], c.locked[host][indexLocked+1:]...)
 	}
 
-	indexAllowed := u_.Chain(c.allowed).FindIndex(func(r string, _ int) bool {
+	indexAllowed := u_.Chain(c.allowed[host]).FindIndex(func(r string, _ int) bool {
 		return r == proxy
 	})
 
 	if indexAllowed != -1 {
-		c.allowed = append(c.allowed[:indexAllowed], c.allowed[indexAllowed+1:]...)
+		c.allowed[host] = append(c.allowed[host][:indexAllowed], c.allowed[host][indexAllowed+1:]...)
 	}
 
 	return nil
 
 }
 
-func (c *Collection) GetProxy() (error, string) {
+func (c *Collection) GetProxy(host string) (error, string) {
 	c.Init()
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	if _, ok := c.stats[host]; !ok {
+		c.stats[host] = make(map[string]int)
+		c.allowed[host], c.locked[host], c.banned[host] = c.getLists(host)
+		go c.unblockingProxy(host)
+		go c.checkingBlocked(host, "https://2ip.ru")
+
+	}
+
 	saltTime := rand.NewSource(time.Now().UnixNano())
 	randomState := rand.New(saltTime)
 
-	count := len(c.allowed)
+	count := len(c.allowed[host])
 
-	if len(c.allowed) == 0 {
+	if len(c.allowed[host]) == 0 {
 		return Errors.New("not found proxy"), ""
 	}
 
 	randomIndex := randomState.Intn(count)
-	selected := c.allowed[randomIndex]
+	selected := c.allowed[host][randomIndex]
 
-	c.stats[selected] += 1
+	c.stats[host][selected] += 1
 
-	errBlock := c.blockAvailableProxyByIndex(randomIndex)
+	errBlock := c.blockAvailableProxyByIndex(host, randomIndex)
 	if errBlock != nil {
 		return errBlock, ""
 	}
@@ -348,8 +366,12 @@ func (c *Collection) PrintStats() {
 	println("--------")
 	fmt.Printf("Count available: %d , blocked: %d ", len(c.allowed), len(c.locked))
 	println("")
-	for proxy, stat := range c.stats {
-		println(fmt.Sprintf(">>> proxy: %s, stats: %d", proxy, stat))
+	for domain, stat := range c.stats {
+		println(fmt.Sprintf(">>> domain: %s", domain))
+
+		for proxy, value := range stat {
+			println(fmt.Sprintf(">>> proxy: %s; stat: %d", proxy, value))
+		}
 	}
 }
 
@@ -361,13 +383,14 @@ func (c *Collection) init() {
 
 	proxyList := strings.Split(proxyEnvList, "\n")
 	c.list = proxyList
-	c.allowed, c.locked, c.banned = c.getLists()
+
 }
 
 func (c *Collection) Init() *Collection {
 	c.Construct(func() {
+		c.init()
 		c.LOG = log.New(log.D{"proxy": "rotator"})
-		c.stats = make(map[string]int)
+		c.stats = make(map[string]map[string]int)
 
 		redisService := &redis.Service{
 			Config: &interfaces.ServiceRedis{
@@ -392,23 +415,17 @@ func (c *Collection) Init() *Collection {
 
 		c.redisService = redisService
 
-		c.init()
-
-		l := fmt.Sprintf("Init %d proxies; locked: %d", len(c.allowed), len(c.locked))
-
-		c.LOG.Debug(l)
-
-		go c.unblockingProxy()
-
-		go c.checkingBlocked()
+		c.allowed = make(map[string][]string)
+		c.locked = make(map[string][]string)
+		c.banned = make(map[string][]string)
 
 	})
 
 	return c
 }
 
-func (c *Collection) IsBannedProxy(proxy string) bool {
-	return len(c.redisService.Get(c.getBanKey(proxy))) > 0
+func (c *Collection) IsBannedProxy(host string, proxy string) bool {
+	return len(c.redisService.Get(c.getBanKey(host, proxy))) > 0
 }
 
 func (c *Collection) IsAllowed(proxy string) bool {
@@ -417,11 +434,11 @@ func (c *Collection) IsAllowed(proxy string) bool {
 	}) > -1
 }
 
-func (c *Collection) getBanKey(value string) string {
-	return fmt.Sprintf("%s:%s", "bans", c.GetFullKeyPath(value))
+func (c *Collection) getBanKey(host string, value string) string {
+	return fmt.Sprintf("%s:%s", "bans", c.GetFullKeyPath(host, value))
 }
 
-func (c *Collection) getLists() ([]string, []string, []string) {
+func (c *Collection) getLists(host string) ([]string, []string, []string) {
 	allowed := make([]string, 0)
 	locked := make([]string, 0)
 	banned := make([]string, 0)
@@ -431,19 +448,19 @@ func (c *Collection) getLists() ([]string, []string, []string) {
 			continue
 		}
 
-		banKey := c.getBanKey(value)
+		banKey := c.getBanKey(host, value)
 
 		switch {
-		case len(c.redisService.Get(banKey)) == 0 && len(c.redisService.Get(c.GetFullKeyPath(value))) == 0:
+		case len(c.redisService.Get(banKey)) == 0 && len(c.redisService.Get(c.GetFullKeyPath(host, value))) == 0:
 			allowed = append(allowed, value)
-		case len(c.redisService.Get(c.GetFullKeyPath(value))) > 0:
+		case len(c.redisService.Get(c.GetFullKeyPath(host, value))) > 0:
 			locked = append(locked, value)
 		case len(c.redisService.Get(banKey)) > 0:
 			banned = append(banned, value)
 		}
 
 	}
-
+	//c.LOG.Debug(">>>>>>>>>>>>>", host, "  ", allowed, locked, banned)
 	return allowed, locked, banned
 }
 
@@ -486,8 +503,23 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
 						logger.Debug("Received request for get a new proxy.")
 						proxy := fake.CreateFakeProxy()
+						params := ctx.Request.URL.Query()
+						endpointURL := params["url"]
+						if len(endpointURL) == 0 {
+							ctx.JSON(500, struct {
+								Success bool
+								Message string
+							}{Success: false, Message: Errors.New("not found url for /proxy").Error()})
+							return
+						}
 
-						err, proxyValue := proxyCollection.GetProxy()
+						u, err := url.Parse(endpointURL[0])
+						if err != nil {
+							ctx.JSON(500, "not valid url for /proxy")
+							return
+						}
+
+						err, proxyValue := proxyCollection.GetProxy(u.Hostname())
 						if err != nil {
 							logger.Debug(err.Error())
 							proxy.Success = false
@@ -511,6 +543,61 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						logger.Debug("Received request for get stats of blocked proxies")
 
 						ctx.JSON(200, proxyCollection.banned)
+					},
+				},
+				"is_blocked": &gin.Action{
+					Action: &forms.Action{
+						MetaInfo: &label.MetaInfo{
+							Name:        "is blocked?",
+							Path:        "is_blocked",
+							Description: "is blocked the proxy ?",
+						},
+						Methods: []string{interfaces.GET},
+					},
+					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
+						logger.Debug("Received request for get stats of blocked proxies")
+
+						params := ctx.Request.URL.Query()
+						endpointURL := params["url"]
+						proxy := params["proxy"]
+						if len(endpointURL) == 0 || len(proxy) == 0 {
+							ctx.JSON(500, struct {
+								Success bool
+								Message string
+							}{Success: false, Message: Errors.New("query params hasn't url or proxy").Error()})
+							return
+						}
+
+						u, err := url.Parse(endpointURL[0])
+						if err != nil {
+							ctx.JSON(500, "not valid url")
+							return
+						}
+
+						index := u_.Chain(proxyCollection.banned[u.Hostname()]).FindIndex(func(r string, _ int) bool {
+							return proxy[0] == r
+						})
+						if index > -1 {
+							ctx.JSON(200, struct {
+								Status  bool
+								Message string
+								Index   int
+							}{
+								Status: true,
+								Index:  index,
+							})
+						} else {
+							ctx.JSON(404, struct {
+								Status  bool
+								Message string
+								Index   int
+							}{
+								Status:  false,
+								Message: "not found",
+								Index:   index,
+							})
+						}
+
 					},
 				},
 				"locked": &gin.Action{
@@ -540,7 +627,23 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
 						logger.Debug("Received request for get active proxies")
 
-						ctx.JSON(200, append(proxyCollection.locked, proxyCollection.allowed...))
+						params := ctx.Request.URL.Query()
+						endpointURL := params["url"]
+						if len(endpointURL) == 0 {
+							ctx.JSON(500, struct {
+								Success bool
+								Message string
+							}{Success: false, Message: Errors.New("query params hasn't url for show stats by active proxies list of the domain").Error()})
+							return
+						}
+
+						u, err := url.Parse(endpointURL[0])
+						if err != nil {
+							ctx.JSON(500, "not valid url for /active")
+							return
+						}
+
+						ctx.JSON(200, append(proxyCollection.locked[u.Hostname()], proxyCollection.allowed[u.Hostname()]...))
 					},
 				},
 				"block": &gin.Action{
@@ -567,7 +670,13 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 
 						logger.Debug(fmt.Sprintf("block proxy by url %s, proxy: %s, status: %s", blockURL[0], blockProxy[0], statusCode[0]))
 
-						err := proxyCollection.Block(blockProxy[0])
+						u, err := url.Parse(blockURL[0])
+						if err != nil {
+							ctx.JSON(500, "not valid url for /block")
+							return
+						}
+
+						err = proxyCollection.Block(blockProxy[0], u.Hostname())
 						if err != nil {
 							ctx.JSON(500, struct {
 								Success bool
@@ -606,16 +715,33 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
 						logger.Debug("Check stats.")
+
+						params := ctx.Request.URL.Query()
+						sURL := params["url"]
+
+						if len(sURL) == 0 {
+							ctx.JSON(500, "not valid url for /stats")
+							return
+						}
+
+						u, err := url.Parse(sURL[0])
+						if err != nil {
+							ctx.JSON(500, "not valid url for /stats")
+							return
+						}
+
 						ctx.JSON(200, struct {
 							Stats   interface{}
 							Active  interface{}
 							Blocked interface{}
 							Locked  interface{}
 							List    interface{}
+							Allowed interface{}
 						}{
 							Stats:   proxyCollection.stats,
-							Active:  append(proxyCollection.locked, proxyCollection.allowed...),
+							Active:  append(proxyCollection.locked[u.Hostname()], proxyCollection.allowed[u.Hostname()]...),
 							Blocked: proxyCollection.banned,
+							Allowed: proxyCollection.allowed[u.Hostname()],
 							Locked:  proxyCollection.locked,
 							List:    proxyCollection.list,
 						})
