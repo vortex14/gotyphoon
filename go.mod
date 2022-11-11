@@ -16,7 +16,6 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20220530001853-c0f376d894d1
 	github.com/chromedp/chromedp v0.8.2
 	github.com/deliveryhero/pipeline v1.0.0
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/cli v20.10.17+incompatible
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/elazarl/goproxy v0.0.0-20210801061803-8e322dfb79c4
@@ -34,6 +33,7 @@ require (
 	github.com/go-rod/rod v0.111.0
 	github.com/gocarina/gocsv v0.0.0-20220531201732-5f969b02b902
 	github.com/goccy/go-graphviz v0.0.9
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.2.0
 	github.com/gopackage/ddp v0.0.3
