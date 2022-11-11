@@ -53,9 +53,12 @@ var (
 		BlockedTime:      BlockedTime,
 		CheckTime:        CheckTime,
 		CheckBlockedTime: CheckBlockedTime,
-		RedisHost:        "localhost",
-		ConcurrentCheck:  3,
-		Port:             11222,
+		RedisDetails: interfaces.RedisDetails{
+			Host: "localhost",
+			Port: 6379,
+		},
+		ConcurrentCheck: 3,
+		Port:            11222,
 	}
 )
 

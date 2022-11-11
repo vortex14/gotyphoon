@@ -88,9 +88,9 @@ type MapFileObjects map[string]*FileObject
 type BuilderOptions builders.BuildOptions
 
 type RedisDetails struct {
-	Host     string      `yaml:"host"`
-	Port     int         `yaml:"port"`
-	Password interface{} `yaml:"password"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Password string `yaml:"password"`
 }
 
 type ServiceRedis struct {

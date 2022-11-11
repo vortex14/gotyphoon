@@ -366,7 +366,9 @@ func (c *Collection) Init() *Collection {
 			Config: &interfaces.ServiceRedis{
 				Name: "Redis proxy data",
 				Details: interfaces.RedisDetails{
-					Host: c.Settings.RedisHost, Port: 6379,
+					Host:     c.Settings.RedisDetails.Host,
+					Port:     c.Settings.RedisDetails.Port,
+					Password: c.Settings.Password,
 				},
 			},
 		}
