@@ -25,9 +25,9 @@ func (s *Service) initClient() {
 		redisString := fmt.Sprintf("%s:%d", s.Config.GetHost(), s.Config.GetPort())
 		color.Yellow("init Redis Service %s", redisString)
 		rdb := redis.NewClient(&redis.Options{
-			Addr:     redisString, // use default Addr
-			Password: "",          // no password set
-			DB:       0,           // use default DB
+			Addr:     redisString,               // use default Addr
+			Password: s.Config.Details.Password, // no password set
+			DB:       0,                         // use default DB
 		})
 		s.client = rdb
 		conn := s.connect()

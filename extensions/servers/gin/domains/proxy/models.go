@@ -1,14 +1,17 @@
 package proxy
 
+import "github.com/vortex14/gotyphoon/interfaces"
+
 type Settings struct {
 	BlockedTime      int
 	CheckTime        int
 	CheckBlockedTime int
-	RedisHost        string
 	ConcurrentCheck  int
 	Port             int
 	PrefixNamespace  string
 	CheckHosts       []string
+
+	interfaces.RedisDetails
 }
 
 type Stats struct {
