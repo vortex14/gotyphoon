@@ -7,14 +7,14 @@ import (
 
 	browser "github.com/EDDYCJY/fake-useragent"
 	"github.com/brianvoe/gofakeit/v6"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/fatih/color"
+	"github.com/golang-jwt/jwt"
 
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/utils"
 )
 
-func init()  {
+func init() {
 	gofakeit.AddFuncLookup("response_product", gofakeit.Info{
 		Category:    "custom",
 		Description: "Random set response product",
@@ -35,7 +35,7 @@ func CreateDefaultTask() *typhoonTask.TyphoonTask {
 	return task
 }
 
-func CreateFakeTask(options interfaces.FakeTaskOptions)  (*typhoonTask.TyphoonTask, error){
+func CreateFakeTask(options interfaces.FakeTaskOptions) (*typhoonTask.TyphoonTask, error) {
 	// TODO: task.yaml
 	var task typhoonTask.TyphoonTask
 	err := gofakeit.Struct(&task)
@@ -66,12 +66,10 @@ func CreateFakeTask(options interfaces.FakeTaskOptions)  (*typhoonTask.TyphoonTa
 
 	if options.Auth {
 		task.Fetcher.Auth = map[string]string{
-			"login": gofakeit.Username(),
+			"login":    gofakeit.Username(),
 			"password": gofakeit.Password(true, false, true, false, false, 10),
 		}
 	}
 
 	return &task, nil
 }
-
-
