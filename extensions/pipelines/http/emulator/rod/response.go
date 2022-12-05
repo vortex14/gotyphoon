@@ -3,15 +3,15 @@ package rod
 import (
 	"context"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/go-rod/rod"
 
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/task"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/extensions/pipelines"
+	"github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 )

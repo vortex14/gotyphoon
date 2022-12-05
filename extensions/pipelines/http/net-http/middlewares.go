@@ -30,12 +30,14 @@ var UrlRequiredMiddleware = &gin.RequestMiddleware{
 		sURL := params["url"]
 
 		if len(sURL) == 0 {
+			logger.Error(sURL)
 			reject(UrlError)
 			return
 		}
 
 		v, err := url.Parse(sURL[0])
 		if err != nil || len(v.Host) == 0 {
+			logger.Error(sURL)
 			reject(UrlInvalidError)
 			return
 		}
