@@ -219,7 +219,7 @@ func (c *Collection) checkingBlocked(availableURL *url.URL) {
 				if err == nil {
 					ansE := c.RemoveProxyBan(host, proxy)
 					if ansE == nil {
-						c.LOG.Debug(fmt.Sprintf("proxy %s is available for domain %s throught %s", proxy, host, availableUrl))
+						c.LOG.Debug(fmt.Sprintf("proxy %s   %s throught %s", proxy, host, availableUrl))
 					} else {
 						c.LOG.Error(ansE)
 					}
