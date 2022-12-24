@@ -3,11 +3,14 @@ package task
 import (
 	"bytes"
 	"context"
+	b64 "encoding/base64"
+	"net/url"
+
 	"github.com/fatih/color"
+
 	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/utils"
-	"net/url"
 )
 
 type TyphoonTask struct {
@@ -88,6 +91,10 @@ func (t *TyphoonTask) GetFetcherUrl() string {
 		url = t.Fetcher.Url
 	}
 	return url
+}
+
+func (t *TyphoonTask) GetBase64FetcherURL() string {
+	return b64.StdEncoding.EncodeToString([]byte(t.GetFetcherUrl()))
 }
 
 func (t *TyphoonTask) SetFetcherMethod(method string) {

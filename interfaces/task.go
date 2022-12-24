@@ -20,6 +20,7 @@ type TaskFetcherInterface interface {
 	GetFetcherTimeout() int
 
 	GetFetcherUrl() string
+	GetBase64FetcherURL() string
 	SetFetcherUrl(url string)
 
 	SetCookies(cookies string)
