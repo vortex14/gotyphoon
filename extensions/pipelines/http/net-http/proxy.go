@@ -51,7 +51,7 @@ func ConstructorProxySettingMiddleware(required bool) interfaces.MiddlewareInter
 				return
 			}
 
-			urlSupported := fmt.Sprintf("%s/proxy?url=%s", proxyServer, task.GetFetcherUrl())
+			urlSupported := fmt.Sprintf("%s/proxy?url=%s&encode=base64", proxyServer, task.GetBase64FetcherURL())
 			logger.Info("get proxy from :", urlSupported)
 
 			request, err := http.NewRequest(http.MethodGet, urlSupported, nil)
