@@ -74,8 +74,6 @@ func CreateProxyRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOp
 			context = html.NewHtmlCtx(context, doc)
 			context = NewBodyResponse(context, &body)
 
-			defer page.MustClose()
-
 			return nil, context
 		},
 		Cn: func(err error,
