@@ -26,4 +26,6 @@ type DetailsOptions struct {
 	Device       devices.Device
 	SleepAfter   int
 	MustElement  string
+	Click        bool
+	Input        string
 }

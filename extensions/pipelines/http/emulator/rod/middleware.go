@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
-	
+
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/elements/models/task"
@@ -25,6 +25,34 @@ func ConstructorRodProxyRequestMiddleware(required bool) interfaces.MiddlewareIn
 			logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
 
 			url := launcher.New().Proxy(task.GetProxyAddress()).Delete("use-mock-keychain").MustLaunch()
+			browser := rod.New().ControlURL(url)
+			err := browser.Connect()
+
+			if err != nil {
+				reject(err)
+				return
+			}
+
+			context = NewBrowserCtx(context, browser)
+
+			next(context)
+
+		},
+	}
+}
+
+func ConstructorRodBasicRequestMiddleware(required bool) interfaces.MiddlewareInterface {
+	return &middlewares.TaskMiddleware{
+		Middleware: &forms.Middleware{
+			MetaInfo: &label.MetaInfo{
+				Required: required,
+				Name:     "prepare for rod request",
+			},
+		},
+		Fn: func(context context.Context, task *task.TyphoonTask,
+			logger interfaces.LoggerInterface, reject func(err error), next func(ctx context.Context)) {
+
+			url := launcher.New().Delete("use-mock-keychain").MustLaunch()
 			browser := rod.New().ControlURL(url)
 			err := browser.Connect()
 
