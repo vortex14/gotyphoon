@@ -93,3 +93,80 @@ func CreateProxyRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOp
 		},
 	}
 }
+
+func CreateRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOptions) *HttpRodRequestPipeline {
+
+	return &HttpRodRequestPipeline{
+		BasePipeline: &forms.BasePipeline{
+			NotIgnorePanic: true,
+			MetaInfo: &label.MetaInfo{
+				Name: "Rod http request",
+			},
+			Options: opts,
+			Middlewares: []interfaces.MiddlewareInterface{
+				ConstructorRodBasicRequestMiddleware(true),
+			},
+		},
+
+		Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface,
+			browser *rod.Browser) (error, context.Context) {
+
+			logger.Info(fmt.Sprintf("RUN rod request to url: %s", task.GetFetcherUrl()))
+
+			page := browser.DefaultDevice(devices.IPadPro).
+				Timeout(time.Duration(task.GetFetcherTimeout()) * time.Second).
+				MustConnect().
+				MustPage(task.GetFetcherUrl())
+
+			if detailOptions != nil {
+				if detailOptions.EventOptions.NetworkResponseReceived {
+					detailOptions.EventOptions.Wait()
+				}
+
+			}
+
+			logger.Debug("the page loaded")
+			context = NewPageCtx(context, page)
+
+			if detailOptions != nil && detailOptions.SleepAfter > 0 {
+				logger.Debug(fmt.Sprintf("Sleep after load: %d", detailOptions.SleepAfter))
+				time.Sleep(time.Duration(detailOptions.SleepAfter) * time.Second)
+			}
+			if detailOptions != nil && len(detailOptions.MustElement) > 0 {
+
+				if !detailOptions.Click && len(detailOptions.Input) == 0 {
+					page.MustElement(detailOptions.MustElement)
+				} else if detailOptions.Click {
+					page.MustElement(detailOptions.MustElement).MustClick()
+				} else if len(detailOptions.Input) > 0 {
+					ie := page.MustElement(detailOptions.MustElement).Input(detailOptions.Input)
+					if ie != nil {
+						logger.Error(ie)
+					}
+				}
+			}
+
+			page.MustWaitLoad()
+			body := page.MustHTML()
+
+			doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(body)))
+			if err != nil {
+				return fmt.Errorf("goquery: %s", err.Error()), context
+			}
+
+			context = html.NewHtmlCtx(context, doc)
+			context = NewBodyResponse(context, &body)
+
+			return nil, context
+		},
+		Cn: func(err error,
+			context context.Context,
+			task interfaces.TaskInterface,
+			logger interfaces.LoggerInterface) {
+
+			if task.GetSaveData("SKIP_CN") == "skip" {
+				return
+			}
+		},
+	}
+}
