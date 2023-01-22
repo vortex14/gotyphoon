@@ -42,7 +42,6 @@ func ConstructorRodProxyRequestMiddleware(required bool) interfaces.MiddlewareIn
 			}
 
 			context = NewBrowserCtx(context, browser)
-			logger.Warning("test a log line")
 			next(context)
 
 		},
