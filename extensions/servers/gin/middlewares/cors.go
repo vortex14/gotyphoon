@@ -2,18 +2,18 @@ package middlewares
 
 import (
 	"context"
-	Errors "github.com/vortex14/gotyphoon/errors"
 
 	Gin "github.com/gin-gonic/gin"
 
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
+	Errors "github.com/vortex14/gotyphoon/errors"
 	GinExtension "github.com/vortex14/gotyphoon/extensions/servers/gin"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/interfaces/server"
 )
 
-func ConstructorCorsMiddleware(options server.CorsOptions) interfaces.MiddlewareInterface  {
+func ConstructorCorsMiddleware(options server.CorsOptions) interfaces.MiddlewareInterface {
 	return &GinExtension.RequestMiddleware{
 		Middleware: &forms.Middleware{
 			MetaInfo: &label.MetaInfo{
@@ -37,7 +37,10 @@ func ConstructorCorsMiddleware(options server.CorsOptions) interfaces.Middleware
 			ginCtx.Writer.Header().Set("Access-Control-Allow-Methods", options.AccessControlAllowMethods)
 			ginCtx.Writer.Header().Set("Access-Control-Allow-Credentials", options.AccessControlAllowCredentials)
 
-			if ginCtx.Request.Method == "OPTIONS" { ginCtx.AbortWithStatus(204); reject(Errors.ForceSkipRequest) }
+			if ginCtx.Request.Method == "OPTIONS" {
+				ginCtx.AbortWithStatus(204)
+				reject(Errors.ForceSkipRequest)
+			}
 
 		},
 	}

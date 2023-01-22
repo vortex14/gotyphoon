@@ -5,11 +5,11 @@ import "context"
 type ActionGraphInterface interface {
 
 	///* ignore for building amd64-linux
-//
-//	SetGraph(graph GraphInterface, buildMethods bool)
-//	SetGraphNodes(nodes map[string] NodeInterface)
-//	UpdateGraphLabel(method string, path string)
-//
+	//
+	//	SetGraph(graph GraphInterface, buildMethods bool)
+	//	SetGraphNodes(nodes map[string] NodeInterface)
+	//	UpdateGraphLabel(method string, path string)
+	//
 	//*/
 
 	InitPipelineGraph()
@@ -25,6 +25,16 @@ type ActionInterface interface {
 	GetHandlerPath() string
 	AddMethod(name string)
 
+	Run(
+		ctx context.Context,
+		logger LoggerInterface,
+	)
+	Cancel(
+		context context.Context,
+		logger LoggerInterface,
+		err error,
+	)
+
 	OnRequest(method string, path string)
 
 	GetController() Controller
@@ -32,8 +42,5 @@ type ActionInterface interface {
 	GetMiddlewareStack() []MiddlewareInterface
 	GetPipeline() PipelineGroupInterface
 
-	Run(ctx context.Context, logger LoggerInterface)
 	MetaDataInterface
-
-
 }
