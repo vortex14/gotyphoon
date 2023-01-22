@@ -23,8 +23,8 @@ func (e *EventOptions) Wait() {
 
 type DetailsOptions struct {
 	EventOptions EventOptions
-	Device       devices.Device
-	SleepAfter   int
+	Device       *devices.Device
+	SleepAfter   float32
 	MustElement  string
 	Click        bool
 	Input        string

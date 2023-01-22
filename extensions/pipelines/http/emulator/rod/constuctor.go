@@ -48,9 +48,6 @@ func CreateProxyRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOp
 				}
 
 			}
-
-			logger.Debug("page opened")
-
 			logger.Debug("the page loaded")
 			context = NewPageCtx(context, page)
 
@@ -62,6 +59,8 @@ func CreateProxyRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOp
 			if detailOptions != nil && len(detailOptions.MustElement) > 0 {
 				page.MustElement(detailOptions.MustElement)
 			}
+
+			page.Timeout(120 * time.Second)
 
 			page.MustWaitLoad()
 			body := page.MustHTML()
@@ -113,10 +112,19 @@ func CreateRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOptions
 
 			logger.Info(fmt.Sprintf("RUN rod request to url: %s", task.GetFetcherUrl()))
 
-			page := browser.DefaultDevice(devices.IPadPro).
-				Timeout(time.Duration(task.GetFetcherTimeout()) * time.Second).
+			var device devices.Device
+			if detailOptions.Device == nil {
+				device = devices.IPadPro
+			} else {
+				device = *detailOptions.Device
+			}
+
+			page := browser.DefaultDevice(device).
+				Timeout(120 * time.Second).
 				MustConnect().
 				MustPage(task.GetFetcherUrl())
+
+			logger.Debug("created a new page")
 
 			if detailOptions != nil {
 				if detailOptions.EventOptions.NetworkResponseReceived {
@@ -125,11 +133,10 @@ func CreateRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOptions
 
 			}
 
-			logger.Debug("the page loaded")
 			context = NewPageCtx(context, page)
 
 			if detailOptions != nil && detailOptions.SleepAfter > 0 {
-				logger.Debug(fmt.Sprintf("Sleep after load: %d", detailOptions.SleepAfter))
+				logger.Debug(fmt.Sprintf("Sleep after load: %f", detailOptions.SleepAfter))
 				time.Sleep(time.Duration(detailOptions.SleepAfter) * time.Second)
 			}
 			if detailOptions != nil && len(detailOptions.MustElement) > 0 {
@@ -147,6 +154,7 @@ func CreateRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOptions
 			}
 
 			page.MustWaitLoad()
+			logger.Debug("the page loaded")
 			body := page.MustHTML()
 
 			doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(body)))

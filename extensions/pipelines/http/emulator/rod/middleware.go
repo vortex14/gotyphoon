@@ -2,7 +2,7 @@ package rod
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 
@@ -26,15 +26,23 @@ func ConstructorRodProxyRequestMiddleware(required bool) interfaces.MiddlewareIn
 
 			url := launcher.New().Proxy(task.GetProxyAddress()).Delete("use-mock-keychain").MustLaunch()
 			browser := rod.New().ControlURL(url)
+
+			browser = browser.WithPanic(func(i interface{}) {
+				logger.Error(fmt.Sprintf(">>>>> %v", i))
+				reject(fmt.Errorf("undefined behavior: %v", i))
+
+			})
+
 			err := browser.Connect()
 
 			if err != nil {
+				logger.Error("Need to retry request after later, browser is very busy or doesn't accessible ")
 				reject(err)
 				return
 			}
 
 			context = NewBrowserCtx(context, browser)
-
+			logger.Warning("test a log line")
 			next(context)
 
 		},
@@ -54,15 +62,20 @@ func ConstructorRodBasicRequestMiddleware(required bool) interfaces.MiddlewareIn
 
 			url := launcher.New().Delete("use-mock-keychain").MustLaunch()
 			browser := rod.New().ControlURL(url)
+
+			browser = browser.WithPanic(func(i interface{}) {
+				logger.Error(fmt.Errorf("undefined behavior: %v", i))
+			})
+
 			err := browser.Connect()
 
 			if err != nil {
+				logger.Error("Need to retry request after later, browser is very busy or doesn't accessible ")
 				reject(err)
 				return
 			}
 
 			context = NewBrowserCtx(context, browser)
-
 			next(context)
 
 		},

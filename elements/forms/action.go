@@ -2,11 +2,14 @@ package forms
 
 import (
 	"context"
+	"fmt"
 	"github.com/sirupsen/logrus"
 
+	"errors"
+
 	// /* ignore for building amd64-linux
-//	"fmt"
-//	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
+	//	"fmt"
+	//	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	// */
 	"github.com/vortex14/gotyphoon/log"
 
@@ -21,27 +24,39 @@ type Stats struct {
 
 type Action struct {
 	*label.MetaInfo
-	LOG            interfaces.LoggerInterface
+	LOG interfaces.LoggerInterface
 	Stats
 
 	Path           string
-	Methods        [] string   //just yet HTTP Methods
-	AllowedMethods [] string
+	Methods        []string //just yet HTTP Methods
+	AllowedMethods []string
 	handlerPath    string
 
-	Controller     interfaces.Controller  //Controller of Action
-	Pipeline       interfaces.PipelineGroupInterface
-	PyController   interfaces.Controller  //Python Controller Bridge of Action
-	Middlewares    [] interfaces.MiddlewareInterface  //Before a call to action we need to check this into middleware. May be client state isn't ready for serve
+	//Cn func(ctx context.Context, err error)
+
+	Controller   interfaces.Controller //Controller of Action
+	Pipeline     interfaces.PipelineGroupInterface
+	PyController interfaces.Controller            //Python Controller Bridge of Action
+	Middlewares  []interfaces.MiddlewareInterface //Before a call to action we need to check this into middleware. May be client state isn't ready for serve
+
+	Cn func(
+		err error,
+		context context.Context,
+		logger interfaces.LoggerInterface,
+	)
 
 	// /* ignore for building amd64-linux
-//	Graph          interfaces.GraphInterface
+	//	Graph          interfaces.GraphInterface
 	// */
 
 }
 
 func (a *Action) AddMethod(name string) {
 	logrus.Error(Errors.ActionAddMethodNotImplemented.Error())
+}
+
+func (a *Action) Cancel(ctx context.Context, logger interfaces.LoggerInterface, err error) {
+	logger.Warning(Errors.ActionFailed)
 }
 
 func (a *Action) IsPipeline() bool {
@@ -52,7 +67,7 @@ func (a *Action) IsPipeline() bool {
 	return status
 }
 
-func (a *Action) GetMiddlewareStack() [] interfaces.MiddlewareInterface {
+func (a *Action) GetMiddlewareStack() []interfaces.MiddlewareInterface {
 	return a.Middlewares
 }
 
@@ -68,69 +83,65 @@ func (a *Action) GetPipeline() interfaces.PipelineGroupInterface {
 	return a.Pipeline
 }
 
-func (a *Action) SetHandlerPath(path string)  {
+func (a *Action) SetHandlerPath(path string) {
 	a.handlerPath = path
 }
-
 
 func (a *Action) GetHandlerPath() string {
 	return a.handlerPath
 }
 
-
-
-func (a *Action) InitPipelineGraph()  {
+func (a *Action) InitPipelineGraph() {
 	pipelineLogger := log.Patch(a.LOG.(*logrus.Entry), log.D{"pipeline-group": a.GetPipeline().GetName()})
 	a.Pipeline.SetLogger(pipelineLogger)
 	// /* ignore for building amd64-linux
-//	a.Pipeline.SetGraph(a.Graph)
-//	a.Pipeline.InitGraph(a.GetHandlerPath())
+	//	a.Pipeline.SetGraph(a.Graph)
+	//	a.Pipeline.InitGraph(a.GetHandlerPath())
 	// */
 }
 
-func (a *Action) UpdateGraphLabel(method string, path string)  {
+func (a *Action) UpdateGraphLabel(method string, path string) {
 
 	///* ignore for building amd64-linux
-//	a.Input ++
-//
-//		labelAction := fmt.Sprintf(`
-//	
-//	R: %d
-//	
-//	`, a.Input)
-//
-//	if a.Graph != nil {
-//		a.Graph.UpdateEdge(&interfaces.EdgeOptions{
-//			NodeA: method,
-//			NodeB: path,
-//			LabelH: labelAction,
-//			Color: graphvizExt.COLORNavy,
-//
-//		})
-//	}
-//
-    //  */
+	//	a.Input ++
+	//
+	//		labelAction := fmt.Sprintf(`
+	//
+	//	R: %d
+	//
+	//	`, a.Input)
+	//
+	//	if a.Graph != nil {
+	//		a.Graph.UpdateEdge(&interfaces.EdgeOptions{
+	//			NodeA: method,
+	//			NodeB: path,
+	//			LabelH: labelAction,
+	//			Color: graphvizExt.COLORNavy,
+	//
+	//		})
+	//	}
+	//
+	//  */
 
 }
 
 func (a *Action) AddMethodNodes() {
 
 	// /* ignore for building amd64-linux
-//	for _, method := range a.GetMethods() {
-//		a.Graph.AddNode(&interfaces.NodeOptions{
-//			Name: method,
-//			Label: graphvizExt.FormatBottomSpace(method),
-//			Shape: graphvizExt.SHAPEAction,
-//			EdgeOptions: &interfaces.EdgeOptions{
-//				NodeB:  a.GetHandlerPath(),
-//				ArrowS: 0.5,
-//			},
-//		})
-//	}
-//
+	//	for _, method := range a.GetMethods() {
+	//		a.Graph.AddNode(&interfaces.NodeOptions{
+	//			Name: method,
+	//			Label: graphvizExt.FormatBottomSpace(method),
+	//			Shape: graphvizExt.SHAPEAction,
+	//			EdgeOptions: &interfaces.EdgeOptions{
+	//				NodeB:  a.GetHandlerPath(),
+	//				ArrowS: 0.5,
+	//			},
+	//		})
+	//	}
+	//
 	//*/
 }
-
 
 // /* ignore for building amd64-linux
 //
@@ -172,16 +183,32 @@ func (a *Action) AddMethodNodes() {
 //
 // */
 
-func (a *Action) OnRequest(method string, path string)  {
+func (a *Action) OnRequest(method string, path string) {
 	// /* ignore for building amd64-linux
-//	a.UpdateGraphLabel(method, path)
+	//	a.UpdateGraphLabel(method, path)
 	//*/
 }
 
-func (a *Action) Run(ctx context.Context, logger interfaces.LoggerInterface)  {
+func (a *Action) SafeRun(run func() error, catch func(err error)) {
+	defer func() {
+
+		if r := recover(); r != nil {
+			panicE := errors.New(fmt.Sprintf("%s: %s", PanicException, r))
+			catch(panicE)
+		}
+
+	}()
+
+	if err := run(); err != nil {
+		catch(err)
+	}
 
 }
 
-func (a *Action) SetLogger(logger interfaces.LoggerInterface)  {
+func (a *Action) Run(ctx context.Context, logger interfaces.LoggerInterface) {
+
+}
+
+func (a *Action) SetLogger(logger interfaces.LoggerInterface) {
 	a.LOG = logger
 }
