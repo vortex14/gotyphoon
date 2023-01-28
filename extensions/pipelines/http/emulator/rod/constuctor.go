@@ -18,6 +18,50 @@ import (
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
+func getDevice(detailOptions *DetailsOptions) devices.Device {
+	var device devices.Device
+	if detailOptions.Device == nil {
+		device = devices.IPadPro
+	} else {
+		device = *detailOptions.Device
+	}
+	return device
+}
+
+func createPageFromTask(browser *rod.Browser, task interfaces.TaskInterface, detailOptions *DetailsOptions) *rod.Page {
+	return browser.DefaultDevice(getDevice(detailOptions)).
+		Timeout(time.Duration(task.GetFetcherTimeout()) * time.Second).
+		MustConnect().
+		MustPage(task.GetFetcherUrl())
+}
+
+func processElementsAfterPreLoad(logger interfaces.LoggerInterface, page *rod.Page, detailOptions *DetailsOptions) {
+
+	if detailOptions != nil {
+		if detailOptions.EventOptions.NetworkResponseReceived {
+			detailOptions.EventOptions.Wait()
+		}
+	}
+
+	if detailOptions != nil && detailOptions.SleepAfter > 0 {
+		logger.Debug(fmt.Sprintf("Sleep after load: %f", detailOptions.SleepAfter))
+		time.Sleep(time.Duration(detailOptions.SleepAfter) * time.Second)
+	}
+	if detailOptions != nil && len(detailOptions.MustElement) > 0 {
+
+		if !detailOptions.Click && len(detailOptions.Input) == 0 {
+			page.MustElement(detailOptions.MustElement)
+		} else if detailOptions.Click {
+			page.MustElement(detailOptions.MustElement).MustClick()
+		} else if len(detailOptions.Input) > 0 {
+			ie := page.MustElement(detailOptions.MustElement).Input(detailOptions.Input)
+			if ie != nil {
+				logger.Error(ie)
+			}
+		}
+	}
+}
+
 func CreateProxyRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOptions) *HttpRodRequestPipeline {
 
 	return &HttpRodRequestPipeline{
@@ -37,30 +81,12 @@ func CreateProxyRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOp
 
 			logger.Info(fmt.Sprintf("RUN rod request proxy: %s , proxy_server: %s url: %s", task.GetProxyAddress(), task.GetProxyServerUrl(), task.GetFetcherUrl()))
 
-			page := browser.DefaultDevice(devices.IPhoneX).
-				Timeout(time.Duration(task.GetFetcherTimeout()) * time.Second).
-				MustConnect().
-				MustPage(task.GetFetcherUrl())
+			page := createPageFromTask(browser, task, detailOptions)
 
-			if detailOptions != nil {
-				if detailOptions.EventOptions.NetworkResponseReceived {
-					detailOptions.EventOptions.Wait()
-				}
+			processElementsAfterPreLoad(logger, page, detailOptions)
 
-			}
 			logger.Debug("the page loaded")
 			context = NewPageCtx(context, page)
-
-			if detailOptions != nil && detailOptions.SleepAfter > 0 {
-				logger.Debug(fmt.Sprintf("Sleep after load: %d", detailOptions.SleepAfter))
-				time.Sleep(time.Duration(detailOptions.SleepAfter) * time.Second)
-			}
-
-			if detailOptions != nil && len(detailOptions.MustElement) > 0 {
-				page.MustElement(detailOptions.MustElement)
-			}
-
-			page.Timeout(120 * time.Second)
 
 			page.MustWaitLoad()
 			body := page.MustHTML()
@@ -112,46 +138,13 @@ func CreateRodRequestPipeline(opts *forms.Options, detailOptions *DetailsOptions
 
 			logger.Info(fmt.Sprintf("RUN rod request to url: %s", task.GetFetcherUrl()))
 
-			var device devices.Device
-			if detailOptions.Device == nil {
-				device = devices.IPadPro
-			} else {
-				device = *detailOptions.Device
-			}
-
-			page := browser.DefaultDevice(device).
-				Timeout(120 * time.Second).
-				MustConnect().
-				MustPage(task.GetFetcherUrl())
+			page := createPageFromTask(browser, task, detailOptions)
 
 			logger.Debug("created a new page")
 
-			if detailOptions != nil {
-				if detailOptions.EventOptions.NetworkResponseReceived {
-					detailOptions.EventOptions.Wait()
-				}
-
-			}
+			processElementsAfterPreLoad(logger, page, detailOptions)
 
 			context = NewPageCtx(context, page)
-
-			if detailOptions != nil && detailOptions.SleepAfter > 0 {
-				logger.Debug(fmt.Sprintf("Sleep after load: %f", detailOptions.SleepAfter))
-				time.Sleep(time.Duration(detailOptions.SleepAfter) * time.Second)
-			}
-			if detailOptions != nil && len(detailOptions.MustElement) > 0 {
-
-				if !detailOptions.Click && len(detailOptions.Input) == 0 {
-					page.MustElement(detailOptions.MustElement)
-				} else if detailOptions.Click {
-					page.MustElement(detailOptions.MustElement).MustClick()
-				} else if len(detailOptions.Input) > 0 {
-					ie := page.MustElement(detailOptions.MustElement).Input(detailOptions.Input)
-					if ie != nil {
-						logger.Error(ie)
-					}
-				}
-			}
 
 			page.MustWaitLoad()
 			logger.Debug("the page loaded")
