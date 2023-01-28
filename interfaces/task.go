@@ -18,6 +18,7 @@ type TaskFetcherInterface interface {
 	AddHeader(key string, value string)
 
 	GetFetcherTimeout() int
+	SetFetcherTimeout(seconds int)
 
 	GetFetcherUrl() string
 	GetBase64FetcherURL() string

@@ -75,6 +75,10 @@ func (t *TyphoonTask) SetSaveData(key string, value string) {
 	t.Processor.Save.Project[key] = value
 }
 
+func (t *TyphoonTask) SetFetcherTimeout(seconds int) {
+	t.Fetcher.Timeout = seconds
+}
+
 func (t *TyphoonTask) GetSaveData(key string) string {
 	return t.Processor.Save.Project[key]
 }
