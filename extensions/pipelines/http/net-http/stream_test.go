@@ -3,16 +3,16 @@ package net_http
 import (
 	"bufio"
 	"fmt"
+	. "github.com/smartystreets/goconvey/convey"
+	Fake "github.com/vortex14/gotyphoon/extensions/data/fake"
+	"github.com/vortex14/gotyphoon/log"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 	"sync"
 	"testing"
-
-	. "github.com/smartystreets/goconvey/convey"
-	Fake "github.com/vortex14/gotyphoon/extensions/data/fake"
-	"github.com/vortex14/gotyphoon/log"
+	"time"
 )
 
 func init() {
@@ -259,6 +259,43 @@ func TestBufferChange(t *testing.T) {
 		editBuff(&test)
 
 		So(test, ShouldResemble, []byte("IT'S NOT MY TEXT"))
+	})
+
+}
+
+func TestChSelect(t *testing.T) {
+	Convey("test", t, func(c C) {
+		done := make(chan bool, 1)
+
+		wg := sync.WaitGroup{}
+		wg.Add(2)
+		go func() {
+		loop:
+			for {
+				println("Start select loop")
+				select {
+				case <-done:
+					break loop
+				}
+
+			}
+
+			c.So(true, ShouldBeTrue)
+			wg.Done()
+
+		}()
+
+		go func() {
+			select {
+			case <-time.After(time.Second * 10):
+				println("timeout ... after 10 seconds")
+				done <- true
+				wg.Done()
+				break
+			}
+		}()
+
+		wg.Wait()
 	})
 
 }

@@ -78,6 +78,7 @@ func TestPanicPipeline(t *testing.T) {
 	l := log.New(map[string]interface{}{"test": "test"})
 	ctx := log.NewCtx(context.Background(), l)
 	Convey("Create a pipeline with panic operation", t, func() {
+
 		Pipe := &BasePipeline{
 			MetaInfo: nil,
 			Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
@@ -95,6 +96,7 @@ func TestPanicPipeline(t *testing.T) {
 		}
 		var err error
 		Pipe.Run(ctx, func(pipeline interfaces.BasePipelineInterface, error error) {
+			l.Error(error)
 			err = error
 
 		}, func(ctx context.Context) {
