@@ -86,6 +86,7 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 					errStack = err
 					logger.Error(fmt.Sprintf("Pipeline name: %s ; Exit from group. Error: %s", p.GetName(), err.Error()))
 					failedFlow = true
+					pipeline.Cancel(mainContext, logger, errStack)
 				}
 
 			}, func(returnedResultPipelineContext Context.Context) {

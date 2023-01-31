@@ -171,12 +171,14 @@ func (p *BasePipeline) Run(
 	p.SafeRun(func() error {
 
 		p.run(context, logCtx, func(pipeline interfaces.BasePipelineInterface, err error) {
+
 			pError = err
 		}, next)
 
 		return pError
 
 	}, func(err error) {
+		pError = err
 		reject(p, pError)
 		p.Cancel(context, logCtx, pError)
 	})
