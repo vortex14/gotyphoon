@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"os"
+	"time"
 
 	"github.com/nuveo/anticaptcha"
 
@@ -19,7 +20,7 @@ func CreateAntiCaptchaPipeline() *pipelines.TaskPipeline {
 				Name:        "Anticaptcha",
 				Description: "Decoding using the service anticaptcha",
 			},
-			Options: forms.GetCustomRetryOptions(2),
+			Options: forms.GetCustomRetryOptions(2, time.Duration(1)*time.Second),
 		},
 		Fn: func(context context.Context,
 			task interfaces.TaskInterface, logger interfaces.LoggerInterface) (error, context.Context) {

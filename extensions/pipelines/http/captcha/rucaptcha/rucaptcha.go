@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
+	"time"
 
 	api2captcha "github.com/vortex14/2captcha-go"
 	"github.com/vortex14/gotyphoon/extensions/pipelines"
@@ -17,7 +18,7 @@ func CreateRuCaptchaPipeline() *pipelines.TaskPipeline {
 				Name:        "Rucaptcha",
 				Description: "Decoding using the service rucaptcha",
 			},
-			Options: forms.GetCustomRetryOptions(2),
+			Options: forms.GetCustomRetryOptions(2, time.Duration(1)*time.Second),
 		},
 		Fn: func(context context.Context,
 			task interfaces.TaskInterface, logger interfaces.LoggerInterface) (error, context.Context) {
