@@ -85,6 +85,19 @@ func (t *HttpRodResponsePipeline) Run(
 		return err
 
 	}, func(err error) {
+
+		// without this will be leaked after panic.
+		if e := rod.Try(func() {
+			_, b := GetBrowserCtx(context)
+			b.MustClose()
+		}); e != nil {
+			reject(t, e)
+			_, logCtx := log.Get(context)
+			t.Cancel(context, logCtx, e)
+
+			return
+		}
+
 		reject(t, err)
 		_, logCtx := log.Get(context)
 		t.Cancel(context, logCtx, err)

@@ -22,7 +22,7 @@ const (
 )
 
 type RetryOptions struct {
-	Sleep time.Duration
+	Delay time.Duration
 
 	MaxCount int
 
@@ -51,10 +51,11 @@ func GetNotRetribleOptions() *Options {
 	}
 }
 
-func GetCustomRetryOptions(count int) *Options {
+func GetCustomRetryOptions(count int, delay time.Duration) *Options {
 	return &Options{
 		Retry: RetryOptions{
 			MaxCount: count,
+			Delay:    delay,
 		},
 	}
 }

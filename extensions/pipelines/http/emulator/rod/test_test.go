@@ -12,6 +12,7 @@ import (
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 	"testing"
+	"time"
 )
 
 func init() {
@@ -28,7 +29,7 @@ func TestHttpRodRequestPipeline_Run(t *testing.T) {
 			},
 			Stages: []interfaces.BasePipelineInterface{
 				CreateProxyRodRequestPipeline(
-					forms.GetCustomRetryOptions(1),
+					forms.GetCustomRetryOptions(1, time.Duration(1)*time.Second),
 					&DetailsOptions{SleepAfter: 1, MustElement: "#shitcoin > .message"},
 				),
 				&HttpRodResponsePipeline{
