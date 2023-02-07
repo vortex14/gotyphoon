@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
-	net_http "github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
+	netHttp "github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -27,7 +27,7 @@ func init() {
 
 type Collection struct {
 	singleton.Singleton
-	mu  sync.Mutex
+	mu  sync.RWMutex
 	LOG interfaces.LoggerInterface
 
 	Settings *Settings
@@ -41,8 +41,8 @@ type Collection struct {
 	allowed map[string][]string
 	banned  map[string][]string
 
-	availableEndpoints map[string]string // domain key : available endpoint
 	observableHosts    map[string]bool
+	availableEndpoints map[string]*UpdateCheckPayload // domain key : available endpoint
 }
 
 func (c *Collection) GetFullKeyPath(host string, key string) string {
@@ -57,7 +57,7 @@ func (c *Collection) Clear() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	var err error
-	for domain, _ := range c.stats {
+	for domain := range c.stats {
 		err = c.RemoveBanHistory(domain)
 		c.LOG.Debug("remove history for ", domain)
 		err = c.RemoveHistory(domain)
@@ -113,7 +113,7 @@ func (c *Collection) RemoveHistory(host string) error {
 
 func (c *Collection) RemoveBanHistory(host string) error {
 	for _, value := range c.list {
-		err := c.redisService.Remove(c.GetFullBanPathByKey(host, value))
+		err := c.RemoveProxyBan(host, value)
 		if err != nil {
 			return err
 		}
@@ -162,17 +162,26 @@ func (c *Collection) unblockingProxy(availableURL *url.URL) {
 	}
 }
 
+func (c *Collection) getAvailablePayload(availableURL *url.URL) *UpdateCheckPayload {
+
+	host := availableURL.Host
+	if _, ok := c.availableEndpoints[host]; !ok {
+		c.availableEndpoints[host] = &UpdateCheckPayload{Url: availableURL}
+		_, _ = c.availableEndpoints[host].ParseUrl()
+	}
+	return c.availableEndpoints[host]
+}
+
+func (c *Collection) setAvailablePayload(payload *UpdateCheckPayload) {
+	host := payload.Url.Hostname()
+	_, _ = payload.ParseUrl()
+	c.availableEndpoints[host] = payload
+}
+
 func (c *Collection) checkingBlocked(availableURL *url.URL) {
 	lastIndex := 0
-	var availableUrl string
-	host := availableURL.Hostname()
 
-	if _, ok := c.availableEndpoints[host]; !ok {
-		availableUrl = availableURL.String()
-		c.availableEndpoints[host] = availableUrl
-	} else {
-		availableUrl = c.availableEndpoints[host]
-	}
+	host := availableURL.Hostname()
 
 	for {
 		c.LOG.Debug(fmt.Sprintf("checking blocked for host: %s ... every %ds Count: %d", host, c.Settings.CheckBlockedTime, len(c.banned[host])))
@@ -206,12 +215,16 @@ func (c *Collection) checkingBlocked(availableURL *url.URL) {
 			go func(wg *sync.WaitGroup, proxy string) {
 				task := fake.CreateDefaultTask()
 
-				task.SetFetcherUrl(availableUrl)
+				payload := c.getAvailablePayload(availableURL)
+
+				task.SetFetcherUrl(payload.UrlSource)
 				task.SetProxyAddress(proxy)
+				task.SetHeaders(payload.Headers)
 
-				c.LOG.Debug("create a new request to ", availableUrl, " through "+proxy)
+				c.LOG.Debug("create a new request to ", payload.UrlSource, " through "+proxy+
+					fmt.Sprintf(" Headers keys: %d", len(payload.Headers)))
 
-				err := net_http.MakeRequestThroughProxy(task, func(logger interfaces.LoggerInterface,
+				err := netHttp.MakeRequestThroughProxy(task, func(logger interfaces.LoggerInterface,
 					response *http.Response, doc *goquery.Document) bool {
 
 					return !(response.StatusCode > 400)
@@ -219,7 +232,7 @@ func (c *Collection) checkingBlocked(availableURL *url.URL) {
 				if err == nil {
 					ansE := c.RemoveProxyBan(host, proxy)
 					if ansE == nil {
-						c.LOG.Debug(fmt.Sprintf("proxy %s   %s throught %s", proxy, host, availableUrl))
+						c.LOG.Debug(fmt.Sprintf("proxy %s   %s throught %s is available", proxy, host, payload.UrlSource))
 					} else {
 						c.LOG.Error(ansE)
 					}
@@ -250,6 +263,8 @@ func (c *Collection) Block(proxy string, u *url.URL) error {
 	if _, ok := c.observableHosts[host]; !ok {
 		c.observableHosts[host] = true
 		go c.unblockingProxy(u)
+		payload := c.getAvailablePayload(u)
+		c.setAvailablePayload(payload)
 		go c.checkingBlocked(u)
 	}
 
@@ -341,12 +356,12 @@ func (c *Collection) Init() *Collection {
 	c.Construct(func() {
 		c.LOG = log.New(log.D{"proxy": "rotator"})
 
-		c.availableEndpoints = make(map[string]string)
-		c.observableHosts = make(map[string]bool)
-		c.stats = make(map[string]map[string]int)
-		c.allowed = make(map[string][]string)
 		c.locked = make(map[string][]string)
 		c.banned = make(map[string][]string)
+		c.allowed = make(map[string][]string)
+		c.stats = make(map[string]map[string]int)
+		c.observableHosts = make(map[string]bool)
+		c.availableEndpoints = make(map[string]*UpdateCheckPayload)
 
 		proxyEnvList := os.Getenv("PROXY_LIST")
 		if len(proxyEnvList) == 0 {

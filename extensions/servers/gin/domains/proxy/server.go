@@ -3,14 +3,12 @@ package proxy
 import (
 	Errors "errors"
 	"fmt"
-
 	u_ "github.com/ahl5esoft/golang-underscore"
 	Gin "github.com/gin-gonic/gin"
-	
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
-	net_http "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
+	netHttp "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/graph"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/ping"
@@ -53,7 +51,7 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						},
 						Methods: []string{interfaces.GET},
 						Middlewares: []interfaces.MiddlewareInterface{
-							net_http.UrlRequiredMiddleware,
+							netHttp.UrlRequiredMiddleware,
 						},
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
@@ -97,7 +95,7 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						},
 						Methods: []string{interfaces.GET},
 						Middlewares: []interfaces.MiddlewareInterface{
-							net_http.UrlRequiredMiddleware,
+							netHttp.UrlRequiredMiddleware,
 						},
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
@@ -164,7 +162,7 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						},
 						Methods: []string{interfaces.GET},
 						Middlewares: []interfaces.MiddlewareInterface{
-							net_http.UrlRequiredMiddleware,
+							netHttp.UrlRequiredMiddleware,
 						},
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
@@ -184,7 +182,7 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						},
 						Methods: []string{interfaces.GET},
 						Middlewares: []interfaces.MiddlewareInterface{
-							net_http.UrlRequiredMiddleware,
+							netHttp.UrlRequiredMiddleware,
 						},
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
@@ -240,13 +238,15 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						},
 						Methods: []string{interfaces.GET},
 						Middlewares: []interfaces.MiddlewareInterface{
-							net_http.UrlRequiredMiddleware,
+							netHttp.UrlRequiredMiddleware,
 						},
 					},
 					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
 						logger.Debug("Check stats.")
 
 						u := GetUrlParamGin(ctx)
+
+						payload := proxyCollection.getAvailablePayload(u)
 
 						ctx.JSON(200, &Stats{
 							Stats:           proxyCollection.stats,
@@ -255,7 +255,7 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 							Allowed:         proxyCollection.allowed[u.Hostname()],
 							Locked:          proxyCollection.locked,
 							List:            proxyCollection.list,
-							TestEndpoint:    proxyCollection.availableEndpoints[u.Hostname()],
+							TestEndpoint:    payload,
 							ObservableHosts: proxyCollection.observableHosts,
 						})
 					},
@@ -273,6 +273,32 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						logger.Debug("clear proxy history.")
 						e := proxyCollection.Clear()
 						ctx.JSON(200, e)
+					},
+				},
+				"check": &gin.Action{
+					Action: &forms.Action{
+						MetaInfo: &label.MetaInfo{
+							Name:        "check",
+							Path:        "check",
+							Description: "check domain by url",
+						},
+						Methods: []string{interfaces.POST},
+					},
+					GinController: func(ctx *Gin.Context, logger interfaces.LoggerInterface) {
+						logger.Debug("change url and headers for check available host through proxy")
+						payload := &UpdateCheckPayload{}
+
+						e := ctx.BindJSON(payload)
+						if e != nil {
+							ctx.JSON(500, e)
+							return
+						}
+						_, u := payload.ParseUrl()
+
+						proxyCollection.setAvailablePayload(payload)
+
+						ctx.JSON(200, proxyCollection.getAvailablePayload(u))
+
 					},
 				},
 			},

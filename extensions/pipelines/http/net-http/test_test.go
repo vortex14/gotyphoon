@@ -8,10 +8,9 @@ import (
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
-	"net/http"
 
 	"context"
-
+	"net/http"
 	"testing"
 )
 

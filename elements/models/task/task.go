@@ -71,6 +71,15 @@ func (t *TyphoonTask) AddHeader(key string, value string) {
 	t.Fetcher.Headers[key] = value
 }
 
+func (t *TyphoonTask) SetHeaders(headers map[string]string) {
+	for key, element := range headers {
+		t.AddHeader(
+			key,
+			element,
+		)
+	}
+}
+
 func (t *TyphoonTask) SetSaveData(key string, value string) {
 	t.Processor.Save.Project[key] = value
 }
