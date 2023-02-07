@@ -1,6 +1,17 @@
 package proxy
 
-import "github.com/vortex14/gotyphoon/interfaces"
+import (
+	"errors"
+	"net/url"
+
+	"github.com/vortex14/gotyphoon/interfaces"
+)
+
+type Proxy struct {
+	Address  string
+	Region   string
+	Provider string
+}
 
 type Settings struct {
 	BlockedTime      int
@@ -22,5 +33,30 @@ type Stats struct {
 	Locked          interface{}
 	List            interface{}
 	Allowed         interface{}
-	TestEndpoint    string
+	TestEndpoint    *UpdateCheckPayload
+}
+
+type UpdateCheckPayload struct {
+	Headers   map[string]string `json:"headers"`
+	UrlSource string            `json:"url"`
+	Url       *url.URL
+}
+
+func (u *UpdateCheckPayload) ParseUrl() (error, *url.URL) {
+
+	var exception error
+
+	if len(u.UrlSource) == 0 && u.Url != nil {
+		u.UrlSource = u.Url.String()
+	} else if len(u.UrlSource) > 0 {
+		urlDecoded, e := url.Parse(u.UrlSource)
+		exception = e
+		if e == nil {
+			u.Url = urlDecoded
+		}
+	} else {
+		exception = errors.New("not found source url or *url.URL")
+	}
+
+	return exception, u.Url
 }

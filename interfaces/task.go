@@ -16,6 +16,7 @@ type TaskFetcherInterface interface {
 	SetFetcherMethod(method string)
 
 	AddHeader(key string, value string)
+	SetHeaders(headers map[string]string)
 
 	GetFetcherTimeout() int
 	SetFetcherTimeout(seconds int)
