@@ -26,7 +26,7 @@ func GetBody(client *http.Client, request *http.Request) (error, *string, *http.
 
 	var reader io.ReadCloser
 	switch response.Header.Get("Content-Encoding") {
-	case "gzip":
+	case GZIP:
 		reader, err = gzip.NewReader(response.Body)
 		if err != nil {
 			return Errors.ResponseHttpGzipDecodeError, nil, nil

@@ -3,6 +3,7 @@ package rod
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
 

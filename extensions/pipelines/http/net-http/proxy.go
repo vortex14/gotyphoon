@@ -3,11 +3,13 @@ package net_http
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"github.com/vortex14/gotyphoon/extensions/middlewares"
-	"github.com/vortex14/gotyphoon/log"
 	"net/http"
 	"net/url"
+
+	"github.com/vortex14/gotyphoon/extensions/middlewares"
+	"github.com/vortex14/gotyphoon/log"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"

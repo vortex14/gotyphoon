@@ -2,11 +2,12 @@ package net_http
 
 import (
 	Context "context"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/vortex14/gotyphoon/interfaces"
 	"net/http"
 
+	"github.com/PuerkitoBio/goquery"
+
 	"github.com/vortex14/gotyphoon/ctx"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 const (
@@ -17,6 +18,7 @@ const (
 	REQUEST   = "request"
 	RESPONSE  = "response"
 	DATA      = "data"
+	GZIP      = "gzip"
 )
 
 type ValidationCallback func(logger interfaces.LoggerInterface, response *http.Response, doc *goquery.Document) bool

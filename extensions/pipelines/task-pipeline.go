@@ -17,7 +17,7 @@ type TaskPipeline struct {
 		context context.Context,
 		task interfaces.TaskInterface,
 		logger interfaces.LoggerInterface,
-	)  (error, context.Context)
+	) (error, context.Context)
 
 	Cn func(
 		err error,
@@ -29,7 +29,7 @@ type TaskPipeline struct {
 
 func (t *TaskPipeline) UnpackCtx(
 	ctx context.Context,
-	) (bool, interfaces.TaskInterface, interfaces.LoggerInterface) {
+) (bool, interfaces.TaskInterface, interfaces.LoggerInterface) {
 
 	okT, taskInstance := task.Get(ctx)
 	okL, logger := log.Get(ctx)
@@ -40,15 +40,24 @@ func (t *TaskPipeline) Run(
 	context context.Context,
 	reject func(pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx context.Context),
-	) {
+) {
 
-	if t.Fn == nil { reject(t, Errors.TaskPipelineRequiredHandler); return }
+	if t.Fn == nil {
+		reject(t, Errors.TaskPipelineRequiredHandler)
+		return
+	}
 
-	ok,taskInstance, logger := t.UnpackCtx(context)
-	if !ok { reject(t, Errors.PipelineContexFailed); return }
+	ok, taskInstance, logger := t.UnpackCtx(context)
+	if !ok {
+		reject(t, Errors.PipelineContexFailed)
+		return
+	}
 
 	err, newContext := t.Fn(context, taskInstance, logger)
-	if err != nil { reject(t, err); return }
+	if err != nil {
+		reject(t, err)
+		return
+	}
 	next(newContext)
 }
 
@@ -58,11 +67,15 @@ func (t *TaskPipeline) Cancel(
 	err error,
 ) {
 
-	if t.Cn == nil { return }
+	if t.Cn == nil {
+		return
+	}
 
-	ok,taskInstance, logger := t.UnpackCtx(context)
-	if !ok { return }
+	ok, taskInstance, _logger := t.UnpackCtx(context)
+	if !ok {
+		return
+	}
 
-	t.Cn(err, context, taskInstance, logger)
+	t.Cn(err, context, taskInstance, _logger)
 
 }

@@ -2,8 +2,9 @@ package net_http
 
 import (
 	"fmt"
-	"github.com/vortex14/gotyphoon/extensions/data/fake"
 	"net/http"
+
+	"github.com/vortex14/gotyphoon/extensions/data/fake"
 )
 
 func FormattingProxy(proxy string) string {
