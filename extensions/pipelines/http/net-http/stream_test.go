@@ -3,9 +3,6 @@ package net_http
 import (
 	"bufio"
 	"fmt"
-	. "github.com/smartystreets/goconvey/convey"
-	Fake "github.com/vortex14/gotyphoon/extensions/data/fake"
-	"github.com/vortex14/gotyphoon/log"
 	"io"
 	"io/ioutil"
 	"os"
@@ -13,6 +10,11 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	. "github.com/smartystreets/goconvey/convey"
+
+	Fake "github.com/vortex14/gotyphoon/extensions/data/fake"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 func init() {

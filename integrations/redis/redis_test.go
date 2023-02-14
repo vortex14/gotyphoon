@@ -22,15 +22,10 @@ func init() {
 	redisService = &Service{
 		Config: &interfaces.ServiceRedis{
 			Name: "Redis proxy data",
-			Details: struct {
-				Host     string      `yaml:"host"`
-				Port     int         `yaml:"port"`
-				Password interface{} `yaml:"password"`
-			}(struct {
-				Host     string
-				Port     int
-				Password interface{}
-			}{Host: "localhost", Port: 6379}),
+			Details: interfaces.RedisDetails{
+				Host: "localhost",
+				Port: 6379,
+			},
 		},
 	}
 	redisService.Init()

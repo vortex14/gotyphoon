@@ -174,9 +174,9 @@ func (s *TyphoonGinServer) onInitAction(resource interfaces.ResourceInterface, a
 
 func (s *TyphoonGinServer) onInitResource(newResource interfaces.ResourceInterface) {
 
-	if _, ok := newResource.(interfaces.ResourceGraphInterface); ok {
-		//s.LOG.Info("onInitResource, hasGraph: ", graphResource.HasParentGraph())
-	}
+	//if _, ok := newResource.(interfaces.ResourceGraphInterface); ok {
+	//s.LOG.Info("onInitResource, hasGraph: ", graphResource.HasParentGraph())
+	//}
 }
 
 func (s *TyphoonGinServer) onBuildSubResources(subResource interfaces.ResourceInterface) {

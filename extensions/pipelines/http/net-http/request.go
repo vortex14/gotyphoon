@@ -3,19 +3,20 @@ package net_http
 import (
 	"context"
 	"fmt"
-	"github.com/avast/retry-go/v4"
-	"github.com/vortex14/gotyphoon/extensions/models"
-	"github.com/vortex14/gotyphoon/log"
-	"github.com/vortex14/gotyphoon/utils"
 	"net/http"
 	"os"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/fatih/color"
+
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/elements/models/task"
 	Errors "github.com/vortex14/gotyphoon/errors"
+	"github.com/vortex14/gotyphoon/extensions/models"
 	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
+	"github.com/vortex14/gotyphoon/utils"
 )
 
 func Request(
