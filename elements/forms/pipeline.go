@@ -111,7 +111,6 @@ func (p *BasePipeline) SafeRun(
 
 	}()
 	logger = log.PatchLogI(logger, map[string]interface{}{"max_retry": p.Options.Retry.MaxCount})
-	var err error
 	retryCount := 0
 	retryMaxCount := p.Options.Retry.MaxCount
 
@@ -152,7 +151,7 @@ func (p *BasePipeline) SafeRun(
 	)
 
 	if eR != nil {
-		catch(err)
+		catch(eR)
 	}
 
 }
@@ -190,7 +189,6 @@ func (p *BasePipeline) Run(
 		return nil
 
 	}, func(err error) {
-
 		pError = err
 		reject(p, pError)
 		p.Cancel(context, logCtx, pError)
