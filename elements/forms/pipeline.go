@@ -123,7 +123,7 @@ func (p *BasePipeline) SafeRun(
 
 		p.RunMiddlewareStack(context, func(middleware interfaces.MiddlewareInterface, _err error) {
 			middlewareErr = _err
-			logger.Error("exit from middleware stack . Error: ", err.Error())
+			logger.Error("exit from middleware stack . Error: ", middlewareErr.Error())
 		}, func(returnedContext Context.Context) {
 			context = returnedContext
 		})
@@ -138,7 +138,6 @@ func (p *BasePipeline) SafeRun(
 		retry.Attempts(retryMaxCount),
 		retry.RetryIf(func(_err error) bool {
 			var status bool
-			err = _err
 			switch _err {
 			case Errors.ForceSkipPipelines:
 				status = false
@@ -147,12 +146,12 @@ func (p *BasePipeline) SafeRun(
 			default:
 				status = true
 			}
-			logger.Errorf("RetryIf .... %t, delay: %+v", status, p.Options.Retry.Delay)
+			logger.Errorf("RetryIf .... %t, delay: %+v; count: %d", status, p.Options.Retry.Delay, retryCount)
 			return status
 		}),
 	)
 
-	if err != nil || eR != nil {
+	if eR != nil {
 		catch(err)
 	}
 

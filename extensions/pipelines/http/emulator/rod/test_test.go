@@ -1,7 +1,10 @@
 package rod
 
 import (
+	"errors"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/vortex14/gotyphoon/elements/forms"
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/elements/models/task"
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
 	"github.com/vortex14/gotyphoon/interfaces"
@@ -79,4 +82,65 @@ func TestCreateRodPipeline(t *testing.T) {
 		So(err, ShouldBeNil)
 	})
 
+}
+
+func TestRetryResponse(t *testing.T) {
+	Convey("Move by coords", t, func() {
+		count := 0
+		g1 := forms.PipelineGroup{
+			MetaInfo: &label.MetaInfo{
+				Name: "Rod group",
+			},
+			Stages: []interfaces.BasePipelineInterface{
+				CreateRodRequestPipeline(
+					forms.GetCustomRetryOptions(2, time.Duration(3)*time.Second),
+					&DetailsOptions{
+						SleepAfter: 0,
+						Options: Options{
+							Debug: true,
+						},
+					},
+				),
+				&HttpRodResponsePipeline{
+					BasePipeline: &forms.BasePipeline{
+						NotIgnorePanic: true,
+						Options: &forms.Options{
+							Retry: forms.RetryOptions{
+								MaxCount: 5, Delay: time.Duration(3) * time.Second,
+							},
+						},
+						MetaInfo: &label.MetaInfo{
+							Name: "http response from rod emulator",
+						},
+					},
+					Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface,
+						browser *rod.Browser, page *rod.Page, body *string, doc *goquery.Document) (error, context.Context) {
+						if count == 2 {
+							return nil, context
+						}
+						count += 1
+						return errors.New("a new error"), context
+					},
+					Cn: func(err error,
+						context context.Context,
+						task interfaces.TaskInterface,
+						logger interfaces.LoggerInterface) {
+
+						logger.Error("--- ", err.Error())
+					},
+				},
+			},
+		}
+
+		_task := fake.CreateDefaultTask()
+		_task.SetFetcherUrl("https://google.com/")
+		_task.SetFetcherTimeout(600)
+		ctxGroup := task.NewTaskCtx(_task)
+
+		e := g1.Run(ctxGroup)
+
+		So(count, ShouldEqual, 2)
+
+		So(e, ShouldBeNil)
+	})
 }
