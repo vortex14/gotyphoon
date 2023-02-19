@@ -69,38 +69,37 @@ func (t *HttpRodResponsePipeline) Run(
 		return
 	}
 
-	t.SafeRun(func() error {
-		ok, taskInstance, logger, browser, page, body, doc := t.UnpackResponseCtx(context)
+	ok, taskInstance, logger, browser, page, body, doc := t.UnpackResponseCtx(context)
 
-		if !ok {
-			return fmt.Errorf("%s. taskInstance: %v, logger: %v, browser: %v, page: %v, body: %v",
-				Errors.PipelineContexFailed, taskInstance, logger, browser, page, body)
-		}
+	if !ok {
+		fError := fmt.Errorf("%s. taskInstance: %v, logger: %v, browser: %v, page: %v, body: %v",
+			Errors.PipelineContexFailed, taskInstance, logger, browser, page, body)
+		reject(t, fError)
+		t.Cancel(context, logger, fError)
+		return
+	}
+
+	t.SafeRun(context, logger, func() error {
 
 		err, newContext := t.Fn(context, taskInstance, logger, browser, page, body, doc)
 		if err != nil {
 			return err
 		}
 		next(newContext)
-		return err
+		return nil
 
 	}, func(err error) {
 
 		// without this will be leaked after panic.
 		if e := rod.Try(func() {
-			_, b := GetBrowserCtx(context)
-			b.MustClose()
+			browser.MustClose()
 		}); e != nil {
-			reject(t, e)
-			_, logCtx := log.Get(context)
-			t.Cancel(context, logCtx, e)
-
+			err = e
 			return
 		}
 
 		reject(t, err)
-		_, logCtx := log.Get(context)
-		t.Cancel(context, logCtx, err)
+		t.Cancel(context, logger, err)
 	})
 
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	b64 "encoding/base64"
 	"net/url"
+	"time"
 
 	"github.com/fatih/color"
 
@@ -92,8 +93,8 @@ func (t *TyphoonTask) GetSaveData(key string) string {
 	return t.Processor.Save.Project[key]
 }
 
-func (t *TyphoonTask) GetFetcherTimeout() int {
-	return t.Fetcher.Timeout
+func (t *TyphoonTask) GetFetcherTimeout() time.Duration {
+	return time.Duration(t.Fetcher.Timeout) * time.Second
 }
 
 func (t *TyphoonTask) GetFetcherUrl() string {

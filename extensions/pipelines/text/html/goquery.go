@@ -59,7 +59,7 @@ func (t *ResponseHtmlPipeline) Run(
 		return
 	}
 
-	t.SafeRun(func() error {
+	t.SafeRun(context, logger, func() error {
 		doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(*data)))
 		if err != nil {
 			return err

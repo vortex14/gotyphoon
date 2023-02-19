@@ -24,7 +24,7 @@ const (
 type RetryOptions struct {
 	Delay time.Duration
 
-	MaxCount int
+	MaxCount uint
 
 	Required            bool
 	OnlyRetryExceptions bool
@@ -40,6 +40,7 @@ type Options struct {
 func GetDefaultRetryOptions() *Options {
 	return &Options{Retry: RetryOptions{
 		MaxCount: 7,
+		Delay:    time.Duration(350) * time.Millisecond,
 	}}
 }
 
@@ -51,7 +52,7 @@ func GetNotRetribleOptions() *Options {
 	}
 }
 
-func GetCustomRetryOptions(count int, delay time.Duration) *Options {
+func GetCustomRetryOptions(count uint, delay time.Duration) *Options {
 	return &Options{
 		Retry: RetryOptions{
 			MaxCount: count,
@@ -91,33 +92,15 @@ type BasePipeline struct {
 	Cn func(ctx Context.Context, logger interfaces.LoggerInterface, err error)
 }
 
-func (p *BasePipeline) run(
+func (p *BasePipeline) SafeRun(
 	context Context.Context,
-	logCtx interfaces.LoggerInterface,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
-	next func(ctx Context.Context),
-) {
+	logger interfaces.LoggerInterface,
+	run func() error, catch func(err error)) {
 
-	if utils.IsNill(p.Fn) {
-		reject(p, Errors.LambdaRequired)
-		p.Cancel(context, logCtx, Errors.LambdaRequired)
-		return
-	}
-
-	err, newContext := p.Fn(context, logCtx)
-	if utils.NotNill(err) {
-		reject(p, err)
-		p.Cancel(context, logCtx, err)
-		return
-	}
-
-	next(newContext)
-}
-
-func (p *BasePipeline) SafeRun(run func() error, catch func(err error)) {
 	if p.Options == nil {
 		p.Options = GetDefaultRetryOptions()
 	}
+
 	defer func() {
 		if !p.NotIgnorePanic {
 			if r := recover(); r != nil {
@@ -127,11 +110,32 @@ func (p *BasePipeline) SafeRun(run func() error, catch func(err error)) {
 		}
 
 	}()
+	logger = log.PatchLogI(logger, map[string]interface{}{"max_retry": p.Options.Retry.MaxCount})
 	var err error
-	_ = retry.Do(func() error {
+	retryCount := 0
+	retryMaxCount := p.Options.Retry.MaxCount
+
+	eR := retry.Do(func() error {
+		retryCount++
+		//logger.Debugf("attempt: %d", retryCount)
+
+		var middlewareErr error
+
+		p.RunMiddlewareStack(context, func(middleware interfaces.MiddlewareInterface, _err error) {
+			middlewareErr = _err
+			logger.Error("exit from middleware stack . Error: ", err.Error())
+		}, func(returnedContext Context.Context) {
+			context = returnedContext
+		})
+
+		if middlewareErr != nil {
+			return middlewareErr
+		}
+
 		return run()
 	},
-		retry.Attempts(uint(p.Options.Retry.MaxCount)),
+		retry.Delay(p.Options.Retry.Delay),
+		retry.Attempts(retryMaxCount),
 		retry.RetryIf(func(_err error) bool {
 			var status bool
 			err = _err
@@ -143,11 +147,12 @@ func (p *BasePipeline) SafeRun(run func() error, catch func(err error)) {
 			default:
 				status = true
 			}
-
+			logger.Errorf("RetryIf .... %t, delay: %+v", status, p.Options.Retry.Delay)
 			return status
 		}),
 	)
-	if err != nil {
+
+	if err != nil || eR != nil {
 		catch(err)
 	}
 
@@ -169,16 +174,24 @@ func (p *BasePipeline) Run(
 		logCtx = logger
 	}
 	var pError error
-	p.SafeRun(func() error {
 
-		p.run(context, logCtx, func(pipeline interfaces.BasePipelineInterface, err error) {
+	p.SafeRun(context, logCtx, func() error {
 
-			pError = err
-		}, next)
+		if utils.IsNill(p.Fn) {
+			return Errors.LambdaRequired
+		}
 
-		return pError
+		err, newContext := p.Fn(context, logCtx)
+		if utils.NotNill(err) {
+			return err
+		}
+
+		next(newContext)
+
+		return nil
 
 	}, func(err error) {
+
 		pError = err
 		reject(p, pError)
 		p.Cancel(context, logCtx, pError)
@@ -211,7 +224,7 @@ func (p *BasePipeline) RunMiddlewareStack(
 		}
 
 		logger := log.New(log.D{"middleware": middleware.GetName(), "pipeline": p.GetName()})
-
+		logger.Debug("Run")
 		middleware.Pass(middlewareContext, logger, func(err error) {
 			if middleware.IsRequired() {
 				baseException = err
