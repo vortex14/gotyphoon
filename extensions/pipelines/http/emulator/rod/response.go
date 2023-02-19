@@ -99,7 +99,7 @@ func (t *HttpRodResponsePipeline) Run(
 		}
 
 		reject(t, err)
-		t.Cancel(context, logger, err)
+		//t.Cancel(context, logger, err)
 	})
 
 }

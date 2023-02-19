@@ -60,7 +60,7 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 			continue
 		}
 
-		pipeline.Run(mainContext, func(p interfaces.BasePipelineInterface, err error) {
+		pipeline.Run(middlewareContext, func(p interfaces.BasePipelineInterface, err error) {
 			switch err {
 			case Errors.ForceSkipPipelines:
 				forceSkip = true
@@ -73,6 +73,7 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 			}
 
 		}, func(returnedResultPipelineContext Context.Context) {
+			errStack = nil
 			mainContext = returnedResultPipelineContext
 		})
 
