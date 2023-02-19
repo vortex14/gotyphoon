@@ -3,6 +3,7 @@ package interfaces
 import (
 	"bytes"
 	"net/url"
+	"time"
 )
 
 type TaskInterface interface {
@@ -18,7 +19,7 @@ type TaskFetcherInterface interface {
 	AddHeader(key string, value string)
 	SetHeaders(headers map[string]string)
 
-	GetFetcherTimeout() int
+	GetFetcherTimeout() time.Duration
 	SetFetcherTimeout(seconds int)
 
 	GetFetcherUrl() string

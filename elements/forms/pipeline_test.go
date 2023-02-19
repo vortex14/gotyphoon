@@ -5,6 +5,8 @@ import (
 	Errors "errors"
 	"testing"
 
+	"github.com/avast/retry-go/v4"
+
 	"github.com/vortex14/gotyphoon/elements/models/label"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -106,15 +108,14 @@ func TestPanicPipeline(t *testing.T) {
 	})
 }
 
-func TestRetryPipeline(t *testing.T) {
+func TestPipelineRetry(t *testing.T) {
 	l := log.New(map[string]interface{}{"test": "test"})
 	ctx := log.NewCtx(context.Background(), l)
-
-	Convey("Create a pipeline with error operation", t, func() {
+	Convey("Create a pipeline with error operation and check retry process", t, func() {
 		countIter := 0
 		Pipe := &BasePipeline{
-			Options:  GetDefaultRetryOptions(),
-			MetaInfo: nil,
+			Options:  &Options{RetryOptions{MaxCount: 7}},
+			MetaInfo: &label.MetaInfo{Name: "base-pipeline"},
 			Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
 				logger.Debug("Run")
 				countIter += 1
@@ -122,6 +123,7 @@ func TestRetryPipeline(t *testing.T) {
 			},
 			Cn: func(ctx context.Context, logger interfaces.LoggerInterface, err error) {
 				logger.Error(err)
+				So(err, ShouldBeError)
 			},
 		}
 		var err error
@@ -134,30 +136,23 @@ func TestRetryPipeline(t *testing.T) {
 		So(countIter, ShouldEqual, 7)
 		So(err, ShouldBeError)
 	})
+}
 
-	Convey("Create a pipeline with error operation and only once retry", t, func() {
-		countIter := 0
-		Pipe := &BasePipeline{
-			Options:  GetNotRetribleOptions(),
-			MetaInfo: nil,
-			Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
-				logger.Debug("Run")
-				countIter += 1
-				return Errors.New("error operation"), nil
-			},
-			Cn: func(ctx context.Context, logger interfaces.LoggerInterface, err error) {
-				logger.Error(err)
-			},
+func TestRetry(t *testing.T) {
+
+	Convey("retry", t, func() {
+		count := 0
+
+		testCallback := func() error {
+			count += 1
+			return Errors.New("test main error")
 		}
-		var err error
-		Pipe.Run(ctx, func(pipeline interfaces.BasePipelineInterface, error error) {
-			err = error
+		e := retry.Do(testCallback, retry.Attempts(uint(10)))
 
-		}, func(ctx context.Context) {
-		})
-		l.Debug(err)
-		So(countIter, ShouldEqual, 1)
-		So(err, ShouldBeError)
+		So(e, ShouldBeError)
+
+		So(count, ShouldEqual, 10)
+
 	})
 
 }

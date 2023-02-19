@@ -60,39 +60,21 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 			continue
 		}
 
-		{
-			var failed bool
-			pipeline.RunMiddlewareStack(middlewareContext, func(middleware interfaces.MiddlewareInterface, err error) {
+		pipeline.Run(mainContext, func(p interfaces.BasePipelineInterface, err error) {
+			switch err {
+			case Errors.ForceSkipPipelines:
+				forceSkip = true
+				logger.Warning(Errors.ForceSkipPipelines.Error())
+			default:
 				errStack = err
-				failed = true
-				logger.Error("exit from middleware stack . Error: ", errStack.Error())
-			}, func(returnedContext Context.Context) {
-				middlewareContext = returnedContext
-			})
-			if failed {
-				break
+				logger.Error(fmt.Sprintf("Pipeline name: %s ; Exit from group. Error: %s", p.GetName(), err.Error()))
+				failedFlow = true
+				pipeline.Cancel(mainContext, logger, errStack)
 			}
-		}
 
-		mainContext = middlewareContext
-
-		{
-			pipeline.Run(mainContext, func(p interfaces.BasePipelineInterface, err error) {
-				switch err {
-				case Errors.ForceSkipPipelines:
-					forceSkip = true
-					logger.Warning(Errors.ForceSkipPipelines.Error())
-				default:
-					errStack = err
-					logger.Error(fmt.Sprintf("Pipeline name: %s ; Exit from group. Error: %s", p.GetName(), err.Error()))
-					failedFlow = true
-					pipeline.Cancel(mainContext, logger, errStack)
-				}
-
-			}, func(returnedResultPipelineContext Context.Context) {
-				mainContext = returnedResultPipelineContext
-			})
-		}
+		}, func(returnedResultPipelineContext Context.Context) {
+			mainContext = returnedResultPipelineContext
+		})
 
 	}
 

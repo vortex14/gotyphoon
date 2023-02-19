@@ -1,116 +1,143 @@
 package rod
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/go-rod/rod"
 
 	"github.com/vortex14/gotyphoon/elements/forms"
-	"github.com/vortex14/gotyphoon/elements/models/task"
-	Errors "github.com/vortex14/gotyphoon/errors"
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/extensions/pipelines"
+	netHttp "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
+	"github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 )
 
-type HttpRodRequestPipeline struct {
-	*forms.BasePipeline
-	*pipelines.TaskPipeline
-
-	Fn func(
-		context context.Context,
-		task interfaces.TaskInterface,
-		logger interfaces.LoggerInterface,
-
-		browser *rod.Browser,
-
-	) (error, context.Context)
-
-	Cn func(
-		err error,
-		context context.Context,
-		task interfaces.TaskInterface,
-		logger interfaces.LoggerInterface,
-	)
-}
-
-func (t *HttpRodRequestPipeline) UnpackRequestCtx(
-	ctx context.Context,
-) (bool, interfaces.TaskInterface, interfaces.LoggerInterface, *rod.Browser) {
-	okT, taskInstance := task.Get(ctx)
-	okL, logger := log.Get(ctx)
-
-	okB, browser := GetBrowserCtx(ctx)
-
-	if !okT || !okL || !okB {
-		return false, nil, nil, nil
-	}
-
-	return okL && okT && okB, taskInstance, logger, browser
-}
-
-func (t *HttpRodRequestPipeline) Run(
-	context context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
-	next func(ctx context.Context),
-) {
-
-	if t.Fn == nil {
-		reject(t, Errors.TaskPipelineRequiredHandler)
-		return
-	}
-
-	t.SafeRun(func() error {
-		ok, taskInstance, logger, browser := t.UnpackRequestCtx(context)
-
-		if !ok {
-			return fmt.Errorf("%s. taskInstance: %v, logger: %v, browser: %v", Errors.PipelineContexFailed, taskInstance, logger, browser)
-		}
-
-		err, newContext := t.Fn(context, taskInstance, logger, browser)
-		if err != nil {
-			return err
-		}
-		next(newContext)
-		return err
-
-	}, func(err error) {
-
-		// without this will be leaked after panic.
-		if e := rod.Try(func() {
-			_, b := GetBrowserCtx(context)
-			b.MustClose()
-		}); e != nil {
-			reject(t, e)
-			_, logCtx := log.Get(context)
-			t.Cancel(context, logCtx, e)
-
-			return
-		}
-
-		reject(t, err)
-		_, logCtx := log.Get(context)
-		t.Cancel(context, logCtx, err)
-	})
-
-}
-
-func (t *HttpRodRequestPipeline) Cancel(
-	context context.Context,
+func processElementsAfterPreLoad(
 	logger interfaces.LoggerInterface,
-	err error,
-) {
+	page *rod.Page,
+	detailOptions *DetailsOptions) {
 
-	if t.Cn == nil {
-		return
+	if detailOptions != nil {
+		if detailOptions.EventOptions.NetworkResponseReceived {
+			detailOptions.EventOptions.Wait()
+		}
 	}
 
-	ok, taskInstance, logger := t.UnpackCtx(context)
-	if !ok {
-		return
+	if detailOptions != nil && detailOptions.SleepAfter > 0 {
+		logger.Debug(fmt.Sprintf("Sleep after load: %f", detailOptions.SleepAfter))
+		time.Sleep(time.Duration(detailOptions.SleepAfter) * time.Second)
+	}
+	if detailOptions != nil && len(detailOptions.MustElement) > 0 {
+
+		if !detailOptions.Click && len(detailOptions.Input) == 0 {
+			page.MustElement(detailOptions.MustElement)
+		} else if detailOptions.Click {
+			page.MustElement(detailOptions.MustElement).MustClick()
+		} else if len(detailOptions.Input) > 0 {
+			ie := page.MustElement(detailOptions.MustElement).Input(detailOptions.Input)
+			if ie != nil {
+				logger.Error(ie)
+			}
+		}
+	}
+}
+
+func CreateRodRequestPipeline(
+	opts *forms.Options,
+	detailOptions *DetailsOptions) *pipelines.TaskPipeline {
+
+	_middlewares := make([]interfaces.MiddlewareInterface, 0)
+
+	if detailOptions.ProxyRequired {
+		_middlewares = append(_middlewares, netHttp.ConstructorProxySettingMiddleware(true))
 	}
 
-	t.Cn(err, context, taskInstance, logger)
+	return &pipelines.TaskPipeline{
+		BasePipeline: &forms.BasePipeline{
+			MetaInfo: &label.MetaInfo{
+				Name: "Rod http request",
+			},
+			Options:     opts,
+			Middlewares: _middlewares,
+		},
 
+		Fn: func(context context.Context,
+			task interfaces.TaskInterface,
+			logger interfaces.LoggerInterface) (error, context.Context) {
+
+			logger.Infof("RUN rod request proxy: %s , proxy_server: %s url: %s",
+				task.GetProxyAddress(), task.GetProxyServerUrl(), task.GetFetcherUrl())
+
+			detailOptions.Options.Timeout = task.GetFetcherTimeout()
+			detailOptions.Options.Proxy = task.GetProxyAddress()
+
+			browser := CreateBaseBrowser(detailOptions.Options)
+
+			var pErr error
+
+			errR := rod.Try(func() {
+
+				browser = browser.MustConnect()
+
+				page := browser.MustPage(task.GetFetcherUrl())
+
+				processElementsAfterPreLoad(logger, page, detailOptions)
+
+				logger.Debug("the page loaded")
+				context = NewPageCtx(context, page)
+
+				page.MustWaitLoad()
+				body := page.MustHTML()
+
+				doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(body)))
+				if err != nil {
+					pErr = fmt.Errorf("goquery: %s", err.Error())
+				}
+
+				context = html.NewHtmlCtx(context, doc)
+				context = NewBodyResponse(context, &body)
+
+				context = NewBrowserCtx(context, browser)
+
+			})
+
+			if errR != nil {
+				pErr = errR
+
+				if cE := rod.Try(func() {
+					browser.MustClose()
+				}); cE != nil {
+					pErr = cE
+				}
+
+			}
+
+			return pErr, context
+		},
+		Cn: func(err error,
+			context context.Context,
+			task interfaces.TaskInterface,
+			logger interfaces.LoggerInterface) {
+
+			if task.GetSaveData("SKIP_CN") == "skip" {
+				return
+			}
+
+			if len(task.GetProxyAddress()) == 0 {
+				return
+			}
+
+			// Block current proxy
+			if netHttp.MakeBlockRequest(logger, task) != nil {
+				logger.Error("Fatal exception. Impossible to block the proxy.")
+				os.Exit(1)
+			}
+		},
+	}
 }

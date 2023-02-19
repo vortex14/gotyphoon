@@ -53,12 +53,21 @@ func (t *TaskPipeline) Run(
 		return
 	}
 
-	err, newContext := t.Fn(context, taskInstance, logger)
-	if err != nil {
+	t.SafeRun(context, logger, func() error {
+		err, newContext := t.Fn(context, taskInstance, logger)
+		if err != nil {
+			return err
+		}
+
+		next(newContext)
+
+		return nil
+
+	}, func(err error) {
 		reject(t, err)
-		return
-	}
-	next(newContext)
+		t.Cancel(context, logger, err)
+	})
+
 }
 
 func (t *TaskPipeline) Cancel(
@@ -73,6 +82,7 @@ func (t *TaskPipeline) Cancel(
 
 	ok, taskInstance, _logger := t.UnpackCtx(context)
 	if !ok {
+		logger.Error(Errors.PipelineContexFailed)
 		return
 	}
 

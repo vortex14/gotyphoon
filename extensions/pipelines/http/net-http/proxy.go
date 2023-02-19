@@ -44,12 +44,15 @@ func ConstructorProxySettingMiddleware(required bool) interfaces.MiddlewareInter
 				return
 			}
 
+			logger.Debug("Init proxy !")
+
 			client := GetHttpClient(task)
 
 			proxyServer := task.GetProxyServerUrl()
 
 			if len(proxyServer) == 0 {
 				reject(Errors.ProxyServerNotFound)
+				logger.Error("Not found proxy server")
 				return
 			}
 

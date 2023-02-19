@@ -1,6 +1,8 @@
 package rod
 
 import (
+	"time"
+
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/devices"
 	"github.com/go-rod/rod/lib/proto"
@@ -21,11 +23,20 @@ func (e *EventOptions) Wait() {
 
 }
 
+type Options struct {
+	Debug   bool
+	Proxy   string
+	Timeout time.Duration
+	Device  devices.Device
+}
+
 type DetailsOptions struct {
-	EventOptions EventOptions
-	Device       *devices.Device
-	SleepAfter   float32
-	MustElement  string
-	Click        bool
-	Input        string
+	Options
+
+	EventOptions  EventOptions
+	ProxyRequired bool
+	Click         bool
+	MustElement   string
+	Input         string
+	SleepAfter    float32
 }
