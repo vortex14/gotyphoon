@@ -4,13 +4,14 @@ import (
 	Context "context"
 	"errors"
 	"fmt"
-	"github.com/avast/retry-go/v4"
 	"time"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/vortex14/gotyphoon/elements/models/awaitabler"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/utils"
+	"golang.org/x/sync/semaphore"
 
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
@@ -34,7 +35,8 @@ type RetryOptions struct {
 }
 
 type Options struct {
-	Retry RetryOptions
+	Retry         RetryOptions
+	MaxConcurrent int64
 }
 
 func GetDefaultRetryOptions() *Options {
@@ -63,10 +65,11 @@ func GetCustomRetryOptions(count uint, delay time.Duration) *Options {
 
 type BasePipeline struct {
 	*label.MetaInfo
-	*awaitabler.Object
+	awaitabler.Object
 
 	Options        *Options
 	NotIgnorePanic bool
+	sem            *semaphore.Weighted
 
 	//stageIndex    int32
 
@@ -101,14 +104,27 @@ func (p *BasePipeline) SafeRun(
 		p.Options = GetDefaultRetryOptions()
 	}
 
+	if p.sem == nil && p.Options.MaxConcurrent > 0 {
+		p.sem = semaphore.NewWeighted(p.Options.MaxConcurrent)
+	}
+
+	if p.sem != nil {
+		if !p.sem.TryAcquire(1) {
+			logger.Error(Errors.PipelineCrowded)
+			catch(Errors.PipelineCrowded)
+			return
+		}
+
+	}
+
 	defer func() {
 		if !p.NotIgnorePanic {
 			if r := recover(); r != nil {
 				panicE := errors.New(fmt.Sprintf("%s: %s", PanicException, r))
 				catch(panicE)
+				p.sem.Release(1)
 			}
 		}
-
 	}()
 	logger = log.PatchLogI(logger, map[string]interface{}{"max_retry": p.Options.Retry.MaxCount})
 	retryCount := 0
@@ -154,6 +170,10 @@ func (p *BasePipeline) SafeRun(
 		catch(eR)
 	}
 
+	if p.sem != nil {
+		p.sem.Release(1)
+	}
+
 }
 
 func (p *BasePipeline) Run(
@@ -197,9 +217,10 @@ func (p *BasePipeline) Run(
 }
 
 func (p *BasePipeline) Cancel(ctx Context.Context, logger interfaces.LoggerInterface, err error) {
-	if utils.IsNill(p.Cn) {
+	if p.Cn == nil {
 		return
 	}
+	logger.Error(p.Cn, utils.IsNill(p.Cn))
 	p.Cn(ctx, logger, err)
 }
 

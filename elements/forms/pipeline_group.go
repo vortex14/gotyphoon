@@ -3,8 +3,10 @@ package forms
 import (
 	Context "context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
+	"golang.org/x/sync/semaphore"
 
 	// /* ignore for building amd64-linux
 	//	"fmt"
@@ -19,8 +21,12 @@ import (
 type PipelineGroup struct {
 	*label.MetaInfo
 
+	sem *semaphore.Weighted
+
 	LambdaMap   map[string]interfaces.LambdaInterface
 	PyLambdaMap map[string]interfaces.LambdaInterface
+
+	Options *Options
 
 	Stages    []interfaces.BasePipelineInterface
 	Consumers map[string]interfaces.ConsumerInterface
@@ -35,6 +41,19 @@ func (g *PipelineGroup) GetFirstPipelineName() string {
 	return firstStage.GetName()
 }
 
+func (g *PipelineGroup) initSemaphore() bool {
+	status := true
+	if g.sem == nil && g.Options.MaxConcurrent > 0 {
+		g.sem = semaphore.NewWeighted(g.Options.MaxConcurrent)
+	}
+
+	if g.sem != nil && !g.sem.TryAcquire(1) {
+		status = false
+	}
+
+	return status
+}
+
 func (g *PipelineGroup) Run(context Context.Context) error {
 
 	var forceSkip bool
@@ -44,7 +63,13 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 
 	middlewareContext, mainContext = context, context
 
-	mainContext = log.PatchCtx(mainContext, log.D{"group": g.GetName()})
+	mainContext = log.PatchCtx(mainContext, log.D{"group": g.GetName(), "call_id": uuid.New().String()})
+
+	semStatus := g.initSemaphore()
+
+	if !semStatus {
+		return Errors.PipelineCrowded
+	}
 
 	var errStack error
 	for index, pipeline := range g.Stages {
@@ -77,6 +102,10 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 			mainContext = returnedResultPipelineContext
 		})
 
+	}
+
+	if g.sem != nil {
+		g.sem.Release(1)
 	}
 
 	return errStack

@@ -3,9 +3,11 @@ package forms
 import (
 	"context"
 	Errors "errors"
-	"testing"
-
 	"github.com/avast/retry-go/v4"
+	"github.com/google/uuid"
+	"golang.org/x/sync/semaphore"
+	"testing"
+	"time"
 
 	"github.com/vortex14/gotyphoon/elements/models/label"
 
@@ -114,7 +116,7 @@ func TestPipelineRetry(t *testing.T) {
 	Convey("Create a pipeline with error operation and check retry process", t, func() {
 		countIter := 0
 		Pipe := &BasePipeline{
-			Options:  &Options{RetryOptions{MaxCount: 7}},
+			Options:  &Options{Retry: RetryOptions{MaxCount: 7}, MaxConcurrent: 2},
 			MetaInfo: &label.MetaInfo{Name: "base-pipeline"},
 			Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
 				logger.Debug("Run")
@@ -155,4 +157,45 @@ func TestRetry(t *testing.T) {
 
 	})
 
+}
+
+func TestSemPipeline(t *testing.T) {
+	//cuncurrentCall := 0
+	p := BasePipeline{
+		Options: &Options{MaxConcurrent: 1},
+		Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
+			logger.Info("Run")
+			time.Sleep(10 * time.Second)
+
+			return nil, ctx
+		},
+	}
+
+	for i := 0; i < 10; i++ {
+		l := log.New(map[string]interface{}{"number": i, "uuid": uuid.New().String()})
+		ctx := log.NewCtx(context.Background(), l)
+		go p.Run(ctx, func(pipeline interfaces.BasePipelineInterface, err error) {
+			l.Error(err)
+		}, func(ctx context.Context) {
+			l.Debug("a good data")
+		})
+
+		//if !p.Try() {
+		//	l.Error("Busy !!")
+		//}
+
+	}
+
+	time.Sleep(60 * time.Second)
+
+	//p.Await()
+
+}
+
+func TestSem(t *testing.T) {
+	s := semaphore.NewWeighted(10)
+
+	e := s.Acquire(context.Background(), 1)
+
+	println(e)
 }
