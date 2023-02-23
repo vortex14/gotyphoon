@@ -43,7 +43,8 @@ func (g *PipelineGroup) GetFirstPipelineName() string {
 
 func (g *PipelineGroup) initSemaphore() bool {
 	status := true
-	if g.sem == nil && g.Options.MaxConcurrent > 0 {
+
+	if g.Options != nil && g.sem == nil && g.Options.MaxConcurrent > 0 {
 		g.sem = semaphore.NewWeighted(g.Options.MaxConcurrent)
 	}
 
