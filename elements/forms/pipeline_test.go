@@ -1,17 +1,17 @@
 package forms
 
 import (
-	"context"
-	Errors "errors"
 	"github.com/avast/retry-go/v4"
 	"github.com/google/uuid"
 	"golang.org/x/sync/semaphore"
+
+	"context"
+	Errors "errors"
 	"testing"
 	"time"
 
-	"github.com/vortex14/gotyphoon/elements/models/label"
-
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
 )
