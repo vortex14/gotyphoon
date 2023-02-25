@@ -86,6 +86,8 @@ func CreateRodRequestPipeline(
 
 				browser = browser.MustConnect()
 
+				browser.MustIgnoreCertErrors(true)
+
 				page := browser.MustPage(task.GetFetcherUrl())
 
 				processElementsAfterPreLoad(logger, page, detailOptions)
