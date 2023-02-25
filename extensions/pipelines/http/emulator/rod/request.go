@@ -60,6 +60,7 @@ func CreateRodRequestPipeline(
 
 	return &pipelines.TaskPipeline{
 		BasePipeline: &forms.BasePipeline{
+			NotIgnorePanic: false,
 			MetaInfo: &label.MetaInfo{
 				Name: "Rod http request",
 			},
@@ -129,7 +130,7 @@ func CreateRodRequestPipeline(
 				return
 			}
 
-			if len(task.GetProxyAddress()) == 0 {
+			if len(task.GetProxyAddress()) == 0 || len(task.GetProxyServerUrl()) == 0 {
 				return
 			}
 

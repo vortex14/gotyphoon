@@ -1,6 +1,8 @@
 package rod
 
 import (
+	"strings"
+
 	. "github.com/go-rod/rod/lib/launcher"
 )
 
@@ -32,7 +34,13 @@ func CreateLauncher(options Options) *Launcher {
 	}
 
 	if len(options.Proxy) > 0 {
-		_launcher.Proxy(options.Proxy)
+		_proxy := strings.Split(options.Proxy, "@")
+		if len(_proxy) == 2 {
+			_launcher.Proxy(_proxy[1])
+		} else {
+			_launcher.Proxy(options.Proxy)
+		}
+
 	}
 
 	return _launcher
