@@ -60,7 +60,7 @@ func CreateRodRequestPipeline(
 
 	return &pipelines.TaskPipeline{
 		BasePipeline: &forms.BasePipeline{
-			NotIgnorePanic: true,
+			NotIgnorePanic: false,
 			MetaInfo: &label.MetaInfo{
 				Name: "Rod http request",
 			},
