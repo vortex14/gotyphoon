@@ -2,12 +2,14 @@ package rod
 
 import (
 	"errors"
+	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/elements/models/task"
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
 	"github.com/vortex14/gotyphoon/interfaces"
+	"regexp"
 
 	"context"
 	"testing"
@@ -50,12 +52,19 @@ func TestCreateBrowser(t *testing.T) {
 
 }
 
+func TestRegex(t *testing.T) {
+	r, _ := regexp.Compile("//([a-z-0-9A-Z]+):([a-zA-Z0-9]+)@")
+	d := r.FindAllStringSubmatch("http://44dfgdfg-982:dfhd@37.19.222.193", 1)
+	println(fmt.Sprintf("%d", len(d)))
+}
+
 func TestCreateRodPipeline(t *testing.T) {
 
 	Convey("create a new pipeline", t, func() {
 		_task := fake.CreateDefaultTask()
-		_task.SetProxyAddress("http://154.53.91.14:8800")
-		_task.SetProxyServerUrl("http://proxy-manager.typhoon-s1.ru")
+		_task.SetProxyAddress("http://localhost:8888")
+		//_task.SetProxyAddress("http://ukehiuwv-982:8htmpmjvdzve@p.webshare.io")
+		//_task.SetProxyServerUrl("http://proxy-manager.typhoon-s1.ru")
 		p := CreateRodRequestPipeline(
 			forms.GetNotRetribleOptions(),
 			&DetailsOptions{
@@ -68,7 +77,7 @@ func TestCreateRodPipeline(t *testing.T) {
 				SleepAfter: 10,
 			})
 
-		_task.SetFetcherUrl("https://2ip.ru/")
+		_task.SetFetcherUrl("https://google.com")
 		ctx := task.NewTaskCtx(_task)
 		ctx = log.NewCtx(ctx, log.New(map[string]interface{}{"pipeline": "rod-request"}))
 

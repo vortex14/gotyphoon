@@ -122,7 +122,9 @@ func (p *BasePipeline) SafeRun(
 			if r := recover(); r != nil {
 				panicE := errors.New(fmt.Sprintf("%s: %s", PanicException, r))
 				catch(panicE)
-				p.sem.Release(1)
+				if p.sem != nil {
+					p.sem.Release(1)
+				}
 			}
 		}
 	}()
