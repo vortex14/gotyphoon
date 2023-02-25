@@ -21,8 +21,6 @@ func CreateBaseBrowser(options Options) *rod.Browser {
 
 	browser := rod.New().ControlURL(CreateLauncher(options).MustLaunch())
 
-	browser.MustIgnoreCertErrors(true)
-
 	if options.Debug {
 		browser.Trace(true)
 		browser.SlowMotion(1 * time.Second)

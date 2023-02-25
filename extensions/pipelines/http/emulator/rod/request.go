@@ -60,7 +60,7 @@ func CreateRodRequestPipeline(
 
 	return &pipelines.TaskPipeline{
 		BasePipeline: &forms.BasePipeline{
-			NotIgnorePanic: false,
+			NotIgnorePanic: true,
 			MetaInfo: &label.MetaInfo{
 				Name: "Rod http request",
 			},
@@ -85,6 +85,8 @@ func CreateRodRequestPipeline(
 			errR := rod.Try(func() {
 
 				browser = browser.MustConnect()
+
+				browser.MustIgnoreCertErrors(true)
 
 				page := browser.MustPage(task.GetFetcherUrl())
 
