@@ -62,9 +62,9 @@ func TestCreateRodPipeline(t *testing.T) {
 
 	Convey("create a new pipeline", t, func() {
 		_task := fake.CreateDefaultTask()
-		_task.SetProxyAddress("http://localhost:8888")
+		//_task.SetProxyAddress("http://localhost:8888")
 		//_task.SetProxyAddress("http://ukehiuwv-982:8htmpmjvdzve@p.webshare.io")
-		//_task.SetProxyServerUrl("http://proxy-manager.typhoon-s1.ru")
+		_task.SetProxyServerUrl("http://proxy-manager.typhoon-s1.ru")
 		p := CreateRodRequestPipeline(
 			forms.GetNotRetribleOptions(),
 			&DetailsOptions{

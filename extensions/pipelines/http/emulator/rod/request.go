@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/log"
 	"os"
 	"time"
 
@@ -77,6 +78,11 @@ func CreateRodRequestPipeline(
 
 			detailOptions.Options.Timeout = task.GetFetcherTimeout()
 			detailOptions.Options.Proxy = task.GetProxyAddress()
+
+			if len(task.GetProxyAddress()) > 0 {
+				context = log.PatchCtx(context, map[string]interface{}{"proxy": task.GetProxyAddress()})
+				_, logger = log.Get(context)
+			}
 
 			browser := CreateBaseBrowser(detailOptions.Options)
 
