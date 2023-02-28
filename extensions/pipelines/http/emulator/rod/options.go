@@ -24,10 +24,11 @@ func (e *EventOptions) Wait() {
 }
 
 type Options struct {
-	Debug   bool
-	Proxy   string
-	Timeout time.Duration
-	Device  devices.Device
+	Debug       bool
+	Proxy       string
+	Timeout     time.Duration
+	Device      devices.Device
+	RandomAgent bool
 }
 
 type DetailsOptions struct {

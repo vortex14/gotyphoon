@@ -44,9 +44,9 @@ func TestCreateBrowser(t *testing.T) {
 	}
 	log.InitD()
 
-	browser := CreateBaseBrowser(opts).MustConnect()
+	_, browser := CreateBaseBrowser(context.Background(), opts)
 
-	_ = browser.MustPage("https://www.wikipedia.org/")
+	_ = browser.MustConnect().MustPage("https://www.wikipedia.org/")
 	time.Sleep(5 * time.Second)
 	_ = browser.Close()
 
@@ -62,6 +62,8 @@ func TestCreateRodPipeline(t *testing.T) {
 
 	Convey("create a new pipeline", t, func() {
 		_task := fake.CreateDefaultTask()
+		d := devices.Device{}
+		d.UserAgent = "random"
 		//_task.SetProxyAddress("http://localhost:8888")
 		//_task.SetProxyAddress("http://ukehiuwv-982:8htmpmjvdzve@p.webshare.io")
 		_task.SetProxyServerUrl("http://proxy-manager.typhoon-s1.ru")
@@ -70,9 +72,10 @@ func TestCreateRodPipeline(t *testing.T) {
 			&DetailsOptions{
 				ProxyRequired: true,
 				Options: Options{
-					Debug:   true,
-					Device:  devices.IPadPro,
-					Timeout: 600 * time.Second,
+					RandomAgent: true,
+					Debug:       true,
+					Device:      d,
+					Timeout:     600 * time.Second,
 				},
 				SleepAfter: 10,
 			})
