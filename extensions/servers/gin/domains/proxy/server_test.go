@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"fmt"
+	net_http "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,7 +17,7 @@ import (
 
 	"github.com/vortex14/gotyphoon/elements/models/timer"
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
-	net_http "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
+	netHttp "github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	net_html "github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
@@ -440,5 +441,20 @@ func TestGetConcurrentProxyCollection(t *testing.T) {
 			So(coll.CountByLocked(endpointURL.Hostname()), ShouldEqual, 0)
 
 		})
+	})
+}
+
+func TestMakeBlockProxy(t *testing.T) {
+	Convey("block the proxy", t, func() {
+		task := fake.CreateDefaultTask()
+
+		task.SetFetcherUrl("https://google.com")
+
+		err := netHttp.MakeRequestThroughProxy(task, func(logger interfaces.LoggerInterface,
+			response *http.Response, doc *goquery.Document) bool {
+
+			return !(response.StatusCode > 400)
+		})
+		So(err, ShouldBeNil)
 	})
 }
