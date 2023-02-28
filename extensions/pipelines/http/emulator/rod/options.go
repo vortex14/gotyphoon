@@ -29,6 +29,7 @@ type Options struct {
 	Timeout     time.Duration
 	Device      devices.Device
 	RandomAgent bool
+	Screen      devices.Screen
 }
 
 type DetailsOptions struct {

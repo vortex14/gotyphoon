@@ -33,7 +33,13 @@ func getDeviceOfBrowser(options Options) devices.Device {
 	} else {
 		device = options.Device
 	}
+
+	if options.Screen.DevicePixelRatio != 0 {
+		device.Screen = options.Screen
+	}
+
 	return device
+
 }
 
 func CreateBaseBrowser(context context.Context, options Options) (context.Context, *rod.Browser) {
