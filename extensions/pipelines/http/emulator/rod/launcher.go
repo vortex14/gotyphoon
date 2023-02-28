@@ -22,7 +22,8 @@ func createLauncher() *Launcher {
 		Set(DisableGPU, "true").
 		Set(HideScrollBars, "true").
 		Set(DisableCrashReporter, "true").
-		Set(DisableNotifications, "true")
+		Set(DisableNotifications, "true").
+		NoSandbox(true)
 }
 
 func CreateLauncher(options Options) *Launcher {
