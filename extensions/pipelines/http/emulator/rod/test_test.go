@@ -76,6 +76,17 @@ func TestCreateRodPipeline(t *testing.T) {
 					Debug:       true,
 					Device:      d,
 					Timeout:     600 * time.Second,
+					Screen: devices.Screen{
+						DevicePixelRatio: 2,
+						Horizontal: devices.ScreenSize{
+							Width:  1366,
+							Height: 1024,
+						},
+						Vertical: devices.ScreenSize{
+							Width:  1024,
+							Height: 1366,
+						},
+					},
 				},
 				SleepAfter: 10,
 			})
