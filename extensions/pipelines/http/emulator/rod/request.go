@@ -80,11 +80,16 @@ func CreateRodRequestPipeline(
 			detailOptions.Options.Proxy = task.GetProxyAddress()
 
 			if len(task.GetProxyAddress()) > 0 {
-				context = log.PatchCtx(context, map[string]interface{}{"proxy": task.GetProxyAddress()})
-				_, logger = log.Get(context)
+				context = log.PatchCtx(context, map[string]interface{}{
+					"proxy": task.GetProxyAddress(),
+				})
 			}
 
-			browser := CreateBaseBrowser(detailOptions.Options)
+			var browser *rod.Browser
+
+			context, browser = CreateBaseBrowser(context, detailOptions.Options)
+
+			_, logger = log.Get(context)
 
 			var pErr error
 
