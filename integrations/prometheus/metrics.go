@@ -27,7 +27,7 @@ type Metric struct {
 }
 
 type TyphoonMetric struct {
-	Metric
+	*Metric
 
 	Active bool
 
@@ -46,45 +46,82 @@ type MetricsInterface interface {
 }
 
 type MetricsConfig struct {
-	Runtime RunTime `yaml:"runtime" json:"runtime"`
+	Runtime                    RunTime `yaml:"runtime" json:"runtime"`
+	ProjectName, ComponentName string
 }
 
 type Metrics struct {
 	singleton.Singleton
 	Config   MetricsConfig
-	measurer *measurer
+	metrics  map[string]*TyphoonMetric
+	measurer Measurer
 
 	//List map[string]TyphoonMetric `yaml:"list" json:"list"`
 }
 
-func (tm *Metrics) init() {
-	tm.Construct(func() {
-
+func (m *Metrics) init() {
+	m.Construct(func() {
+		m.metrics = make(map[string]*TyphoonMetric)
+		m.measurer = NewMeasurer(m.Config)
 	})
+
+	for metricName, metricInfo := range m.metrics {
+
+		if metricInfo.Active {
+			continue
+		}
+
+		switch metricInfo.Type {
+		case TypeSummaryVec:
+			m.measurer.AddSummaryVec(metricName, metricInfo.Description, metricInfo.Labels...)
+		case TypeSummary:
+			m.measurer.AddSummary(metricName, metricInfo.Description)
+		case TypeCounterVec:
+			m.measurer.AddCounterVec(metricName, metricInfo.Description, metricInfo.Labels...)
+		case TypeCounter:
+			m.measurer.AddCounter(metricName, metricInfo.Description)
+		case TypeGaugeVec:
+			m.measurer.AddGaugeVec(metricName, metricInfo.Description, metricInfo.Labels...)
+		case TypeGauge:
+			m.measurer.AddGauge(metricName, metricInfo.Description)
+		}
+	}
+
 }
 
-func (tm *Metrics) AddNewMetric(metric *Metric) {
+func (m *Metrics) AddNewMetric(metric *Metric) {
+	m.init()
+
+	if _, ok := m.metrics[metric.Name]; !ok {
+
+		m.metrics[metric.Name] = &TyphoonMetric{
+			Metric:        metric,
+			ComponentName: m.Config.ComponentName,
+			ProjectName:   m.Config.ProjectName,
+		}
+
+	}
 
 }
 
-func (tm *Metrics) AddMetric(metric ...*Metric) {
+func (m *Metrics) AddMetric(metric ...*Metric) {
 	//for _, _metric := range metric {
 	//
 	//}
 }
 
-func (tm *Metrics) SetException(data *MetricData) {
+func (m *Metrics) SetException(data *MetricData) {
 
 }
 
-func (tm *Metrics) Update(data *MetricData) {
+func (m *Metrics) Update(data *MetricData) {
 
 }
 
-func (tm *Metrics) Add(data *MetricData) {
+func (m *Metrics) Add(data *MetricData) {
 
 }
 
-func (tm *Metrics) Dec(data *MetricData) {
+func (m *Metrics) Dec(data *MetricData) {
 
 }

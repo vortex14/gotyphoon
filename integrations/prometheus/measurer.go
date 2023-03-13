@@ -3,19 +3,19 @@ package prometheus
 import "github.com/prometheus/client_golang/prometheus"
 
 type Measurer interface {
-	AddSummaryVec(name string, labels ...string)
+	AddSummaryVec(name, description string, labels ...string)
 	SummaryVec(name string) *prometheus.SummaryVec
-	AddSummary(name string)
+	AddSummary(name, description string)
 	Summary(name string) prometheus.Summary
 
-	AddCounterVec(name string, labels ...string)
+	AddCounterVec(name, description string, labels ...string)
 	CounterVec(name string) *prometheus.CounterVec
 	AddCounter(name, description string)
 	Counter(name string) prometheus.Counter
 
-	AddGaugeVec(name string, labels ...string)
+	AddGaugeVec(name, description string, labels ...string)
 	GaugeVec(name string) *prometheus.GaugeVec
-	AddGauge(name string)
+	AddGauge(name, description string)
 	Gauge(name string) prometheus.Gauge
 }
 
@@ -30,9 +30,10 @@ type measurer struct {
 	runtimeMetricsCollector *runtimeMetricsCollector
 }
 
-func (m *measurer) AddSummaryVec(name string, labels ...string) {
+func (m *measurer) AddSummaryVec(name, description string, labels ...string) {
 	m.summaryVec[name] = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Name: name,
+		Help: description,
 	}, labels)
 }
 
@@ -40,9 +41,10 @@ func (m *measurer) SummaryVec(name string) *prometheus.SummaryVec {
 	return m.summaryVec[name]
 }
 
-func (m *measurer) AddSummary(name string) {
+func (m *measurer) AddSummary(name, description string) {
 	m.summary[name] = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name: name,
+		Help: description,
 	})
 }
 
@@ -50,9 +52,10 @@ func (m *measurer) Summary(name string) prometheus.Summary {
 	return m.summary[name]
 }
 
-func (m *measurer) AddCounterVec(name string, labels ...string) {
+func (m *measurer) AddCounterVec(name, description string, labels ...string) {
 	m.counterVec[name] = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: name,
+		Help: description,
 	}, labels)
 }
 
@@ -71,9 +74,10 @@ func (m *measurer) Counter(name string) prometheus.Counter {
 	return m.counter[name]
 }
 
-func (m *measurer) AddGaugeVec(name string, labels ...string) {
+func (m *measurer) AddGaugeVec(name, description string, labels ...string) {
 	m.gaugeVec[name] = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: name,
+		Help: description,
 	}, labels)
 }
 
@@ -81,9 +85,10 @@ func (m *measurer) GaugeVec(name string) *prometheus.GaugeVec {
 	return m.gaugeVec[name]
 }
 
-func (m *measurer) AddGauge(name string) {
+func (m *measurer) AddGauge(name, description string) {
 	m.gauge[name] = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: name,
+		Help: description,
 	})
 }
 

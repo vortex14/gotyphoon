@@ -2,7 +2,6 @@ package prometheus
 
 import (
 	Context "context"
-	"github.com/go-rod/rod"
 	"github.com/vortex14/gotyphoon/ctx"
 )
 
@@ -49,11 +48,17 @@ const (
 )
 
 const (
-	METRICS = "metrics"
+	METRICS = "METRICS"
 )
 
-func NewBrowserCtx(context Context.Context, browser *rod.Browser) Context.Context {
-	return ctx.Update(context, METRICS, browser)
+func NewMetricsCtx(context Context.Context, metrics MetricsInterface) Context.Context {
+	return ctx.Update(context, METRICS, metrics)
+}
+
+func GetMetricsCtx(context Context.Context) (bool, MetricsInterface) {
+	metrics, ok := ctx.Get(context, METRICS).(MetricsInterface)
+	return ok, metrics
+
 }
 
 //func NewBodyResponse(context Context.Context, body *string) Context.Context {
@@ -78,4 +83,3 @@ func NewBrowserCtx(context Context.Context, browser *rod.Browser) Context.Contex
 //	page, ok := ctx.Get(context, PAGE).(*rod.Page)
 //	return ok, page
 //}
-
