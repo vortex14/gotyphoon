@@ -267,3 +267,15 @@ func (p *BasePipeline) RunMiddlewareStack(
 		next(middlewareContext)
 	}
 }
+
+func InsertPipeline(
+	a []interfaces.BasePipelineInterface,
+	index int, value interfaces.BasePipelineInterface) []interfaces.BasePipelineInterface {
+
+	if len(a) == index {
+		return append(a, value)
+	}
+	a = append(a[:index+1], a[index:]...)
+	a[index] = value
+	return a
+}
