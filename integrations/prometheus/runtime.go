@@ -80,7 +80,7 @@ func (m *runtimeMetricsCollector) Run() {
 func (m *runtimeMetricsCollector) collect() {
 	if m.config.Runtime.CPU {
 		m.measurer.Gauge(RuntimeCpuNum).Set(float64(runtime.NumCPU()))
-		m.measurer.Gauge(RuntimeCpuGorutine).Set(float64(runtime.NumGoroutine()))
+		m.measurer.Gauge(RuntimeCpuGoroutine).Set(float64(runtime.NumGoroutine()))
 		m.measurer.Gauge(RuntimeCpuCgoCall).Set(float64(runtime.NumCgoCall()))
 	}
 

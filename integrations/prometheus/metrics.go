@@ -12,7 +12,7 @@ type Measurer interface {
 
 	AddCounterVec(name string, labels ...string)
 	CounterVec(name string) *prometheus.CounterVec
-	AddCounter(name string)
+	AddCounter(name, description string)
 	Counter(name string) prometheus.Counter
 
 	AddGaugeVec(name string, labels ...string)
@@ -21,17 +21,46 @@ type Measurer interface {
 	Gauge(name string) prometheus.Gauge
 }
 
+type RunTime struct {
+	Duration string `yaml:"duration" json:"duration"`
+	CPU      bool   `yaml:"cpu" json:"cpu"`
+	Mem      bool   `yaml:"mem" json:"mem"`
+	GC       bool   `yaml:"gc" json:"gc"`
+}
+
+type MetricData struct {
+	Name   string   `yaml:"name" json:"name"`
+	Labels []string `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Value  float32  `yaml:"value" json:"value"`
+
+	AutoIncrement bool
+	AutoDecrement bool
+}
+
+type Metric struct {
+	MetricData
+	Type        string `yaml:"type" json:"type"`
+	Description string `yaml:"description" json:"description"`
+}
+
+type TyphoonMetric struct {
+	Metric
+
+	Active bool
+
+	ProjectName    string
+	ComponentName  string
+	PrometheusPath string
+}
+
 type Metrics struct {
-	Runtime struct {
-		Duration string `yaml:"duration" json:"duration" mapstructure:"duration"`
-		CPU      bool   `yaml:"cpu" json:"cpu" mapstructure:"cpu"`
-		Mem      bool   `yaml:"mem" json:"mem" mapstructure:"mem"`
-		GC       bool   `yaml:"gc" json:"gc" mapstructure:"gc"`
-	} `yaml:"runtime" json:"runtime" mapstructure:"runtime"`
-	List map[string]struct {
-		Type   string   `yaml:"type" json:"type" mapstructure:"type"`
-		Labels []string `yaml:"labels,omitempty" json:"labels,omitempty" mapstructure:"labels,omitempty"`
-	} `yaml:"list" json:"list" mapstructure:"list"`
+	Runtime RunTime `yaml:"runtime" json:"runtime"`
+
+	List map[string]TyphoonMetric `yaml:"list" json:"list"`
+}
+
+func (tm *TyphoonMetric) AddNewMetric(metric Metric) {
+
 }
 
 type measurer struct {
@@ -75,8 +104,9 @@ func (m *measurer) CounterVec(name string) *prometheus.CounterVec {
 	return m.counterVec[name]
 }
 
-func (m *measurer) AddCounter(name string) {
+func (m *measurer) AddCounter(name, description string) {
 	m.counter[name] = prometheus.NewCounter(prometheus.CounterOpts{
+		Help: description,
 		Name: name,
 	})
 }
@@ -124,7 +154,7 @@ func NewMeasurer(config Metrics) Measurer {
 		case TypeCounterVec:
 			m.AddCounterVec(metricName, metricInfo.Labels...)
 		case TypeCounter:
-			m.AddCounter(metricName)
+			m.AddCounter(metricName, metricInfo.Description)
 		case TypeGaugeVec:
 			m.AddGaugeVec(metricName, metricInfo.Labels...)
 		case TypeGauge:
