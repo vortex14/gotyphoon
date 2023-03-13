@@ -52,7 +52,7 @@ type runtimeMetrics struct {
 }
 
 type runtimeMetricsCollector struct {
-	config   Metrics
+	config   MetricsConfig
 	measurer Measurer
 	Done     <-chan struct{}
 }
