@@ -159,6 +159,36 @@ func TestRetry(t *testing.T) {
 
 }
 
+func TestRetryDelayPipeline(t *testing.T) {
+	l := log.New(map[string]interface{}{"test": "test"})
+	ctx := log.NewCtx(context.Background(), l)
+	Convey("Create a pipeline with error operation and check retry process with delay", t, func() {
+		countIter := 0
+		Pipe := &BasePipeline{
+			Options:  &Options{Retry: RetryOptions{MaxCount: 7, Delay: time.Second * 3}, MaxConcurrent: 1},
+			MetaInfo: &label.MetaInfo{Name: "base-pipeline"},
+			Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
+				logger.Debug("Run")
+				countIter += 1
+				return Errors.New("error operation"), nil
+			},
+			Cn: func(ctx context.Context, logger interfaces.LoggerInterface, err error) {
+				logger.Error(err)
+				So(err, ShouldBeError)
+			},
+		}
+		var err error
+		Pipe.Run(ctx, func(pipeline interfaces.BasePipelineInterface, error error) {
+			err = error
+
+		}, func(ctx context.Context) {
+		})
+		l.Debug(err)
+		So(countIter, ShouldEqual, 7)
+		So(err, ShouldBeError)
+	})
+}
+
 func TestSemPipeline(t *testing.T) {
 	//cuncurrentCall := 0
 	p := BasePipeline{
