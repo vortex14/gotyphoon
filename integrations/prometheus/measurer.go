@@ -3,59 +3,102 @@ package prometheus
 import "github.com/prometheus/client_golang/prometheus"
 
 type Measurer interface {
-	Summary(name string) *prometheus.SummaryVec
-	AddSummary(name, description string, labels ...string)
+	AddSummaryVec(name string, labels ...string)
+	SummaryVec(name string) *prometheus.SummaryVec
+	AddSummary(name string)
+	Summary(name string) prometheus.Summary
 
-	AddCounter(name, description string, labels ...string)
-	Counter(name string) *prometheus.CounterVec
+	AddCounterVec(name string, labels ...string)
+	CounterVec(name string) *prometheus.CounterVec
+	AddCounter(name, description string)
+	Counter(name string) prometheus.Counter
 
-	AddGauge(name, description string, labels ...string)
-	Gauge(name string) *prometheus.GaugeVec
+	AddGaugeVec(name string, labels ...string)
+	GaugeVec(name string) *prometheus.GaugeVec
+	AddGauge(name string)
+	Gauge(name string) prometheus.Gauge
 }
 
 type measurer struct {
-	summary map[string]*prometheus.SummaryVec
-	counter map[string]*prometheus.CounterVec
-	gauge   map[string]*prometheus.GaugeVec
+	summaryVec map[string]*prometheus.SummaryVec
+	summary    map[string]prometheus.Summary
+	counterVec map[string]*prometheus.CounterVec
+	counter    map[string]prometheus.Counter
+	gaugeVec   map[string]*prometheus.GaugeVec
+	gauge      map[string]prometheus.Gauge
 
 	runtimeMetricsCollector *runtimeMetricsCollector
 }
 
-func (m *measurer) AddSummary(name, description string, labels ...string) {
-	m.summary[name] = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+func (m *measurer) AddSummaryVec(name string, labels ...string) {
+	m.summaryVec[name] = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Name: name,
 	}, labels)
 }
 
-func (m *measurer) Summary(name string) *prometheus.SummaryVec {
+func (m *measurer) SummaryVec(name string) *prometheus.SummaryVec {
+	return m.summaryVec[name]
+}
+
+func (m *measurer) AddSummary(name string) {
+	m.summary[name] = prometheus.NewSummary(prometheus.SummaryOpts{
+		Name: name,
+	})
+}
+
+func (m *measurer) Summary(name string) prometheus.Summary {
 	return m.summary[name]
 }
 
-func (m *measurer) AddCounter(name, description string, labels ...string) {
-	m.counter[name] = prometheus.NewCounterVec(prometheus.CounterOpts{
+func (m *measurer) AddCounterVec(name string, labels ...string) {
+	m.counterVec[name] = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: name,
 	}, labels)
 }
 
-func (m *measurer) Counter(name string) *prometheus.CounterVec {
+func (m *measurer) CounterVec(name string) *prometheus.CounterVec {
+	return m.counterVec[name]
+}
+
+func (m *measurer) AddCounter(name, description string) {
+	m.counter[name] = prometheus.NewCounter(prometheus.CounterOpts{
+		Help: description,
+		Name: name,
+	})
+}
+
+func (m *measurer) Counter(name string) prometheus.Counter {
 	return m.counter[name]
 }
 
-func (m *measurer) AddGauge(name, description string, labels ...string) {
-	m.gauge[name] = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+func (m *measurer) AddGaugeVec(name string, labels ...string) {
+	m.gaugeVec[name] = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: name,
 	}, labels)
 }
 
-func (m *measurer) Gauge(name string) *prometheus.GaugeVec {
+func (m *measurer) GaugeVec(name string) *prometheus.GaugeVec {
+	return m.gaugeVec[name]
+}
+
+func (m *measurer) AddGauge(name string) {
+	m.gauge[name] = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: name,
+	})
+}
+
+func (m *measurer) Gauge(name string) prometheus.Gauge {
 	return m.gauge[name]
 }
 
 func NewMeasurer(config MetricsConfig) Measurer {
 	m := &measurer{
-		summary: make(map[string]*prometheus.SummaryVec),
-		counter: make(map[string]*prometheus.CounterVec),
-		gauge:   make(map[string]*prometheus.GaugeVec),
+		summaryVec: make(map[string]*prometheus.SummaryVec),
+		summary:    make(map[string]prometheus.Summary),
+		counterVec: make(map[string]*prometheus.CounterVec),
+		counter:    make(map[string]prometheus.Counter),
+		gaugeVec:   make(map[string]*prometheus.GaugeVec),
+		gauge:      make(map[string]prometheus.Gauge),
 	}
 
 	// Run collect runtime metrics
