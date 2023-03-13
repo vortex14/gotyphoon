@@ -83,6 +83,7 @@ func (m *Metrics) init() {
 		m.LOG = log.New(map[string]interface{}{"metrics": "prometheus"})
 		m.metrics = make(map[string]*TyphoonMetric)
 		m.measurer = NewMeasurer(m.Config)
+
 	})
 
 	for metricName, metricInfo := range m.metrics {
@@ -118,6 +119,8 @@ func (m *Metrics) init() {
 		}
 
 		prometheus.MustRegister(collector)
+
+		metricInfo.Active = true
 	}
 
 }
@@ -133,6 +136,31 @@ func (m *Metrics) AddNewMetric(metric *Metric) {
 			ComponentName: m.Config.ComponentName,
 			ProjectName:   m.Config.ProjectName,
 		}
+
+		exceptionName := strings.Join([]string{metric.Name, "exceptions"}, "_")
+
+		exceptionDescription := strings.Join([]string{metric.Description, " Only exceptions"}, ";")
+
+		exceptionMetric := &TyphoonMetric{
+			Metric: &Metric{
+				Type:        metric.Type,
+				Description: exceptionDescription,
+				MetricData: &MetricData{
+					Name: exceptionName,
+				},
+			},
+			ComponentName: m.Config.ComponentName,
+			ProjectName:   m.Config.ProjectName,
+		}
+
+		switch metric.Type {
+		case TypeCounter:
+			m.metrics[exceptionName] = exceptionMetric
+		case TypeCounterVec:
+			exceptionMetric.LabelsKeys = metric.LabelsKeys
+
+			m.metrics[exceptionName] = exceptionMetric
+		}
 		m.init()
 
 	}
@@ -146,7 +174,25 @@ func (m *Metrics) AddMetric(metric ...*Metric) {
 }
 
 func (m *Metrics) SetException(data *MetricData) {
+	if tm, ok := m.metrics[data.Name]; ok {
 
+		name := tm.GetPrometheusPath()
+
+		switch tm.Type {
+		case TypeCounter:
+			metric := m.measurer.Counter(name)
+			metric.Inc()
+		case TypeCounterVec:
+			metricVec := m.measurer.CounterVec(name)
+			metric, err := metricVec.GetMetricWith(tm.Labels)
+
+			if err != nil {
+				m.LOG.Error(err.Error())
+			} else {
+				metric.Inc()
+			}
+		}
+	}
 }
 
 func (m *Metrics) Update(data *MetricData) {
@@ -182,5 +228,23 @@ func (m *Metrics) Add(data *MetricData) {
 }
 
 func (m *Metrics) Dec(data *MetricData) {
+	if tm, ok := m.metrics[data.Name]; ok {
 
+		name := tm.GetPrometheusPath()
+
+		switch tm.Type {
+		case TypeGauge:
+			metric := m.measurer.Gauge(name)
+			metric.Dec()
+		case TypeGaugeVec:
+			metricVec := m.measurer.GaugeVec(name)
+			metric, err := metricVec.GetMetricWith(tm.Labels)
+
+			if err != nil {
+				m.LOG.Error(err.Error())
+			} else {
+				metric.Dec()
+			}
+		}
+	}
 }
