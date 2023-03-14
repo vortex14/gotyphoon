@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
@@ -22,20 +23,21 @@ type MetricData struct {
 
 	AutoIncrement bool
 	AutoDecrement bool
+	IsException   bool
 }
 
 type Metric struct {
-	*MetricData
+	MetricData
 
 	Type        string   `yaml:"type" json:"type"`
-	LabelsKeys  []string `yaml:"labelsKeys", json:"labelsKeys"`
+	LabelsKeys  []string `yaml:"labelsKeys" json:"labelsKeys"`
 	Description string   `yaml:"description" json:"description"`
 }
 
 type TyphoonMetric struct {
 	singleton.Singleton
 
-	*Metric
+	Metric
 
 	Active bool
 
@@ -46,9 +48,8 @@ type TyphoonMetric struct {
 
 func (tm *TyphoonMetric) GetPrometheusPath() string {
 	tm.Construct(func() {
-
-		projectName := strings.ReplaceAll(tm.ProjectName, "-", "_")
-		componentName := strings.ReplaceAll(tm.ComponentName, "-", "_")
+		projectName := strings.TrimSpace(strings.ReplaceAll(tm.ProjectName, "-", "_"))
+		componentName := strings.TrimSpace(strings.ReplaceAll(tm.ComponentName, "-", "_"))
 
 		tm.prometheusPath = strings.Join([]string{projectName, componentName, tm.Name}, "_")
 	})
@@ -56,12 +57,13 @@ func (tm *TyphoonMetric) GetPrometheusPath() string {
 }
 
 type MetricsInterface interface {
-	SetException(data *MetricData)
-	AddNewMetric(metric *Metric)
-	AddMetric(metric ...*Metric)
-	Update(data *MetricData)
-	Add(data *MetricData)
-	Dec(data *MetricData)
+	SetException(data MetricData)
+	AddNewMetric(metric Metric)
+	AddMetric(metric ...Metric)
+	Update(data MetricData)
+	GetDTO(data MetricData) *dto.Metric
+	Add(data MetricData)
+	Dec(data MetricData)
 }
 
 type MetricsConfig struct {
@@ -125,7 +127,7 @@ func (m *Metrics) init() {
 
 }
 
-func (m *Metrics) AddNewMetric(metric *Metric) {
+func (m *Metrics) AddNewMetric(metric Metric) {
 	m.init()
 
 	if _, ok := m.metrics[metric.Name]; !ok {
@@ -142,10 +144,10 @@ func (m *Metrics) AddNewMetric(metric *Metric) {
 		exceptionDescription := strings.Join([]string{metric.Description, " Only exceptions"}, ";")
 
 		exceptionMetric := &TyphoonMetric{
-			Metric: &Metric{
+			Metric: Metric{
 				Type:        metric.Type,
 				Description: exceptionDescription,
-				MetricData: &MetricData{
+				MetricData: MetricData{
 					Name: exceptionName,
 				},
 			},
@@ -167,17 +169,16 @@ func (m *Metrics) AddNewMetric(metric *Metric) {
 
 }
 
-func (m *Metrics) AddMetric(metric ...*Metric) {
+func (m *Metrics) AddMetric(metric ...Metric) {
 	//for _, _metric := range metric {
 	//
 	//}
 }
 
-func (m *Metrics) SetException(data *MetricData) {
+func (m *Metrics) SetException(data MetricData) {
 	if tm, ok := m.metrics[data.Name]; ok {
-
-		name := tm.GetPrometheusPath()
-
+		name := strings.Join([]string{tm.GetPrometheusPath(), "exceptions"}, "_")
+		m.LOG.Debug(name, " full")
 		switch tm.Type {
 		case TypeCounter:
 			metric := m.measurer.Counter(name)
@@ -195,11 +196,11 @@ func (m *Metrics) SetException(data *MetricData) {
 	}
 }
 
-func (m *Metrics) Update(data *MetricData) {
+func (m *Metrics) Update(data MetricData) {
 
 }
 
-func (m *Metrics) Add(data *MetricData) {
+func (m *Metrics) Add(data MetricData) {
 	if tm, ok := m.metrics[data.Name]; ok {
 
 		value := tm.Value
@@ -227,7 +228,7 @@ func (m *Metrics) Add(data *MetricData) {
 	}
 }
 
-func (m *Metrics) Dec(data *MetricData) {
+func (m *Metrics) Dec(data MetricData) {
 	if tm, ok := m.metrics[data.Name]; ok {
 
 		name := tm.GetPrometheusPath()
@@ -247,4 +248,36 @@ func (m *Metrics) Dec(data *MetricData) {
 			}
 		}
 	}
+}
+
+func (m *Metrics) GetDTO(data MetricData) *dto.Metric {
+	if tm, ok := m.metrics[data.Name]; ok {
+
+		o := &dto.Metric{}
+
+		path := tm.GetPrometheusPath()
+
+		if data.IsException {
+			path = strings.Join([]string{path, "exceptions"}, "_")
+		}
+
+		switch tm.Type {
+		case TypeSummaryVec:
+			_ = m.measurer.SummaryVec(path).WithLabelValues(tm.LabelsKeys...).(prometheus.Summary).Write(o)
+		case TypeSummary:
+			_ = m.measurer.Summary(path).Write(o)
+		case TypeCounterVec:
+			_ = m.measurer.CounterVec(path).WithLabelValues(tm.LabelsKeys...).Write(o)
+		case TypeCounter:
+			_ = m.measurer.Counter(path).Write(o)
+		case TypeGaugeVec:
+			_ = m.measurer.GaugeVec(path).WithLabelValues(tm.LabelsKeys...).Write(o)
+		case TypeGauge:
+			_ = m.measurer.Gauge(path).Write(o)
+		}
+
+		return o
+
+	}
+	return nil
 }

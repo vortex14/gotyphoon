@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-var metrics = &PR.Metrics{
+var metrics = PR.Metrics{
 	Config: PR.MetricsConfig{ProjectName: "my-project", ComponentName: "component-1"},
 }
 
@@ -26,16 +26,16 @@ func ping(w http.ResponseWriter, req *http.Request) {
 	//c := measurer.Counter(nameCounter)
 	//c.Inc()
 
-	metrics.Add(&PR.MetricData{Name: nameCounter})
+	metrics.Add(PR.MetricData{Name: nameCounter})
 
 	fmt.Fprintf(w, "pong")
 }
 
 func main() {
 
-	newCountMetric := &PR.Metric{
+	newCountMetric := PR.Metric{
 		Type: PR.TypeCounter, Description: descriptionCounter,
-		MetricData: &PR.MetricData{Name: nameCounter},
+		MetricData: PR.MetricData{Name: nameCounter},
 	}
 
 	metrics.AddNewMetric(newCountMetric)

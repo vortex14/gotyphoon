@@ -156,7 +156,7 @@ func CreateRodRequestPipeline(
 				return
 			}
 
-			// Block current proxy
+			// To Block the proxy
 			if netHttp.MakeBlockRequest(logger, task) != nil {
 				logger.Error("Fatal exception. Impossible to block the proxy.")
 				os.Exit(1)
