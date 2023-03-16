@@ -15,9 +15,9 @@ const (
 )
 
 const (
-	RuntimeCpuNum           = "proxy_runtime_cpu_num"
-	RuntimeCpuGoroutine     = "proxy_runtime_cpu_goroutine"
-	RuntimeCpuCgoCall       = "proxy_runtime_cpu_cgo_call"
+	RuntimeCpuNum           = "runtime_cpu_num"
+	RuntimeCpuGoroutine     = "runtime_cpu_goroutine"
+	RuntimeCpuCgoCall       = "runtime_cpu_cgo_call"
 	RuntimeMemAlloc         = "runtime_mem_alloc"
 	RuntimeMemAllocTotal    = "runtime_mem_alloc_total"
 	RuntimeMemSys           = "runtime_mem_sys"

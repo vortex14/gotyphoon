@@ -84,6 +84,51 @@ func TestMetricsCounterWithExceptions(t *testing.T) {
 	})
 }
 
+func TestMetricsCounterWithExceptionsAndLabels(t *testing.T) {
+
+	Convey("metrics counter with exceptions and labels", t, func() {
+
+		var metrics = Metrics{
+			Config: MetricsConfig{ProjectName: "my-project", ComponentName: "component-1"},
+		}
+
+		const (
+			nameCounter        = "test_counter"
+			descriptionCounter = "test description"
+		)
+
+		newCountMetric := Metric{
+			Type: TypeCounterVec, Description: descriptionCounter,
+			MetricData: MetricData{Name: nameCounter},
+			LabelsKeys: []string{"label1", "label2"},
+		}
+
+		metrics.AddNewMetric(newCountMetric)
+
+		md := MetricData{Name: nameCounter, Labels: map[string]string{"label1": "1", "label2": "2"}}
+
+		metrics.Add(md)
+		metrics.Add(md)
+		metrics.Add(md)
+
+		metrics.SetException(md)
+		metrics.SetException(md)
+
+		_dto := metrics.GetDTO(md)
+
+		_dtoE := metrics.GetDTO(MetricData{
+			Name:        nameCounter,
+			IsException: true,
+			Labels:      map[string]string{"label1": "1", "label2": "2"},
+		})
+
+		So(*_dto.Counter.Value, ShouldEqual, 3)
+
+		So(*_dtoE.Counter.Value, ShouldEqual, 2)
+
+	})
+}
+
 func TestPipelineCounterMetric(t *testing.T) {
 	Convey("pipeline counter", t, func() {
 

@@ -71,3 +71,14 @@ func InitD() {
 		}).Init()
 	})
 }
+
+func Init(opts *BaseOptions) {
+	logOnce.Do(func() {
+		(&TyphoonLogger{
+			Name: "App",
+			Options: Options{
+				BaseOptions: opts,
+			},
+		}).Init()
+	})
+}

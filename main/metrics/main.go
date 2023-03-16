@@ -26,7 +26,11 @@ func ping(w http.ResponseWriter, req *http.Request) {
 	//c := measurer.Counter(nameCounter)
 	//c.Inc()
 
-	metrics.Add(PR.MetricData{Name: nameCounter})
+	metrics.Add(PR.MetricData{Name: nameCounter, Labels: map[string]string{"label1": "test1", "be": "asf"}})
+
+	metrics.Add(PR.MetricData{Name: nameCounter, Labels: map[string]string{"label1": "l", "be": "1"}})
+	metrics.Add(PR.MetricData{Name: nameCounter, Labels: map[string]string{"label1": "l", "be": "1"}})
+	//metrics.Add(PR.MetricData{Name: nameCounter, Labels: map[string]string{"label2": "test1_test2"}})
 
 	fmt.Fprintf(w, "pong")
 }
@@ -34,8 +38,9 @@ func ping(w http.ResponseWriter, req *http.Request) {
 func main() {
 
 	newCountMetric := PR.Metric{
-		Type: PR.TypeCounter, Description: descriptionCounter,
+		Type: PR.TypeCounterVec, Description: descriptionCounter,
 		MetricData: PR.MetricData{Name: nameCounter},
+		LabelsKeys: []string{"label1", "be"},
 	}
 
 	metrics.AddNewMetric(newCountMetric)

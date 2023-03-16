@@ -21,7 +21,7 @@ type Options struct {
 	*BaseOptions
 }
 
-func (o *Options) InitFormatter()  {
+func (o *Options) InitFormatter() {
 	color.Yellow("Init Log Formatter ... line: %t, file: %t, short: %t", o.ShowLine, o.ShowFile, o.ShortFileName)
 	formatter := runtime.Formatter{ChildFormatter: &logrus.TextFormatter{
 		FullTimestamp: o.FullTimestamp,
@@ -40,13 +40,13 @@ type TyphoonLogger struct {
 
 	Name string
 	Options
-	closer io.Closer
-	reporter jaeger.Reporter
-	tracer opentracing.Tracer
+	closer         io.Closer
+	reporter       jaeger.Reporter
+	tracer         opentracing.Tracer
 	TracingOptions *interfaces.TracingOptions
 }
 
-func (l *TyphoonLogger) InitTracer()  {
+func (l *TyphoonLogger) InitTracer() {
 	if l.TracingOptions == nil {
 		return
 	}
@@ -58,8 +58,8 @@ func (l *TyphoonLogger) InitTracer()  {
 
 	tracer, reporter, closer, err := ginOpentracing.InitTracing(
 		fmt.Sprintf("Typhoon-%s:%s", l.Name, hostName), // service name for the traces
-		l.TracingOptions.GetEndpoint(),                        // where to send the spans
-		ginOpentracing.WithEnableInfoLog(false)) // WithEnableLogInfo(false) will not log info on every span sent... if set to true it will log and they won't be aggregated
+		l.TracingOptions.GetEndpoint(),                 // where to send the spans
+		ginOpentracing.WithEnableInfoLog(false))        // WithEnableLogInfo(false) will not log info on every span sent... if set to true it will log and they won't be aggregated
 	if err != nil {
 		color.Red("%s", err.Error())
 		panic("unable to init tracing")
@@ -69,15 +69,14 @@ func (l *TyphoonLogger) InitTracer()  {
 	l.reporter = reporter
 	l.closer = closer
 
-
 	opentracing.SetGlobalTracer(tracer)
 }
 
 func (l *TyphoonLogger) GetTracerHeader() string {
-	return fmt.Sprintf("api-request-%s-",l.Name)
+	return fmt.Sprintf("api-request-%s-", l.Name)
 }
 
-func (l *TyphoonLogger) init()  {
+func (l *TyphoonLogger) init() {
 	l.InitFormatter()
 	l.InitTracer()
 }
@@ -89,7 +88,7 @@ func (l *TyphoonLogger) Init() *TyphoonLogger {
 	return l
 }
 
-func (l *TyphoonLogger) Stop()  {
-	defer l.closer.Close()
-	defer l.reporter.Close()
+func (l *TyphoonLogger) Stop() {
+	_ = l.closer.Close()
+	l.reporter.Close()
 }

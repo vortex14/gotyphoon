@@ -95,7 +95,7 @@ func (m *Metrics) init() {
 		}
 		prometheusPath := metricInfo.GetPrometheusPath()
 
-		m.LOG.Debugf("init metric %s, prometheusPath: %s", metricName, prometheusPath)
+		m.LOG.Debugf("init metric %s, prometheusPath: %s, labels: %+v", metricName, prometheusPath, metricInfo.LabelsKeys)
 
 		var collector prometheus.Collector
 
@@ -178,19 +178,18 @@ func (m *Metrics) AddMetric(metric ...Metric) {
 func (m *Metrics) SetException(data MetricData) {
 	if tm, ok := m.metrics[data.Name]; ok {
 		name := strings.Join([]string{tm.GetPrometheusPath(), "exceptions"}, "_")
-		m.LOG.Debug(name, " full")
 		switch tm.Type {
 		case TypeCounter:
 			metric := m.measurer.Counter(name)
 			metric.Inc()
 		case TypeCounterVec:
 			metricVec := m.measurer.CounterVec(name)
-			metric, err := metricVec.GetMetricWith(tm.Labels)
+			me, err := metricVec.GetMetricWith(data.Labels)
 
 			if err != nil {
 				m.LOG.Error(err.Error())
 			} else {
-				metric.Inc()
+				me.Add(1)
 			}
 		}
 	}
@@ -217,13 +216,14 @@ func (m *Metrics) Add(data MetricData) {
 			metric.Add(value)
 		case TypeCounterVec:
 			metricVec := m.measurer.CounterVec(name)
-			metric, err := metricVec.GetMetricWith(tm.Labels)
 
+			me, err := metricVec.GetMetricWith(data.Labels)
 			if err != nil {
 				m.LOG.Error(err.Error())
 			} else {
-				metric.Add(value)
+				me.Add(value)
 			}
+
 		}
 	}
 }
@@ -252,22 +252,29 @@ func (m *Metrics) Dec(data MetricData) {
 
 func (m *Metrics) GetDTO(data MetricData) *dto.Metric {
 	if tm, ok := m.metrics[data.Name]; ok {
-
 		o := &dto.Metric{}
-
 		path := tm.GetPrometheusPath()
-
 		if data.IsException {
 			path = strings.Join([]string{path, "exceptions"}, "_")
 		}
-
 		switch tm.Type {
 		case TypeSummaryVec:
-			_ = m.measurer.SummaryVec(path).WithLabelValues(tm.LabelsKeys...).(prometheus.Summary).Write(o)
+			//c, e := m.measurer.SummaryVec(path).GetMetricWith(data.Labels).(prometheus.Summary)
+			//if e != false {
+			//	m.LOG.Error("SummaryVec is not ")
+			//}
+			//_ = c.Write(o)
 		case TypeSummary:
 			_ = m.measurer.Summary(path).Write(o)
 		case TypeCounterVec:
-			_ = m.measurer.CounterVec(path).WithLabelValues(tm.LabelsKeys...).Write(o)
+			c, e := m.measurer.CounterVec(path).GetMetricWith(data.Labels)
+
+			if e != nil {
+				m.LOG.Error(e.Error())
+			} else {
+				_ = c.Write(o)
+			}
+
 		case TypeCounter:
 			_ = m.measurer.Counter(path).Write(o)
 		case TypeGaugeVec:
