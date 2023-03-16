@@ -2,9 +2,10 @@ package prometheus
 
 import (
 	"context"
-	"testing"
-
 	. "github.com/smartystreets/goconvey/convey"
+	"sync"
+	"testing"
+	"time"
 
 	dto "github.com/prometheus/client_model/go"
 	"github.com/vortex14/gotyphoon/elements/forms"
@@ -54,14 +55,14 @@ func TestMetricsCounterWithExceptions(t *testing.T) {
 			descriptionCounter = "test description"
 		)
 
+		md := MetricData{Name: nameCounter}
+
 		newCountMetric := Metric{
 			Type: TypeCounter, Description: descriptionCounter,
-			MetricData: MetricData{Name: nameCounter},
+			MetricData: md,
 		}
 
 		metrics.AddNewMetric(newCountMetric)
-
-		md := MetricData{Name: nameCounter}
 
 		metrics.Add(md)
 		metrics.Add(md)
@@ -80,6 +81,80 @@ func TestMetricsCounterWithExceptions(t *testing.T) {
 		So(*_dto.Counter.Value, ShouldEqual, 3)
 
 		So(*_dtoE.Counter.Value, ShouldEqual, 2)
+
+	})
+}
+
+func TestGauge(t *testing.T) {
+	Convey("test basic gauge", t, func() {
+
+		var metrics = Metrics{
+			Config: MetricsConfig{ProjectName: "my-project", ComponentName: "component-1"},
+		}
+
+		const (
+			nameGauge        = "test_gauge"
+			descriptionGauge = "test gauge description"
+		)
+
+		md := MetricData{Name: nameGauge}
+
+		newGaugeMetric := Metric{
+			Type: TypeGauge, Description: descriptionGauge,
+			MetricData: md,
+		}
+
+		metrics.AddNewMetric(newGaugeMetric)
+
+		metrics.Add(md)
+		metrics.Add(md)
+		metrics.Add(md)
+
+		_dto := metrics.GetDTO(md)
+
+		So(*_dto.Gauge.Value, ShouldEqual, 3)
+
+		metrics.Dec(md)
+		metrics.Dec(md)
+		metrics.Dec(md)
+
+		_dto = metrics.GetDTO(md)
+
+		So(*_dto.Gauge.Value, ShouldEqual, 0)
+
+		wg := sync.WaitGroup{}
+		wg.Add(2)
+
+		go func(md MetricData) {
+			metrics.Add(md)
+
+			time.Sleep(5 * time.Second)
+
+			metrics.Dec(md)
+
+			wg.Done()
+		}(md)
+
+		go func(md MetricData) {
+			metrics.Add(md)
+
+			time.Sleep(2 * time.Second)
+
+			metrics.Dec(md)
+			wg.Done()
+		}(md)
+
+		time.Sleep(1 * time.Second)
+
+		_dto = metrics.GetDTO(md)
+
+		So(*_dto.Gauge.Value, ShouldEqual, 2)
+
+		wg.Wait()
+
+		_dto = metrics.GetDTO(md)
+
+		So(*_dto.Gauge.Value, ShouldEqual, 0)
 
 	})
 }

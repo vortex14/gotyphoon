@@ -223,6 +223,18 @@ func (m *Metrics) Add(data MetricData) {
 			} else {
 				me.Add(value)
 			}
+		case TypeGauge:
+			metric := m.measurer.Gauge(name)
+			metric.Inc()
+		case TypeGaugeVec:
+
+			metricVec := m.measurer.GaugeVec(name)
+			me, err := metricVec.GetMetricWith(data.Labels)
+			if err != nil {
+				m.LOG.Error(err.Error())
+			} else {
+				me.Inc()
+			}
 
 		}
 	}
@@ -278,7 +290,14 @@ func (m *Metrics) GetDTO(data MetricData) *dto.Metric {
 		case TypeCounter:
 			_ = m.measurer.Counter(path).Write(o)
 		case TypeGaugeVec:
-			_ = m.measurer.GaugeVec(path).WithLabelValues(tm.LabelsKeys...).Write(o)
+
+			c, e := m.measurer.GaugeVec(path).GetMetricWith(data.Labels)
+
+			if e != nil {
+				m.LOG.Error(e.Error())
+			} else {
+				_ = c.Write(o)
+			}
 		case TypeGauge:
 			_ = m.measurer.Gauge(path).Write(o)
 		}
