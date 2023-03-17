@@ -2,10 +2,11 @@ package prometheus
 
 import (
 	"context"
-	. "github.com/smartystreets/goconvey/convey"
 	"sync"
 	"testing"
 	"time"
+
+	. "github.com/smartystreets/goconvey/convey"
 
 	dto "github.com/prometheus/client_model/go"
 	"github.com/vortex14/gotyphoon/elements/forms"
@@ -200,6 +201,45 @@ func TestMetricsCounterWithExceptionsAndLabels(t *testing.T) {
 		So(*_dto.Counter.Value, ShouldEqual, 3)
 
 		So(*_dtoE.Counter.Value, ShouldEqual, 2)
+
+	})
+}
+
+func TestGaugeWithLabels(t *testing.T) {
+	Convey("test gauge with labels", t, func() {
+
+		var metrics = Metrics{
+			Config: MetricsConfig{ProjectName: "my-project", ComponentName: "component-1"},
+		}
+
+		const (
+			nameGauge        = "test_gauge_labels"
+			descriptionGauge = "test description"
+		)
+
+		newGaugeMetric := Metric{
+			Type: TypeGaugeVec, Description: descriptionGauge,
+			MetricData: MetricData{Name: nameGauge},
+			LabelsKeys: []string{"label1", "label2"},
+		}
+
+		metrics.AddNewMetric(newGaugeMetric)
+
+		md := MetricData{Name: nameGauge, Labels: map[string]string{"label1": "1", "label2": "2"}}
+
+		metrics.Add(md)
+		metrics.Add(md)
+		metrics.Add(md)
+
+		_dto := metrics.GetDTO(md)
+		So(*_dto.Gauge.Value, ShouldEqual, 3)
+
+		metrics.Dec(md)
+		metrics.Dec(md)
+		metrics.Dec(md)
+
+		_dto = metrics.GetDTO(md)
+		So(*_dto.Gauge.Value, ShouldEqual, 0)
 
 	})
 }

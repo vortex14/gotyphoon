@@ -251,7 +251,7 @@ func (m *Metrics) Dec(data MetricData) {
 			metric.Dec()
 		case TypeGaugeVec:
 			metricVec := m.measurer.GaugeVec(name)
-			metric, err := metricVec.GetMetricWith(tm.Labels)
+			metric, err := metricVec.GetMetricWith(data.Labels)
 
 			if err != nil {
 				m.LOG.Error(err.Error())
