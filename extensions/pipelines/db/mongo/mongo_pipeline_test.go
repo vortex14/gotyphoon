@@ -14,7 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	M "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
+	"sync"
 	"testing"
 
 	"encoding/json"
@@ -112,7 +112,7 @@ func TestMongoGroup(t *testing.T) {
 			DefaultCollection: "test-collection",
 			DefaultDatabase:   "test-db",
 			DbNames:           []string{"test-db", "data"},
-			Name:              "target",
+			Name:              "db",
 			Details: struct {
 				AuthSource string `yaml:"authSource,omitempty"`
 				Username   string `yaml:"username,omitempty"`
@@ -174,6 +174,166 @@ func TestMongoGroup(t *testing.T) {
 
 						So(collection.Name(), ShouldEqual, "LA-LA-DBA-DBA")
 						So(database.Name(), ShouldEqual, "data")
+						return nil, context
+
+					},
+					Cn: func(err error, context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) {
+
+					},
+				},
+			},
+		}
+
+		L := log.New(map[string]interface{}{"test": "test"})
+
+		ctx := log.NewCtx(Context.Background(), L)
+
+		ctx = task.PatchCtx(ctx, fake.CreateDefaultTask())
+
+		err := p.Run(ctx)
+
+		So(err, ShouldBeNil)
+	})
+}
+
+func serializeTask(doc bson.M) []byte {
+	_doc, _ := json.Marshal(doc["task"])
+	return _doc
+}
+
+func deserializeTask(doc bson.M) *task.TyphoonTask {
+	docM, _ := json.Marshal(doc["task"])
+	var _task task.TyphoonTask
+	_ = json.Unmarshal(docM, &_task)
+	return &_task
+}
+
+func TestMigrateProcessorExceptions(t *testing.T) {
+	Convey("test migrate exceptions to NSQ ", t, func() {
+
+		producer, _ := NSQ.StartProducer(NSQ.ProducerConfig{
+			Topic:   "hello10100101010101010",
+			Address: "localhost:4150",
+		})
+
+		opts := &interfaces.ServiceMongo{
+			DefaultCollection: "processor_exceptions",
+			DefaultDatabase:   "",
+			DbNames:           []string{""},
+			Name:              "db",
+			Details: struct {
+				AuthSource string `yaml:"authSource,omitempty"`
+				Username   string `yaml:"username,omitempty"`
+				Password   string `yaml:"password,omitempty"`
+				Host       string `yaml:"host"`
+				Port       int    `yaml:"port"`
+			}{},
+		}
+
+		p := forms.PipelineGroup{
+			MetaInfo: &label.MetaInfo{Name: "mongo group"},
+			Options:  forms.GetNotRetribleOptions(),
+			Stages: []interfaces.BasePipelineInterface{
+				&Pipeline{
+					BasePipeline: &forms.BasePipeline{
+						NotIgnorePanic: true,
+						MetaInfo: &label.MetaInfo{
+							Name:        "Mongo check",
+							Description: "Mongo pipeline for check collection",
+						},
+					},
+					opts: opts,
+
+					Fn: func(context Context.Context,
+						task interfaces.TaskInterface,
+						logger interfaces.LoggerInterface,
+						service *mongo.Service,
+						database *M.Database,
+						collection *M.Collection) (error, Context.Context) {
+
+						query := bson.D{{"exception_id", "b860f84703ec2a0b79ae8de74e1f70aa"}}
+
+						c, _ := collection.CountDocuments(context, query)
+						logger.Warning(c)
+
+						var results []bson.M
+						limit := int64(100)
+
+						cursor, err := collection.Find(context, query, &options.FindOptions{Limit: &limit})
+						if err != nil {
+							return err, context
+						}
+
+						if err = cursor.All(Context.TODO(), &results); err != nil {
+							return err, context
+						}
+
+						task.SetSaveData("data", &results)
+
+						return nil, context
+
+					},
+					Cn: func(err error, context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) {
+
+					},
+				},
+				&Pipeline{
+					BasePipeline: &forms.BasePipeline{
+						Options:        &forms.Options{ProgressBar: true},
+						NotIgnorePanic: true,
+						MetaInfo: &label.MetaInfo{
+							Name:        "processing exceptions",
+							Description: "Mongo pipeline for processing exceptions",
+						},
+					},
+					opts: opts,
+					Fn: func(context Context.Context,
+						task interfaces.TaskInterface,
+						logger interfaces.LoggerInterface,
+						service *mongo.Service,
+						database *M.Database,
+						collection *M.Collection) (error, Context.Context) {
+
+						list := task.GetSaveData("data").(*[]bson.M)
+
+						wg := sync.WaitGroup{}
+
+						_, _bar := forms.GetBar(context)
+
+						//logger.Warning(_bar)
+						//
+						//return nil, context
+
+						_bar.NewOption(int64(0), int64(len(*list)))
+
+						//for i := 0; i < 100; i++ {
+						//	_bar.Increment()
+						//	time.Sleep(10 * time.Millisecond)
+						//}
+
+						for _, doc := range *list {
+							_t := serializeTask(doc)
+							wg.Add(1)
+							go func(w *sync.WaitGroup) {
+								err := producer.Publish(_t)
+								if err != nil {
+									logger.Error(err)
+								} else {
+									_bar.Increment()
+									//logger.Debug("Published !")
+								}
+								w.Done()
+
+							}(&wg)
+							//logger.Debug(_t.Taskid)
+						}
+
+						wg.Wait()
+						_bar.Finish()
+						logger.Info("DONE !!")
+
+						//logger.Debug(len(*list))
+
 						return nil, context
 
 					},

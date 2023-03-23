@@ -82,7 +82,7 @@ func (t *TyphoonTask) SetHeaders(headers map[string]string) {
 	}
 }
 
-func (t *TyphoonTask) SetSaveData(key string, value string) {
+func (t *TyphoonTask) SetSaveData(key string, value interface{}) {
 	t.Processor.Save.Project[key] = value
 }
 
@@ -90,7 +90,7 @@ func (t *TyphoonTask) SetFetcherTimeout(seconds int) {
 	t.Fetcher.Timeout = seconds
 }
 
-func (t *TyphoonTask) GetSaveData(key string) string {
+func (t *TyphoonTask) GetSaveData(key string) interface{} {
 	return t.Processor.Save.Project[key]
 }
 

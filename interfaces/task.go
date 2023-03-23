@@ -45,8 +45,8 @@ type TaskFetcherInterface interface {
 	SetRequestBody(values url.Values)
 	GetRequestBody() *bytes.Buffer
 
-	SetSaveData(key string, value string)
-	GetSaveData(key string) string
+	SetSaveData(key string, value interface{})
+	GetSaveData(key string) interface{}
 }
 
 type TaskProcessorInterface interface {

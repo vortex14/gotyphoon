@@ -1,11 +1,11 @@
 package task
 
-type ProjectSave map[string]string
+type ProjectSave map[string]interface{}
 
 type ProcessorTask struct {
-	ErrorResponse bool `json:"error_response" default:"false" fake:"{randomstring:[false]}"`
-	MaxProcessorRetries int `json:"max_processor_retries" default:"5"  fake:"{number:4,5}"`
-	Callback struct {
+	ErrorResponse       bool `json:"error_response" default:"false" fake:"{randomstring:[false]}"`
+	MaxProcessorRetries int  `json:"max_processor_retries" default:"5"  fake:"{number:4,5}"`
+	Callback            struct {
 		Name string `json:"name" default:"first_group" fake:"{randomstring:[first_group]}"`
 		Type string `json:"type" default:"pipelines_group" fake:"{randomstring:[pipelines_group]}"`
 	} `json:"callback"`
@@ -19,12 +19,9 @@ type ProcessorTask struct {
 	History []interface{} `json:"history" fake:"skip"`
 }
 
-
-func (t *ProcessorTask) IsMaxProcessorRetry() bool{
+func (t *ProcessorTask) IsMaxProcessorRetry() bool {
 	return t.ErrorResponse && t.MaxProcessorRetries <= t.Save.System.ProcessorRetries
 }
-
-
 
 func (t *ProcessorTask) IsProcessorRetry() bool {
 	return t.ErrorResponse && t.MaxProcessorRetries > t.Save.System.ProcessorRetries

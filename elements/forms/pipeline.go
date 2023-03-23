@@ -4,6 +4,7 @@ import (
 	Context "context"
 	"errors"
 	"fmt"
+	"github.com/vortex14/gotyphoon/elements/models/bar"
 	"sync"
 	"time"
 
@@ -39,6 +40,7 @@ type Options struct {
 	Retry            RetryOptions
 	MaxConcurrent    int64
 	NotSharedContext bool
+	ProgressBar      bool
 }
 
 func GetDefaultRetryOptions() *Options {
@@ -76,6 +78,8 @@ type BasePipeline struct {
 	sem             *semaphore.Weighted
 	syncContext     sync.Once
 
+	bar *bar.Bar
+
 	//stageIndex    int32
 
 	//inputCount    int64
@@ -100,19 +104,39 @@ type BasePipeline struct {
 	Cn func(ctx Context.Context, logger interfaces.LoggerInterface, err error)
 }
 
+func (p *BasePipeline) semaphoreInit() {
+	if p.sem == nil && p.Options.MaxConcurrent > 0 {
+		p.sem = semaphore.NewWeighted(p.Options.MaxConcurrent)
+	}
+}
+func (p *BasePipeline) initBar() {
+	p.bar = &bar.Bar{Description: fmt.Sprintf("Progress bar, pipeline: %s", p.MetaInfo.Name)}
+}
+
+func (p *BasePipeline) initCtx() {
+	p.syncContext.Do(func() {
+
+		if p.Options == nil {
+			p.Options = GetDefaultRetryOptions()
+		}
+
+		p.semaphoreInit()
+		p.initBar()
+	})
+
+}
+
 func (p *BasePipeline) SafeRun(
 	context Context.Context,
 	logger interfaces.LoggerInterface,
 	run func(patchedCtx Context.Context) error, catch func(err error)) {
 
-	if p.Options == nil {
-		p.Options = GetDefaultRetryOptions()
-	}
-
 	context = setLabel(context, p.MetaInfo)
 
-	if p.sem == nil && p.Options.MaxConcurrent > 0 {
-		p.sem = semaphore.NewWeighted(p.Options.MaxConcurrent)
+	p.initCtx()
+
+	if p.Options.ProgressBar {
+		context = setBar(context, p.bar)
 	}
 
 	if p.sem != nil {
@@ -121,7 +145,6 @@ func (p *BasePipeline) SafeRun(
 			catch(Errors.PipelineCrowded)
 			return
 		}
-
 	}
 
 	defer func() {
