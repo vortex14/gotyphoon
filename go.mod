@@ -49,7 +49,10 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/osamingo/checkdigit v1.0.0
+	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.10.1
+	github.com/prometheus/client_golang v1.12.1
+	github.com/prometheus/client_model v0.2.0
 	github.com/radovskyb/watcher v1.0.7
 	github.com/rivo/tview v0.0.0-20220307222120-9994674d60a8
 	github.com/segmentio/nsq-go v1.2.7
@@ -144,9 +147,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/opencontainers/runc v1.1.4 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_golang v1.12.1 // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect

@@ -1,9 +1,8 @@
 package rod
 
 import (
-	"context"
+	Context "context"
 	"fmt"
-
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-rod/rod"
 
@@ -21,7 +20,7 @@ type HttpRodResponsePipeline struct {
 	*pipelines.TaskPipeline
 
 	Fn func(
-		context context.Context,
+		context Context.Context,
 		task interfaces.TaskInterface,
 		logger interfaces.LoggerInterface,
 
@@ -30,18 +29,18 @@ type HttpRodResponsePipeline struct {
 		body *string,
 		doc *goquery.Document,
 
-	) (error, context.Context)
+	) (error, Context.Context)
 
 	Cn func(
 		err error,
-		context context.Context,
+		context Context.Context,
 		task interfaces.TaskInterface,
 		logger interfaces.LoggerInterface,
 	)
 }
 
 func (t *HttpRodResponsePipeline) UnpackResponseCtx(
-	ctx context.Context,
+	ctx Context.Context,
 ) (bool, interfaces.TaskInterface, interfaces.LoggerInterface, *rod.Browser, *rod.Page, *string, *goquery.Document) {
 	okT, taskInstance := task.Get(ctx)
 	okL, logger := log.Get(ctx)
@@ -52,16 +51,16 @@ func (t *HttpRodResponsePipeline) UnpackResponseCtx(
 	okD, doc := html.GetHtmlDoc(ctx)
 
 	if !okT || !okL || !okB || !okP || !okR || !okD {
-		return false, nil, nil, nil, nil, nil, nil
+		return false, taskInstance, logger, browser, page, body, doc
 	}
 
 	return okL && okT && okB, taskInstance, logger, browser, page, body, doc
 }
 
 func (t *HttpRodResponsePipeline) Run(
-	context context.Context,
+	context Context.Context,
 	reject func(pipeline interfaces.BasePipelineInterface, err error),
-	next func(ctx context.Context),
+	next func(ctx Context.Context),
 ) {
 
 	if t.Fn == nil {
@@ -79,7 +78,7 @@ func (t *HttpRodResponsePipeline) Run(
 		return
 	}
 
-	t.SafeRun(context, logger, func() error {
+	t.SafeRun(context, logger, func(patchedCtx Context.Context) error {
 
 		err, newContext := t.Fn(context, taskInstance, logger, browser, page, body, doc)
 		if err != nil {
@@ -105,7 +104,7 @@ func (t *HttpRodResponsePipeline) Run(
 }
 
 func (t *HttpRodResponsePipeline) Cancel(
-	context context.Context,
+	context Context.Context,
 	logger interfaces.LoggerInterface,
 	err error,
 ) {

@@ -7,6 +7,7 @@ import (
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"golang.org/x/sync/semaphore"
+	"sync"
 
 	// /* ignore for building amd64-linux
 	//	"fmt"
@@ -18,6 +19,8 @@ import (
 	"github.com/vortex14/gotyphoon/log"
 )
 
+//const name =
+
 type PipelineGroup struct {
 	*label.MetaInfo
 
@@ -27,6 +30,8 @@ type PipelineGroup struct {
 	PyLambdaMap map[string]interfaces.LambdaInterface
 
 	Options *Options
+	ctx     Context.Context
+	syncCtx sync.Once
 
 	Stages    []interfaces.BasePipelineInterface
 	Consumers map[string]interfaces.ConsumerInterface
@@ -53,6 +58,12 @@ func (g *PipelineGroup) initSemaphore() bool {
 	}
 
 	return status
+}
+
+func (g *PipelineGroup) initCtx() {
+	g.syncCtx.Do(func() {
+		g.ctx = Context.Background()
+	})
 }
 
 func (g *PipelineGroup) Run(context Context.Context) error {
@@ -84,6 +95,11 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 
 		if skipFlag, numberStage := GetGOTOCtx(mainContext); skipFlag && numberStage > index+1 {
 			continue
+		}
+
+		if !g.Options.NotSharedContext {
+			g.initCtx()
+			pipeline.SetSharedCtx(&g.ctx)
 		}
 
 		pipeline.Run(middlewareContext, func(p interfaces.BasePipelineInterface, err error) {

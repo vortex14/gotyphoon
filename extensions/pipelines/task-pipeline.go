@@ -1,7 +1,7 @@
 package pipelines
 
 import (
-	"context"
+	Context "context"
 
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/task"
@@ -14,21 +14,21 @@ type TaskPipeline struct {
 	*forms.BasePipeline
 
 	Fn func(
-		context context.Context,
+		context Context.Context,
 		task interfaces.TaskInterface,
 		logger interfaces.LoggerInterface,
-	) (error, context.Context)
+	) (error, Context.Context)
 
 	Cn func(
 		err error,
-		context context.Context,
+		context Context.Context,
 		task interfaces.TaskInterface,
 		logger interfaces.LoggerInterface,
 	)
 }
 
 func (t *TaskPipeline) UnpackCtx(
-	ctx context.Context,
+	ctx Context.Context,
 ) (bool, interfaces.TaskInterface, interfaces.LoggerInterface) {
 
 	okT, taskInstance := task.Get(ctx)
@@ -37,9 +37,9 @@ func (t *TaskPipeline) UnpackCtx(
 }
 
 func (t *TaskPipeline) Run(
-	context context.Context,
+	context Context.Context,
 	reject func(pipeline interfaces.BasePipelineInterface, err error),
-	next func(ctx context.Context),
+	next func(ctx Context.Context),
 ) {
 
 	if t.Fn == nil {
@@ -53,7 +53,7 @@ func (t *TaskPipeline) Run(
 		return
 	}
 
-	t.SafeRun(context, logger, func() error {
+	t.SafeRun(context, logger, func(patchedCtx Context.Context) error {
 		err, newContext := t.Fn(context, taskInstance, logger)
 		if err != nil {
 			return err
@@ -71,7 +71,7 @@ func (t *TaskPipeline) Run(
 }
 
 func (t *TaskPipeline) Cancel(
-	context context.Context,
+	context Context.Context,
 	logger interfaces.LoggerInterface,
 	err error,
 ) {

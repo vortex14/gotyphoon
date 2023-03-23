@@ -9,6 +9,7 @@ import (
 type TaskInterface interface {
 	IsMaxRetry() bool
 	UpdateRetriesCounter()
+	String() string
 	IsRetry() bool
 	TaskFetcherInterface
 }

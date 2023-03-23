@@ -78,6 +78,37 @@ func TestSkipStages(t *testing.T) {
 
 }
 
+func TestPipelineLabel(t *testing.T) {
+	l := log.New(map[string]interface{}{"test": "test"})
+	ctx := log.NewCtx(context.Background(), l)
+	Convey("test pipeline label", t, func() {
+
+		Pipe := &BasePipeline{
+			MetaInfo: &label.MetaInfo{Name: "test-1-3-4"},
+			Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
+				logger.Debug("Run")
+
+				_, _labels := GetPipelineLabel(ctx)
+
+				So(_labels.Name, ShouldEqual, "test-1-3-4")
+				
+				return nil, nil
+			},
+			Cn: func(ctx context.Context, logger interfaces.LoggerInterface, err error) {
+				logger.Error(err)
+			},
+		}
+		var err error
+		Pipe.Run(ctx, func(pipeline interfaces.BasePipelineInterface, error error) {
+
+		}, func(ctx context.Context) {
+		})
+
+		So(err, ShouldBeNil)
+	})
+
+}
+
 func TestPanicPipeline(t *testing.T) {
 	l := log.New(map[string]interface{}{"test": "test"})
 	ctx := log.NewCtx(context.Background(), l)

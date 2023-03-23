@@ -4,6 +4,7 @@ import (
 	Context "context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/avast/retry-go/v4"
@@ -35,8 +36,9 @@ type RetryOptions struct {
 }
 
 type Options struct {
-	Retry         RetryOptions
-	MaxConcurrent int64
+	Retry            RetryOptions
+	MaxConcurrent    int64
+	NotSharedContext bool
 }
 
 func GetDefaultRetryOptions() *Options {
@@ -67,9 +69,12 @@ type BasePipeline struct {
 	*label.MetaInfo
 	awaitabler.Object
 
-	Options        *Options
-	NotIgnorePanic bool
-	sem            *semaphore.Weighted
+	Options         *Options
+	SharedCtx       *Context.Context
+	SharedCtxStatus bool
+	NotIgnorePanic  bool
+	sem             *semaphore.Weighted
+	syncContext     sync.Once
 
 	//stageIndex    int32
 
@@ -98,11 +103,13 @@ type BasePipeline struct {
 func (p *BasePipeline) SafeRun(
 	context Context.Context,
 	logger interfaces.LoggerInterface,
-	run func() error, catch func(err error)) {
+	run func(patchedCtx Context.Context) error, catch func(err error)) {
 
 	if p.Options == nil {
 		p.Options = GetDefaultRetryOptions()
 	}
+
+	context = setLabel(context, p.MetaInfo)
 
 	if p.sem == nil && p.Options.MaxConcurrent > 0 {
 		p.sem = semaphore.NewWeighted(p.Options.MaxConcurrent)
@@ -149,7 +156,7 @@ func (p *BasePipeline) SafeRun(
 			return middlewareErr
 		}
 
-		return run()
+		return run(context)
 	},
 		retry.Delay(p.Options.Retry.Delay),
 		retry.Attempts(retryMaxCount),
@@ -195,13 +202,13 @@ func (p *BasePipeline) Run(
 	}
 	var pError error
 
-	p.SafeRun(context, logCtx, func() error {
+	p.SafeRun(context, logCtx, func(patchedCtx Context.Context) error {
 
 		if utils.IsNill(p.Fn) {
 			return Errors.LambdaRequired
 		}
 
-		err, newContext := p.Fn(context, logCtx)
+		err, newContext := p.Fn(patchedCtx, logCtx)
 		if utils.NotNill(err) {
 			return err
 		}
@@ -278,4 +285,13 @@ func InsertPipeline(
 	a = append(a[:index+1], a[index:]...)
 	a[index] = value
 	return a
+}
+
+func (p *BasePipeline) SetSharedCtx(ctx *Context.Context) {
+	p.SharedCtx = ctx
+	p.SharedCtxStatus = true
+}
+
+func (p *BasePipeline) GetSharedStatus() bool {
+	return p.SharedCtxStatus
 }

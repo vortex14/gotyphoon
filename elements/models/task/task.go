@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	b64 "encoding/base64"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -198,6 +199,10 @@ func (t *TyphoonTask) IsMaxRetry() bool {
 
 	return status
 
+}
+
+func (t *TyphoonTask) String() string {
+	return fmt.Sprintf("Task<%s>", t.Taskid)
 }
 
 func (t *TyphoonTask) UpdateRetriesCounter() {
