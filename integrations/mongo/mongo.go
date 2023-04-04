@@ -171,6 +171,13 @@ func (s *Service) GetCollections() []*Collection {
 	return results
 }
 
+func (s *Service) FindOne(query bson.D, collection *mongo.Collection) *bson.D {
+	_doc := collection.FindOne(context.TODO(), query)
+	var _decoded bson.D
+	_ = _doc.Decode(&_decoded)
+	return &_decoded
+}
+
 func (s *Service) GetCountDocuments(query *interfaces.MongoQuery) int64 {
 	s.initClient()
 	query.Options = options.Count().SetMaxTime(query.Timeout * time.Second)

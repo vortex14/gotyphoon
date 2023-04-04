@@ -7,7 +7,7 @@ import (
 type BasePipelineInterface interface {
 	Run(
 		context context.Context,
-		reject func(pipeline BasePipelineInterface, err error),
+		reject func(ctx context.Context, pipeline BasePipelineInterface, err error),
 		next func(ctx context.Context),
 	)
 	RunMiddlewareStack(

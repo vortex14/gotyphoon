@@ -11,4 +11,5 @@ var (
 	ForceSkipPipelines   = Errors.New("skip all next pipelines")
 	PipelineContexFailed = Errors.New("invalid pipeline context")
 	CtxLogFailed         = Errors.New("context has not logger")
+	PipelineFailed       = errors.New("pipeline failed by undefined reason")
 )

@@ -57,6 +57,10 @@ func (t *Pipeline) UnpackResponseCtx(
 
 	if t.SharedCtxStatus {
 		okS, sv = GetService(t.SharedCtx)
+
+		if sv.GetHost() != t.opts.GetHost() {
+			okS, sv = GetService(&t.ctx)
+		}
 	} else {
 		okS, sv = GetService(&t.ctx)
 	}
@@ -73,17 +77,17 @@ func (t *Pipeline) UnpackResponseCtx(
 
 func (t *Pipeline) Run(
 	context Context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
+	reject func(context Context.Context, pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx Context.Context),
 ) {
 
 	if t.Fn == nil {
-		reject(t, Errors.TaskPipelineRequiredHandler)
+		reject(context, t, Errors.TaskPipelineRequiredHandler)
 		return
 	}
 
 	if t.opts != nil {
-		t.initCtx()
+		t.initServiceCtx()
 	}
 
 	ok, taskInstance, logger, sv, db, collection := t.UnpackResponseCtx(context)
@@ -92,7 +96,7 @@ func (t *Pipeline) Run(
 
 		fError := fmt.Errorf("%s. taskInstance: %s, logger: %s, db: %+v, collection: %v, sv: %+v",
 			Errors.PipelineContexFailed, taskInstance, logger, db, collection, sv)
-		reject(t, fError)
+		reject(context, t, fError)
 		t.Cancel(context, logger, fError)
 		return
 	}
@@ -106,35 +110,50 @@ func (t *Pipeline) Run(
 		next(newContext)
 		return nil
 
-	}, func(err error) {
+	}, func(context Context.Context, err error) {
 
-		reject(t, err)
+		reject(context, t, err)
 
 	})
 
 }
 
-func (t *Pipeline) initCtx() {
+func (t *Pipeline) initSharedCtx() {
+
+	*t.SharedCtx = SetService(t.SharedCtx, &mongo.Service{
+		Settings: *t.opts,
+	})
+
+}
+
+func (t *Pipeline) initLocalCtx() {
+	t.ctx = SetService(&t.ctx, &mongo.Service{
+		Settings: *t.opts,
+	})
+}
+
+func (t *Pipeline) initServiceCtx() {
 	t.sCtx.Do(func() {
 		t.ctx = Context.Background()
 
 		var service *mongo.Service
 
 		if t.SharedCtxStatus {
-			s, srv := GetService(t.SharedCtx)
-			if s {
-				service = srv
+			s1, srvShared := GetService(t.SharedCtx)
+			if s1 {
+				service = srvShared
 			} else {
-				service = &mongo.Service{
-					Settings: *t.opts,
-				}
-				*t.SharedCtx = SetService(t.SharedCtx, service)
+				t.initSharedCtx()
+				s1, service = GetService(t.SharedCtx)
+			}
+
+			if service.Settings.GetHost() != t.opts.GetHost() {
+				t.initLocalCtx()
+				_, service = GetService(&t.ctx)
 			}
 		} else {
-			service = &mongo.Service{
-				Settings: *t.opts,
-			}
-			t.ctx = SetService(&t.ctx, service)
+			t.initLocalCtx()
+			_, service = GetService(&t.ctx)
 		}
 
 		if len(t.opts.DefaultCollection) > 0 && len(t.opts.DefaultDatabase) > 0 {

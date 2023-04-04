@@ -91,7 +91,7 @@ func TestPipelineLabel(t *testing.T) {
 				_, _labels := GetPipelineLabel(ctx)
 
 				So(_labels.Name, ShouldEqual, "test-1-3-4")
-				
+
 				return nil, nil
 			},
 			Cn: func(ctx context.Context, logger interfaces.LoggerInterface, err error) {
@@ -99,7 +99,7 @@ func TestPipelineLabel(t *testing.T) {
 			},
 		}
 		var err error
-		Pipe.Run(ctx, func(pipeline interfaces.BasePipelineInterface, error error) {
+		Pipe.Run(ctx, func(context context.Context, pipeline interfaces.BasePipelineInterface, error error) {
 
 		}, func(ctx context.Context) {
 		})
@@ -113,9 +113,9 @@ func TestPanicPipeline(t *testing.T) {
 	l := log.New(map[string]interface{}{"test": "test"})
 	ctx := log.NewCtx(context.Background(), l)
 	Convey("Create a pipeline with panic operation", t, func() {
-
+		var errCallback error
 		Pipe := &BasePipeline{
-			MetaInfo: nil,
+			MetaInfo: &label.MetaInfo{Name: "panic pipe"},
 			Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
 				logger.Debug("Run")
 
@@ -126,18 +126,20 @@ func TestPanicPipeline(t *testing.T) {
 				return nil, nil
 			},
 			Cn: func(ctx context.Context, logger interfaces.LoggerInterface, err error) {
+				errCallback = err
 				logger.Error(err)
 			},
 		}
 		var err error
-		Pipe.Run(ctx, func(pipeline interfaces.BasePipelineInterface, error error) {
+		Pipe.Run(ctx, func(context context.Context, pipeline interfaces.BasePipelineInterface, error error) {
 			l.Error(error)
 			err = error
 
 		}, func(ctx context.Context) {
 		})
-		l.Debug(err)
+
 		So(err, ShouldBeError)
+		So(errCallback, ShouldBeError)
 	})
 }
 
@@ -160,7 +162,7 @@ func TestPipelineRetry(t *testing.T) {
 			},
 		}
 		var err error
-		Pipe.Run(ctx, func(pipeline interfaces.BasePipelineInterface, error error) {
+		Pipe.Run(ctx, func(context context.Context, pipeline interfaces.BasePipelineInterface, error error) {
 			err = error
 
 		}, func(ctx context.Context) {
@@ -209,7 +211,7 @@ func TestRetryDelayPipeline(t *testing.T) {
 			},
 		}
 		var err error
-		Pipe.Run(ctx, func(pipeline interfaces.BasePipelineInterface, error error) {
+		Pipe.Run(ctx, func(context context.Context, pipeline interfaces.BasePipelineInterface, error error) {
 			err = error
 
 		}, func(ctx context.Context) {
@@ -221,35 +223,41 @@ func TestRetryDelayPipeline(t *testing.T) {
 }
 
 func TestSemPipeline(t *testing.T) {
-	//cuncurrentCall := 0
-	p := BasePipeline{
-		Options: &Options{MaxConcurrent: 1},
-		Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
-			logger.Info("Run")
-			time.Sleep(10 * time.Second)
 
-			return nil, ctx
-		},
-	}
+	Convey("test semaphore group", t, func() {
+		p := BasePipeline{
+			MetaInfo: &label.MetaInfo{Name: "semaphore pipe"},
+			Options:  &Options{MaxConcurrent: 1},
+			Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
+				logger.Info("Run")
+				time.Sleep(10 * time.Second)
 
-	for i := 0; i < 10; i++ {
-		l := log.New(map[string]interface{}{"number": i, "uuid": uuid.New().String()})
-		ctx := log.NewCtx(context.Background(), l)
-		go p.Run(ctx, func(pipeline interfaces.BasePipelineInterface, err error) {
-			l.Error(err)
-		}, func(ctx context.Context) {
-			l.Debug("a good data")
-		})
+				return nil, ctx
+			},
+		}
 
-		//if !p.Try() {
-		//	l.Error("Busy !!")
-		//}
+		crowded := 0
+		success := 0
 
-	}
+		for i := 0; i < 10; i++ {
 
-	time.Sleep(60 * time.Second)
+			l := log.New(map[string]interface{}{"number": i, "uuid": uuid.New().String()})
+			ctx := log.NewCtx(context.Background(), l)
+			go p.Run(ctx, func(context context.Context, pipeline interfaces.BasePipelineInterface, err error) {
+				crowded++
+				l.Error(err)
+			}, func(ctx context.Context) {
+				success++
+				l.Debug("a good data")
+			})
+		}
 
-	//p.Await()
+		time.Sleep(11 * time.Second)
+
+		So(success, ShouldEqual, 1)
+		So(crowded, ShouldEqual, 9)
+
+	})
 
 }
 

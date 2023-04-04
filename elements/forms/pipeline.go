@@ -126,10 +126,22 @@ func (p *BasePipeline) initCtx() {
 
 }
 
+func (p *BasePipeline) recover(ctx Context.Context, catch func(ctx Context.Context, err error)) {
+	if !p.NotIgnorePanic {
+		if r := recover(); r != nil {
+			panicE := errors.New(fmt.Sprintf("%s: %s", PanicException, r))
+			catch(ctx, panicE)
+			if p.sem != nil {
+				p.sem.Release(1)
+			}
+		}
+	}
+}
+
 func (p *BasePipeline) SafeRun(
 	context Context.Context,
 	logger interfaces.LoggerInterface,
-	run func(patchedCtx Context.Context) error, catch func(err error)) {
+	run func(patchedCtx Context.Context) error, catch func(ctx Context.Context, err error)) {
 
 	context = setLabel(context, p.MetaInfo)
 
@@ -142,29 +154,19 @@ func (p *BasePipeline) SafeRun(
 	if p.sem != nil {
 		if !p.sem.TryAcquire(1) {
 			logger.Error(Errors.PipelineCrowded)
-			catch(Errors.PipelineCrowded)
+			catch(context, Errors.PipelineCrowded)
 			return
 		}
 	}
 
-	defer func() {
-		if !p.NotIgnorePanic {
-			if r := recover(); r != nil {
-				panicE := errors.New(fmt.Sprintf("%s: %s", PanicException, r))
-				catch(panicE)
-				if p.sem != nil {
-					p.sem.Release(1)
-				}
-			}
-		}
-	}()
-	logger = log.PatchLogI(logger, map[string]interface{}{"max_retry": p.Options.Retry.MaxCount})
+	defer p.recover(context, catch)
+
+	logger = log.PatchLogI(logger, log.D{"max_retry": p.Options.Retry.MaxCount})
 	retryCount := 0
 	retryMaxCount := p.Options.Retry.MaxCount
 
 	eR := retry.Do(func() error {
 		retryCount++
-		//logger.Debugf("attempt: %d", retryCount)
 
 		var middlewareErr error
 
@@ -199,7 +201,7 @@ func (p *BasePipeline) SafeRun(
 	)
 
 	if eR != nil {
-		catch(eR)
+		catch(context, eR)
 	}
 
 	if p.sem != nil {
@@ -210,13 +212,13 @@ func (p *BasePipeline) SafeRun(
 
 func (p *BasePipeline) Run(
 	context Context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
+	reject func(context Context.Context, pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx Context.Context),
 ) {
 
 	var logCtx interfaces.LoggerInterface
 	if ok, logger := log.Get(context); !ok {
-		reject(p, Errors.CtxLogFailed)
+		reject(context, p, Errors.CtxLogFailed)
 		l := log.New(log.D{})
 		p.Cancel(context, l, Errors.CtxLogFailed)
 		return
@@ -240,9 +242,9 @@ func (p *BasePipeline) Run(
 
 		return nil
 
-	}, func(err error) {
+	}, func(context Context.Context, err error) {
 		pError = err
-		reject(p, pError)
+		reject(context, p, pError)
 		p.Cancel(context, logCtx, pError)
 	})
 

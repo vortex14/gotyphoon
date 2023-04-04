@@ -25,7 +25,7 @@ func ConstructorMockTaskMiddleware(required bool) interfaces.MiddlewareInterface
 
 			t := fake.CreateDefaultTask()
 
-			l := log.New(map[string]interface{}{"test": "test"})
+			l := log.New(log.D{"test": "test"})
 			ctx := log.NewCtx(context, l)
 
 			ctx = Task.PatchCtx(ctx, t)

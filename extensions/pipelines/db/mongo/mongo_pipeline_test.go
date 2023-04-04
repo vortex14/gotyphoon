@@ -96,7 +96,7 @@ func TestCtxPipeline(t *testing.T) {
 
 		ctx = task.PatchCtx(ctx, fake.CreateDefaultTask())
 
-		p.Run(ctx, func(pipeline interfaces.BasePipelineInterface, err error) {
+		p.Run(ctx, func(ctx Context.Context, pipeline interfaces.BasePipelineInterface, err error) {
 			L.Errorf("%+v", err)
 		}, func(ctx Context.Context) {
 
@@ -112,7 +112,7 @@ func TestMongoGroup(t *testing.T) {
 			DefaultCollection: "test-collection",
 			DefaultDatabase:   "test-db",
 			DbNames:           []string{"test-db", "data"},
-			Name:              "db",
+			Name:              "",
 			Details: struct {
 				AuthSource string `yaml:"authSource,omitempty"`
 				Username   string `yaml:"username,omitempty"`
@@ -211,8 +211,11 @@ func deserializeTask(doc bson.M) *task.TyphoonTask {
 func TestMigrateProcessorExceptions(t *testing.T) {
 	Convey("test migrate exceptions to NSQ ", t, func() {
 
+		exception_id := "244de05854e5f8b0a38a8d385908165a"
+		limit := int64(1)
+
 		producer, _ := NSQ.StartProducer(NSQ.ProducerConfig{
-			Topic:   "hello10100101010101010",
+			Topic:   "",
 			Address: "localhost:4150",
 		})
 
@@ -220,7 +223,7 @@ func TestMigrateProcessorExceptions(t *testing.T) {
 			DefaultCollection: "processor_exceptions",
 			DefaultDatabase:   "",
 			DbNames:           []string{""},
-			Name:              "db",
+			Name:              "",
 			Details: struct {
 				AuthSource string `yaml:"authSource,omitempty"`
 				Username   string `yaml:"username,omitempty"`
@@ -230,6 +233,23 @@ func TestMigrateProcessorExceptions(t *testing.T) {
 			}{},
 		}
 
+		opts2 := &interfaces.ServiceMongo{
+			DefaultCollection: "processor_exceptions",
+			DefaultDatabase:   "",
+			DbNames:           []string{""},
+			Name:              "",
+			Details: struct {
+				AuthSource string `yaml:"authSource,omitempty"`
+				Username   string `yaml:"username,omitempty"`
+				Password   string `yaml:"password,omitempty"`
+				Host       string `yaml:"host"`
+				Port       int    `yaml:"port"`
+			}{
+				Host: "localhost",
+				Port: 27017,
+			},
+		}
+
 		p := forms.PipelineGroup{
 			MetaInfo: &label.MetaInfo{Name: "mongo group"},
 			Options:  forms.GetNotRetribleOptions(),
@@ -237,6 +257,7 @@ func TestMigrateProcessorExceptions(t *testing.T) {
 				&Pipeline{
 					BasePipeline: &forms.BasePipeline{
 						NotIgnorePanic: true,
+						Options:        &forms.Options{ProgressBar: true},
 						MetaInfo: &label.MetaInfo{
 							Name:        "Mongo check",
 							Description: "Mongo pipeline for check collection",
@@ -251,13 +272,34 @@ func TestMigrateProcessorExceptions(t *testing.T) {
 						database *M.Database,
 						collection *M.Collection) (error, Context.Context) {
 
-						query := bson.D{{"exception_id", "b860f84703ec2a0b79ae8de74e1f70aa"}}
+						query := bson.D{{"exception_id", exception_id}}
 
 						c, _ := collection.CountDocuments(context, query)
-						logger.Warning(c)
+						logger.Warning(c, service.GetHost())
+
+						exColl := database.Collection("types_exceptions")
+
+						countType, _ := exColl.CountDocuments(context, query)
+
+						_typeDocDecoded := service.FindOne(query, collection)
+
+						logger.Warningf("CountType: %d, %+v", countType, _typeDocDecoded)
+
+						task.SetSaveData("exception_doc", _typeDocDecoded)
 
 						var results []bson.M
-						limit := int64(100)
+
+						_, _bar := forms.GetBar(context)
+
+						//logger.Warning(_bar)
+						//
+						//return nil, context
+
+						_bar.NewOption(int64(0), int64(100))
+
+						_bar.IncCur(100)
+
+						_bar.Finish()
 
 						cursor, err := collection.Find(context, query, &options.FindOptions{Limit: &limit})
 						if err != nil {
@@ -330,9 +372,68 @@ func TestMigrateProcessorExceptions(t *testing.T) {
 
 						wg.Wait()
 						_bar.Finish()
+
 						logger.Info("DONE !!")
 
-						//logger.Debug(len(*list))
+						return nil, context
+					},
+					Cn: func(err error, context Context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) {
+
+					},
+				},
+				&Pipeline{
+					BasePipeline: &forms.BasePipeline{
+						NotIgnorePanic: true,
+						Options:        &forms.Options{ProgressBar: true},
+						MetaInfo: &label.MetaInfo{
+							Name:        "Push data to local Mongo",
+							Description: "Mongo pipeline for upload data to local DB",
+						},
+					},
+					opts: opts2,
+
+					Fn: func(context Context.Context,
+						task interfaces.TaskInterface,
+						logger interfaces.LoggerInterface,
+						service *mongo.Service,
+						database *M.Database,
+						collection *M.Collection) (error, Context.Context) {
+
+						// Set exception type to localhost
+
+						exColl := database.Collection("types_exceptions")
+						query := bson.D{{"exception_id", exception_id}}
+						countType, _ := exColl.CountDocuments(context, query)
+
+						if countType == 0 {
+							logger.Debug("create a new exception type")
+							_ex := task.GetSaveData("exception_doc").(*bson.D)
+							_, _ = exColl.InsertOne(context, _ex)
+						}
+
+						logger.Debug("Hi it is local DB")
+
+						c, _ := collection.CountDocuments(context, query)
+						logger.Warning(c)
+
+						logger.Warning(service.Settings.GetHost())
+
+						list := task.GetSaveData("data").(*[]bson.M)
+						for _, doc := range *list {
+							_hasDoc, _ := collection.CountDocuments(Context.TODO(), bson.D{{"_id", doc["_id"]}})
+							if _hasDoc == 0 {
+								_doc, e := collection.InsertOne(Context.TODO(), doc)
+								if e != nil {
+									logger.Error(_doc, e)
+								} else {
+									logger.Debugf("pushed _id: %v", doc["_id"])
+								}
+
+							} else {
+								logger.Debug("Doc already created")
+							}
+
+						}
 
 						return nil, context
 

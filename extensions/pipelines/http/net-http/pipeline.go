@@ -56,12 +56,12 @@ func (t *HttpRequestPipeline) UnpackRequestCtx(
 
 func (t *HttpRequestPipeline) Run(
 	context Context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
+	reject func(context Context.Context, pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx Context.Context),
 ) {
 
 	if t.Fn == nil {
-		reject(t, Errors.TaskPipelineRequiredHandler)
+		reject(context, t, Errors.TaskPipelineRequiredHandler)
 		return
 	}
 
@@ -82,8 +82,8 @@ func (t *HttpRequestPipeline) Run(
 		next(newContext)
 		return err
 
-	}, func(err error) {
-		reject(t, err)
+	}, func(context Context.Context, err error) {
+		reject(context, t, err)
 		_, logCtx := log.Get(context)
 		t.Cancel(context, logCtx, err)
 	})

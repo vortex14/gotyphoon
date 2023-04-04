@@ -63,6 +63,9 @@ func (g *PipelineGroup) initSemaphore() bool {
 func (g *PipelineGroup) initCtx() {
 	g.syncCtx.Do(func() {
 		g.ctx = Context.Background()
+		if g.Options == nil {
+			g.Options = &Options{}
+		}
 	})
 }
 
@@ -71,13 +74,13 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 	var forceSkip bool
 	var failedFlow bool
 	var mainContext Context.Context
-	var middlewareContext Context.Context
 
-	middlewareContext, mainContext = context, context
+	mainContext = context
 
 	mainContext = log.PatchCtx(mainContext, log.D{"group": g.GetName(), "call_id": uuid.New().String()})
 
 	semStatus := g.initSemaphore()
+	g.initCtx()
 
 	if !semStatus {
 		return Errors.PipelineCrowded
@@ -89,20 +92,19 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 			break
 		}
 
-		middlewareContext = log.PatchCtx(mainContext, log.D{"pipeline": pipeline.GetName(), "group": g.GetName()})
+		mainContext = log.PatchCtx(mainContext, log.D{"pipeline": pipeline.GetName()})
 
-		_, logger := log.Get(middlewareContext)
+		_, logger := log.Get(mainContext)
 
 		if skipFlag, numberStage := GetGOTOCtx(mainContext); skipFlag && numberStage > index+1 {
 			continue
 		}
 
 		if !g.Options.NotSharedContext {
-			g.initCtx()
 			pipeline.SetSharedCtx(&g.ctx)
 		}
 
-		pipeline.Run(middlewareContext, func(p interfaces.BasePipelineInterface, err error) {
+		pipeline.Run(mainContext, func(canceledCtx Context.Context, p interfaces.BasePipelineInterface, err error) {
 			switch err {
 			case Errors.ForceSkipPipelines:
 				forceSkip = true
@@ -111,7 +113,7 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 				errStack = err
 				logger.Error(fmt.Sprintf("Pipeline name: %s ; Exit from group. Error: %s", p.GetName(), err.Error()))
 				failedFlow = true
-				pipeline.Cancel(mainContext, logger, errStack)
+				pipeline.Cancel(canceledCtx, logger, errStack)
 			}
 
 		}, func(returnedResultPipelineContext Context.Context) {

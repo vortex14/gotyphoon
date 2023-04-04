@@ -38,18 +38,18 @@ func (t *TaskPipeline) UnpackCtx(
 
 func (t *TaskPipeline) Run(
 	context Context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
+	reject func(context Context.Context, pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx Context.Context),
 ) {
 
 	if t.Fn == nil {
-		reject(t, Errors.TaskPipelineRequiredHandler)
+		reject(context, t, Errors.TaskPipelineRequiredHandler)
 		return
 	}
 
 	ok, taskInstance, logger := t.UnpackCtx(context)
 	if !ok {
-		reject(t, Errors.PipelineContexFailed)
+		reject(context, t, Errors.PipelineContexFailed)
 		return
 	}
 
@@ -63,8 +63,8 @@ func (t *TaskPipeline) Run(
 
 		return nil
 
-	}, func(err error) {
-		reject(t, err)
+	}, func(context Context.Context, err error) {
+		reject(context, t, err)
 		t.Cancel(context, logger, err)
 	})
 

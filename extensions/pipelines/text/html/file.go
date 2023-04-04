@@ -37,32 +37,32 @@ type FileHtmlPipeline struct {
 
 func (t *FileHtmlPipeline) Run(
 	context context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
+	reject func(context context.Context, pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx context.Context),
 ) {
 
 	if t.Fn == nil {
-		reject(t, Errors.TaskPipelineRequiredHandler)
+		reject(context, t, Errors.TaskPipelineRequiredHandler)
 		return
 	}
 
 	ok, taskInstance, logger := t.UnpackCtx(context)
 
 	if !ok {
-		reject(t, Errors.PipelineContexFailed)
+		reject(context, t, Errors.PipelineContexFailed)
 		return
 	}
 
 	data, err := ioutil.ReadFile(taskInstance.GetFetcherUrl())
 
 	if err != nil {
-		reject(t, Errors.FileReadFailed)
+		reject(context, t, Errors.FileReadFailed)
 		return
 	}
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer(data))
 	if err != nil {
-		reject(t, err)
+		reject(context, t, err)
 		return
 	}
 
@@ -70,7 +70,7 @@ func (t *FileHtmlPipeline) Run(
 
 	err, newContext := t.Fn(context, taskInstance, logger, string(data), doc)
 	if err != nil {
-		reject(t, err)
+		reject(context, t, err)
 		return
 	}
 	next(newContext)
