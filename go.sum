@@ -1050,6 +1050,8 @@ github.com/orisano/pixelmatch v0.0.0-20210112091706-4fa4c7ba91d5 h1:1SoBaSPudixR
 github.com/orisano/pixelmatch v0.0.0-20210112091706-4fa4c7ba91d5/go.mod h1:nZgzbfBr3hhjoZnS66nKrHmduYNpc34ny7RK4z5/HM0=
 github.com/osamingo/checkdigit v1.0.0 h1:c5vj+swZrFKWtQEUqj9DbgzTGYa1UscZO5Rwz9L8RKU=
 github.com/osamingo/checkdigit v1.0.0/go.mod h1:1YyIqzN+gc5pRmqS39JtDY8Wz0CWY4+VOpR4dtQLUAY=
+github.com/ozankasikci/go-image-merge v0.2.2 h1:K370BLLTIsamwjAeViiPntf7GiG3h9pXzDmxXCbN8/0=
+github.com/ozankasikci/go-image-merge v0.2.2/go.mod h1:NQ2aN0b21buFx3p+5x4dZrKuPSLh2uBukK7F30BrYTo=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=

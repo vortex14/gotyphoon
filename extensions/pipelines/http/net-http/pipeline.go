@@ -69,13 +69,13 @@ func (t *HttpRequestPipeline) Run(
 
 	t.SafeRun(context, logger, func(patchedCtx Context.Context) error {
 
-		ok, taskInstance, logger, client, request, transport := t.UnpackRequestCtx(context)
+		ok, taskInstance, logger, client, request, transport := t.UnpackRequestCtx(patchedCtx)
 
 		if !ok {
 			return Errors.PipelineContexFailed
 		}
 
-		err, newContext := t.Fn(context, taskInstance, logger, client, request, transport)
+		err, newContext := t.Fn(patchedCtx, taskInstance, logger, client, request, transport)
 		if err != nil {
 			return err
 		}

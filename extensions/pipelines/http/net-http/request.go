@@ -3,8 +3,10 @@ package net_http
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/fatih/color"
@@ -42,6 +44,28 @@ func Request(
 func NewRequest(task *task.TyphoonTask) (*http.Request, error) {
 	color.Yellow("Create request %s : %s", task.GetFetcherMethod(), task.GetFetcherUrl())
 	return http.NewRequest(task.GetFetcherMethod(), task.GetFetcherUrl(), task.GetRequestBody())
+}
+
+func BasicRequest(url string) (error, []byte) {
+	method := "GET"
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		return err, nil
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		return err, nil
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err, nil
+	}
+	return nil, body
 }
 
 func FetchData(task *task.TyphoonTask) (error, *string) {
@@ -151,6 +175,7 @@ func CreateProxyRequestPipeline(opts *forms.Options) *HttpRequestPipeline {
 func CreateRequestPipeline() *HttpRequestPipeline {
 	return &HttpRequestPipeline{
 		BasePipeline: &forms.BasePipeline{
+			Options: forms.GetCustomRetryOptions(3, time.Second*2),
 			MetaInfo: &label.MetaInfo{
 				Name: "http-request",
 			},

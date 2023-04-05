@@ -59,12 +59,12 @@ func (t *HttpRodResponsePipeline) UnpackResponseCtx(
 
 func (t *HttpRodResponsePipeline) Run(
 	context Context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
+	reject func(context Context.Context, pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx Context.Context),
 ) {
 
 	if t.Fn == nil {
-		reject(t, Errors.TaskPipelineRequiredHandler)
+		reject(context, t, Errors.TaskPipelineRequiredHandler)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (t *HttpRodResponsePipeline) Run(
 	if !ok {
 		fError := fmt.Errorf("%s. taskInstance: %v, logger: %v, browser: %v, page: %v, body: %v",
 			Errors.PipelineContexFailed, taskInstance, logger, browser, page, body)
-		reject(t, fError)
+		reject(context, t, fError)
 		t.Cancel(context, logger, fError)
 		return
 	}
@@ -87,7 +87,7 @@ func (t *HttpRodResponsePipeline) Run(
 		next(newContext)
 		return nil
 
-	}, func(err error) {
+	}, func(ctx Context.Context, err error) {
 
 		// without this will be leaked after panic.
 		if e := rod.Try(func() {
@@ -97,7 +97,7 @@ func (t *HttpRodResponsePipeline) Run(
 			return
 		}
 
-		reject(t, err)
+		reject(ctx, t, err)
 		//t.Cancel(context, logger, err)
 	})
 

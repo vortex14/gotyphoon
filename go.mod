@@ -49,6 +49,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/osamingo/checkdigit v1.0.0
+	github.com/ozankasikci/go-image-merge v0.2.2
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.10.1
 	github.com/prometheus/client_golang v1.12.1

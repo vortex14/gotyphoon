@@ -96,7 +96,7 @@ func TestCreateRodPipeline(t *testing.T) {
 		ctx = log.NewCtx(ctx, log.New(map[string]interface{}{"pipeline": "rod-request"}))
 
 		var err error
-		p.Run(ctx, func(pipeline interfaces.BasePipelineInterface, _err error) {
+		p.Run(ctx, func(ctx context.Context, pipeline interfaces.BasePipelineInterface, _err error) {
 			err = _err
 		}, func(ctx context.Context) {
 

@@ -1,6 +1,5 @@
 package fake_image
 
-
 import (
 	"context"
 	"github.com/fogleman/gg"
@@ -20,7 +19,7 @@ type ImagePipeline struct {
 		task interfaces.TaskInterface,
 		logger interfaces.LoggerInterface,
 		imgCtx *gg.Context,
-	)  (error, context.Context)
+	) (error, context.Context)
 
 	Cn func(
 		err error,
@@ -32,7 +31,7 @@ type ImagePipeline struct {
 
 func (t *ImagePipeline) UnpackCtx(
 	ctx context.Context,
-	) (bool, interfaces.TaskInterface, interfaces.LoggerInterface, *gg.Context)  {
+) (bool, interfaces.TaskInterface, interfaces.LoggerInterface, *gg.Context) {
 
 	okT, taskInstance := task.Get(ctx)
 	okL, logger := log.Get(ctx)
@@ -42,18 +41,27 @@ func (t *ImagePipeline) UnpackCtx(
 
 func (t *ImagePipeline) Run(
 	context context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
+	reject func(context context.Context, pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx context.Context),
 ) {
 
-	if t.Fn == nil { reject(t, Errors.TaskPipelineRequiredHandler); return }
+	if t.Fn == nil {
+		reject(context, t, Errors.TaskPipelineRequiredHandler)
+		return
+	}
 
-	ok,taskInstance, logger, imgCtx := t.UnpackCtx(context)
+	ok, taskInstance, logger, imgCtx := t.UnpackCtx(context)
 
-	if !ok { reject(t, Errors.PipelineContexFailed); return }
+	if !ok {
+		reject(context, t, Errors.PipelineContexFailed)
+		return
+	}
 
 	err, newContext := t.Fn(context, taskInstance, logger, imgCtx)
-	if err != nil { reject(t, err); return }
+	if err != nil {
+		reject(context, t, err)
+		return
+	}
 	next(newContext)
 }
 

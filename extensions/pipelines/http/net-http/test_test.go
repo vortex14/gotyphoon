@@ -83,7 +83,7 @@ func TestRetryHttpPipeline(t *testing.T) {
 
 		So(errM, ShouldBeNil)
 
-		p1.Run(preparedCtx, func(pipeline interfaces.BasePipelineInterface, err error) {
+		p1.Run(preparedCtx, func(ctx context.Context, pipeline interfaces.BasePipelineInterface, err error) {
 			errP = err
 		}, func(ctx context.Context) {
 			preparedCtx = ctx
@@ -164,7 +164,7 @@ func TestRetryHttpPipeline(t *testing.T) {
 
 		So(errM, ShouldBeNil)
 
-		p1.Run(preparedCtx, func(pipeline interfaces.BasePipelineInterface, err error) {
+		p1.Run(preparedCtx, func(ctx context.Context, pipeline interfaces.BasePipelineInterface, err error) {
 			errP = err
 		}, func(ctx context.Context) {
 			preparedCtx = ctx
@@ -252,7 +252,7 @@ func TestRetryHttpPipeline(t *testing.T) {
 		So(errM, ShouldBeNil)
 
 		var errR error
-		p1.Run(preparedCtx, func(pipeline interfaces.BasePipelineInterface, err error) {
+		p1.Run(preparedCtx, func(ctx context.Context, pipeline interfaces.BasePipelineInterface, err error) {
 			errR = err
 		}, func(ctx context.Context) {
 			preparedCtx = ctx
@@ -265,5 +265,42 @@ func TestRetryHttpPipeline(t *testing.T) {
 		So(errR, ShouldBeError)
 
 		So(countIter, ShouldEqual, 1)
+	})
+}
+
+func TestBaseRequest(t *testing.T) {
+	Convey("base request", t, func() {
+		g := &forms.PipelineGroup{
+			MetaInfo: &label.MetaInfo{Name: "test"},
+			Stages: []interfaces.BasePipelineInterface{
+				CreateRequestPipeline(),
+				&HttpResponsePipeline{
+					BasePipeline: &forms.BasePipeline{
+						MetaInfo: &label.MetaInfo{
+							Name: "test-response",
+						},
+					},
+					Fn: func(context context.Context,
+						task interfaces.TaskInterface,
+						logger interfaces.LoggerInterface,
+						client *http.Client,
+						request *http.Request,
+						transport *http.Transport,
+						response *http.Response, data *string) (error, context.Context) {
+
+						logger.Error(*data)
+						return nil, context
+					},
+				},
+			},
+		}
+
+		_task := fake.CreateDefaultTask()
+
+		_task.SetFetcherUrl("https://httpbin.org/ip")
+
+		ctxt := task.PatchCtx(context.Background(), _task)
+
+		_ = g.Run(ctxt)
 	})
 }
