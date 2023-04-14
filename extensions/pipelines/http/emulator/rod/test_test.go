@@ -65,8 +65,8 @@ func TestCreateRodPipeline(t *testing.T) {
 		d := devices.Device{}
 		d.UserAgent = "random"
 		//_task.SetProxyAddress("http://localhost:8888")
-		//_task.SetProxyAddress("http://ukehiuwv-982:8htmpmjvdzve@p.webshare.io")
-		_task.SetProxyServerUrl("http://proxy-manager.typhoon-s1.ru")
+		_task.SetProxyAddress("http://154.53.89.116:8800")
+		//_task.SetProxyServerUrl("http://proxy-manager.typhoon-s1.ru")
 		p := CreateRodRequestPipeline(
 			forms.GetNotRetribleOptions(),
 			&DetailsOptions{
@@ -88,7 +88,7 @@ func TestCreateRodPipeline(t *testing.T) {
 						},
 					},
 				},
-				SleepAfter: 10,
+				SleepAfter: 1000000,
 			})
 
 		_task.SetFetcherUrl("https://google.com")

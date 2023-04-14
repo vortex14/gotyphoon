@@ -50,7 +50,13 @@ func TestCheckJSON(t *testing.T) {
 							net_http.ConstructorMockResponseMiddleware(true),
 						},
 					},
-					Fn: func(context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface, request *http.Request, response *http.Response, data *string, jq gojq.Iter) (error, context.Context) {
+					Fn: func(context context.Context,
+						task interfaces.TaskInterface,
+						logger interfaces.LoggerInterface,
+						request *http.Request,
+						response *http.Response,
+						data *string, jq gojq.Iter) (error, context.Context) {
+
 						v, ok := jq.Next()
 
 						if !ok {
