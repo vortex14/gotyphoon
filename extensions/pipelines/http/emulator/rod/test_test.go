@@ -55,7 +55,7 @@ func TestCreateBrowser(t *testing.T) {
 func TestRegex(t *testing.T) {
 	r, _ := regexp.Compile("//([a-z-0-9A-Z]+):([a-zA-Z0-9]+)@")
 	d := r.FindAllStringSubmatch("http://44dfgdfg-982:dfhd@37.19.222.193", 1)
-	println(fmt.Sprintf("%d", len(d)))
+	println(fmt.Sprintf("%+v", d))
 }
 
 func TestCreateRodPipeline(t *testing.T) {
@@ -65,8 +65,8 @@ func TestCreateRodPipeline(t *testing.T) {
 		d := devices.Device{}
 		d.UserAgent = "random"
 		//_task.SetProxyAddress("http://localhost:8888")
-		//_task.SetProxyAddress("http://ukehiuwv-982:8htmpmjvdzve@p.webshare.io")
-		_task.SetProxyServerUrl("http://proxy-manager.typhoon-s1.ru")
+		_task.SetProxyAddress("http://154.53.89.116:8800")
+		//_task.SetProxyServerUrl("http://proxy-manager.typhoon-s1.ru")
 		p := CreateRodRequestPipeline(
 			forms.GetNotRetribleOptions(),
 			&DetailsOptions{
@@ -88,7 +88,7 @@ func TestCreateRodPipeline(t *testing.T) {
 						},
 					},
 				},
-				SleepAfter: 10,
+				SleepAfter: 1000000,
 			})
 
 		_task.SetFetcherUrl("https://google.com")
@@ -96,7 +96,7 @@ func TestCreateRodPipeline(t *testing.T) {
 		ctx = log.NewCtx(ctx, log.New(map[string]interface{}{"pipeline": "rod-request"}))
 
 		var err error
-		p.Run(ctx, func(pipeline interfaces.BasePipelineInterface, _err error) {
+		p.Run(ctx, func(ctx context.Context, pipeline interfaces.BasePipelineInterface, _err error) {
 			err = _err
 		}, func(ctx context.Context) {
 

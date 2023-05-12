@@ -3,7 +3,7 @@ package net_http
 import (
 	"context"
 	"net/http"
-	
+
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/extensions/pipelines"
 
@@ -63,25 +63,25 @@ func (t *HttpResponsePipeline) UnpackResponse(ctx context.Context) (
 
 func (t *HttpResponsePipeline) Run(
 	context context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
+	reject func(context context.Context, pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx context.Context),
 ) {
 
 	if t.Fn == nil {
-		reject(t, Errors.TaskPipelineRequiredHandler)
+		reject(context, t, Errors.TaskPipelineRequiredHandler)
 		return
 	}
 
 	ok, taskInstance, logger, client, request, transport, response, data := t.UnpackResponse(context)
 
 	if !ok {
-		reject(t, Errors.PipelineContexFailed)
+		reject(context, t, Errors.PipelineContexFailed)
 		return
 	}
 
 	err, newContext := t.Fn(context, taskInstance, logger, client, request, transport, response, data)
 	if err != nil {
-		reject(t, err)
+		reject(context, t, err)
 		return
 	}
 	next(newContext)

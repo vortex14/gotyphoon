@@ -3,8 +3,10 @@ package proxy
 import (
 	Errors "errors"
 	"fmt"
+
 	u_ "github.com/ahl5esoft/golang-underscore"
 	Gin "github.com/gin-gonic/gin"
+
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
@@ -64,10 +66,11 @@ func Constructor(opts *Settings) interfaces.ServerInterface {
 						if err != nil {
 							logger.Debug(err.Error())
 							proxy.Success = false
-							proxy.Proxy = err.Error()
+							proxy.Proxy = nil
+						} else {
+							proxy.Proxy = &proxyValue
 						}
 
-						proxy.Proxy = proxyValue
 						ctx.JSON(200, proxy)
 					},
 				},

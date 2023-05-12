@@ -2,9 +2,9 @@ package html
 
 import (
 	"context"
-	Errors "errors"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/vortex14/gotyphoon/elements/forms"
+	"github.com/vortex14/gotyphoon/errors"
 	net_http "github.com/vortex14/gotyphoon/extensions/pipelines/http/net-http"
 	"net/http"
 	"testing"
@@ -30,7 +30,7 @@ func TestCancelCallback(t *testing.T) {
 
 		pg := &forms.PipelineGroup{
 			MetaInfo: &label.MetaInfo{
-				Name:     "Skip-Pipeline",
+				Name:     "first group",
 				Required: true,
 			},
 			Stages: []interfaces.BasePipelineInterface{
@@ -38,7 +38,7 @@ func TestCancelCallback(t *testing.T) {
 					BasePipeline: &forms.BasePipeline{
 						Options: forms.GetNotRetribleOptions(),
 						MetaInfo: &label.MetaInfo{
-							Name:     "Skip-Pipeline",
+							Name:     "html goQuery",
 							Required: true,
 						},
 						Middlewares: []interfaces.MiddlewareInterface{
@@ -52,7 +52,7 @@ func TestCancelCallback(t *testing.T) {
 						logger interfaces.LoggerInterface, request *http.Request, response *http.Response,
 						data *string, doc *goquery.Document) (error, context.Context) {
 
-						return Errors.New("error"), context
+						return errors.PipelineFailed, context
 					},
 					Cn: func(err error, context context.Context, task interfaces.TaskInterface, logger interfaces.LoggerInterface) {
 						cancelErr = err

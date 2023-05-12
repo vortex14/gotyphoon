@@ -3,19 +3,20 @@ package log
 import "github.com/sirupsen/logrus"
 
 const (
-	DEBUG 	 = "DEBUG"
-	WARNING  = "WARNING"
-	INFO   	 = "INFO"
-	ERROR    = "ERROR"
+	DEBUG   = "DEBUG"
+	WARNING = "WARNING"
+	INFO    = "INFO"
+	ERROR   = "ERROR"
 )
 
 type BaseOptions struct {
-	Name string
-	Level string
-	ShowLine bool
-	ShowFile bool
+	Name          string
+	Level         string
+	ShowLine      bool
+	ShowFile      bool
 	ShortFileName bool
 	FullTimestamp bool
+	JsonFormat    bool
 }
 
 func (o *BaseOptions) GetLevel(name string) logrus.Level {

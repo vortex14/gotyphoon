@@ -7,7 +7,7 @@ import (
 type BasePipelineInterface interface {
 	Run(
 		context context.Context,
-		reject func(pipeline BasePipelineInterface, err error),
+		reject func(ctx context.Context, pipeline BasePipelineInterface, err error),
 		next func(ctx context.Context),
 	)
 	RunMiddlewareStack(
@@ -20,6 +20,10 @@ type BasePipelineInterface interface {
 		logger LoggerInterface,
 		err error,
 	)
+	SetSharedCtx(
+		ctx *context.Context,
+	)
+	GetSharedStatus() bool
 	MetaDataInterface
 }
 
@@ -33,11 +37,11 @@ type ProcessorPipelineInterface interface {
 type PipelineGroupGraph interface {
 
 	// /* ignore for building amd64-linux
-//
-//	SetGraph(graph GraphInterface)
-//	InitGraph(parentNode string)
-//	SetGraphNodes(nodes map[string]NodeInterface)
-//
+	//
+	//	SetGraph(graph GraphInterface)
+	//	InitGraph(parentNode string)
+	//	SetGraphNodes(nodes map[string]NodeInterface)
+	//
 	// */
 
 	PipelineGroupInterface
@@ -50,12 +54,12 @@ type PipelineGroupInterface interface {
 	SetLogger(logger LoggerInterface)
 
 	// /* ignore for building amd64-linux
-//	SetGraph(graph GraphInterface)
-//
-//	InitGraph(parentNode string)
-//
-//	SetGraphNodes(nodes map[string]NodeInterface)
-//	//
+	//	SetGraph(graph GraphInterface)
+	//
+	//	InitGraph(parentNode string)
+	//
+	//	SetGraphNodes(nodes map[string]NodeInterface)
+	//	//
 	// */
 
 }

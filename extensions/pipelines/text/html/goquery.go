@@ -2,7 +2,8 @@ package html
 
 import (
 	"bytes"
-	"context"
+	Context "context"
+	"github.com/vortex14/gotyphoon/log"
 	"net/http"
 
 	"github.com/PuerkitoBio/goquery"
@@ -21,7 +22,7 @@ type ResponseHtmlPipeline struct {
 	netHttp.HttpResponsePipeline
 
 	Fn func(
-		context context.Context,
+		context Context.Context,
 		task interfaces.TaskInterface,
 		logger interfaces.LoggerInterface,
 
@@ -30,11 +31,11 @@ type ResponseHtmlPipeline struct {
 		data *string,
 		doc *goquery.Document,
 
-	) (error, context.Context)
+	) (error, Context.Context)
 
 	Cn func(
 		err error,
-		context context.Context,
+		context Context.Context,
 
 		task interfaces.TaskInterface,
 		logger interfaces.LoggerInterface,
@@ -42,55 +43,57 @@ type ResponseHtmlPipeline struct {
 }
 
 func (t *ResponseHtmlPipeline) Run(
-	context context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
-	next func(ctx context.Context),
+	context Context.Context,
+	reject func(context Context.Context, pipeline interfaces.BasePipelineInterface, err error),
+	next func(ctx Context.Context),
 ) {
 
 	if t.Fn == nil {
-		reject(t, Errors.TaskPipelineRequiredHandler)
+		reject(context, t, Errors.TaskPipelineRequiredHandler)
 		return
 	}
 
-	ok, taskInstance, logger, _, request, _, response, data := t.UnpackResponse(context)
+	_, logger := log.Get(context)
 
-	if !ok {
-		reject(t, Errors.PipelineContexFailed)
-		return
-	}
+	t.SafeRun(context, logger, func(patchedContext Context.Context) error {
 
-	t.SafeRun(context, logger, func() error {
+		ok, taskInstance, logger, _, request, _, response, data := t.UnpackResponse(patchedContext)
+
+		if !ok {
+			return Errors.PipelineContexFailed
+		}
+
 		doc, err := goquery.NewDocumentFromReader(bytes.NewBuffer([]byte(*data)))
 		if err != nil {
 			return err
 		}
 
-		context = NewHtmlCtx(context, doc)
+		patchedContext = NewHtmlCtx(patchedContext, doc)
 
-		err, newContext := t.Fn(context, taskInstance, logger, request, response, data, doc)
+		err, newContext := t.Fn(patchedContext, taskInstance, logger, request, response, data, doc)
 		if err != nil {
 			return err
 		}
 		next(newContext)
 		return nil
 
-	}, func(err error) {
-		reject(t, err)
+	}, func(context Context.Context, err error) {
+		reject(context, t, err)
 		t.Cancel(context, logger, err)
 	})
 
 }
 
 func (t *ResponseHtmlPipeline) Cancel(
-	context context.Context,
+	context Context.Context,
 	logger interfaces.LoggerInterface,
 	err error,
 ) {
-
 	if t.Cn == nil {
 		return
 	}
 	ok, taskInstance, logger := t.UnpackCtx(context)
+
 	if !ok {
 		return
 	}

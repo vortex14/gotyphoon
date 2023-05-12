@@ -1,7 +1,8 @@
 package net_http
 
 import (
-	"context"
+	Context "context"
+	"golang.org/x/net/context"
 	"net/http"
 
 	"github.com/vortex14/gotyphoon/elements/forms"
@@ -17,7 +18,7 @@ type HttpRequestPipeline struct {
 	*pipelines.TaskPipeline
 
 	Fn func(
-		context context.Context,
+		context Context.Context,
 		task interfaces.TaskInterface,
 		logger interfaces.LoggerInterface,
 
@@ -25,7 +26,7 @@ type HttpRequestPipeline struct {
 		request *http.Request,
 		transport *http.Transport,
 
-	) (error, context.Context)
+	) (error, Context.Context)
 
 	Cn func(
 		err error,
@@ -36,7 +37,7 @@ type HttpRequestPipeline struct {
 }
 
 func (t *HttpRequestPipeline) UnpackRequestCtx(
-	ctx context.Context,
+	ctx Context.Context,
 ) (bool, interfaces.TaskInterface, interfaces.LoggerInterface, *http.Client, *http.Request, *http.Transport) {
 	okT, taskInstance := task.Get(ctx)
 	okL, logger := log.Get(ctx)
@@ -54,35 +55,35 @@ func (t *HttpRequestPipeline) UnpackRequestCtx(
 }
 
 func (t *HttpRequestPipeline) Run(
-	context context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
-	next func(ctx context.Context),
+	context Context.Context,
+	reject func(context Context.Context, pipeline interfaces.BasePipelineInterface, err error),
+	next func(ctx Context.Context),
 ) {
 
 	if t.Fn == nil {
-		reject(t, Errors.TaskPipelineRequiredHandler)
+		reject(context, t, Errors.TaskPipelineRequiredHandler)
 		return
 	}
 
 	_, logger := log.Get(context)
 
-	t.SafeRun(context, logger, func() error {
+	t.SafeRun(context, logger, func(patchedCtx Context.Context) error {
 
-		ok, taskInstance, logger, client, request, transport := t.UnpackRequestCtx(context)
+		ok, taskInstance, logger, client, request, transport := t.UnpackRequestCtx(patchedCtx)
 
 		if !ok {
 			return Errors.PipelineContexFailed
 		}
 
-		err, newContext := t.Fn(context, taskInstance, logger, client, request, transport)
+		err, newContext := t.Fn(patchedCtx, taskInstance, logger, client, request, transport)
 		if err != nil {
 			return err
 		}
 		next(newContext)
 		return err
 
-	}, func(err error) {
-		reject(t, err)
+	}, func(context Context.Context, err error) {
+		reject(context, t, err)
 		_, logCtx := log.Get(context)
 		t.Cancel(context, logCtx, err)
 	})
@@ -90,7 +91,7 @@ func (t *HttpRequestPipeline) Run(
 }
 
 func (t *HttpRequestPipeline) Cancel(
-	context context.Context,
+	context Context.Context,
 	logger interfaces.LoggerInterface,
 	err error,
 ) {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/vortex14/gotyphoon/log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -97,6 +98,14 @@ func CreateRodRequestPipeline(
 
 				browser = browser.MustConnect()
 
+				_proxy := strings.Split(task.GetProxyAddress(), "@")
+
+				if len(_proxy) == 2 {
+					_pSource := strings.ReplaceAll(_proxy[0], "http://", "")
+					_proxyAuth := strings.Split(_pSource, ":")
+					go browser.MustHandleAuth(_proxyAuth[0], _proxyAuth[1])()
+				}
+
 				browser.MustIgnoreCertErrors(true)
 
 				page := browser.MustPage(task.GetFetcherUrl())
@@ -147,7 +156,7 @@ func CreateRodRequestPipeline(
 				return
 			}
 
-			// Block current proxy
+			// To Block the proxy
 			if netHttp.MakeBlockRequest(logger, task) != nil {
 				logger.Error("Fatal exception. Impossible to block the proxy.")
 				os.Exit(1)

@@ -94,6 +94,23 @@ func (s *Service) GetMongoCollection(dbName, collectionName string) *mongo.Colle
 	}
 }
 
+func (s *Service) GetMongoDB(dbName string) *mongo.Database {
+
+	s.initClient()
+
+	if s.dbs == nil {
+		s.LOG.Error(Errors.MongoNotFoundDBMap.Error())
+		return nil
+	}
+
+	if mongoDB, ok := s.dbs[dbName]; !ok {
+		s.LOG.Error(Errors.MongoNotFoundDB.Error())
+		return nil
+	} else {
+		return mongoDB
+	}
+}
+
 func (s *Service) GetFilterOptions(_id string, value interface{}) bson.M {
 	return bson.M{_id: value}
 }
@@ -124,7 +141,7 @@ func (s *Service) GetCollections() []*Collection {
 		db := s.dbs[dbName]
 		query := &interfaces.MongoQuery{
 			Context: context.TODO(),
-			Filter:  bson.D{},
+			Filter:  bson.M{},
 			Query:   nil,
 			Options: &options.ListCollectionsOptions{},
 		}
@@ -154,6 +171,13 @@ func (s *Service) GetCollections() []*Collection {
 	return results
 }
 
+func (s *Service) FindOne(query bson.D, collection *mongo.Collection) *bson.D {
+	_doc := collection.FindOne(context.TODO(), query)
+	var _decoded bson.D
+	_ = _doc.Decode(&_decoded)
+	return &_decoded
+}
+
 func (s *Service) GetCountDocuments(query *interfaces.MongoQuery) int64 {
 	s.initClient()
 	query.Options = options.Count().SetMaxTime(query.Timeout * time.Second)
@@ -169,6 +193,44 @@ func (s *Service) GetCountDocuments(query *interfaces.MongoQuery) int64 {
 	}
 
 	return count
+}
+
+func (s *Service) GetDocument(query *interfaces.MongoQuery) (*mongo.SingleResult, error) {
+	s.initClient()
+	//var opts *options.FindOptions
+	//if query.Options != nil {
+	//	opts = query.Options.(*options.FindOptions)
+	//}
+
+	collection := s.dbs[query.Database].Collection(query.Collection)
+	res := collection.FindOne(query.Context, query.Filter)
+
+	return res, nil
+}
+
+func (s *Service) RemoveDocById(query *interfaces.MongoQuery) (*mongo.DeleteResult, error) {
+	s.initClient()
+	collection := s.dbs[query.Database].Collection(query.Collection)
+	return collection.DeleteOne(query.Context, query.Filter)
+}
+
+func (s *Service) GetDocuments(query *interfaces.MongoQuery, _results *[]bson.M) error {
+	s.initClient()
+	var opts *options.FindOptions
+	if query.Options != nil {
+		opts = query.Options.(*options.FindOptions)
+	}
+
+	collection := s.dbs[query.Database].Collection(query.Collection)
+	cursor, err := collection.Find(query.Context, query.Filter, opts)
+	if err != nil {
+		return err
+	}
+
+	if err = cursor.All(context.TODO(), _results); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Service) connect() bool {

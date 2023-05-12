@@ -108,10 +108,42 @@ type MongoDetails struct {
 }
 
 type ServiceMongo struct {
-	Name    string       `yaml:"name"`
-	Details MongoDetails `yaml:"details"`
-	DbNames []string     `yaml:"db_names"`
+	DefaultCollection string       `yaml:"default_collection"`
+	DefaultDatabase   string       `yaml:"default_database"`
+	Name              string       `yaml:"name"`
+	Details           MongoDetails `yaml:"details"`
+	DbNames           []string     `yaml:"db_names"`
 	Service
+}
+
+func (s *ServiceMongo) RenameDefaultDatabase(name string) *ServiceMongo {
+	return &ServiceMongo{
+		DefaultDatabase:   name,
+		DefaultCollection: s.DefaultCollection,
+		Details:           s.Details,
+		DbNames:           s.DbNames,
+		Name:              s.Name,
+	}
+}
+
+func (s *ServiceMongo) RenameDefaultCollection(name string) *ServiceMongo {
+	return &ServiceMongo{
+		DefaultDatabase:   s.DefaultDatabase,
+		DefaultCollection: name,
+		Details:           s.Details,
+		DbNames:           s.DbNames,
+		Name:              s.Name,
+	}
+}
+
+func (s *ServiceMongo) RenameDefaultCollectionAndDB(dbname string, collection string) *ServiceMongo {
+	return &ServiceMongo{
+		DefaultDatabase:   dbname,
+		DefaultCollection: collection,
+		Details:           s.Details,
+		DbNames:           s.DbNames,
+		Name:              s.Name,
+	}
 }
 
 type Services struct {

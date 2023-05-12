@@ -3,6 +3,7 @@ package json
 import (
 	"context"
 	"github.com/itchyny/gojq"
+	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"
 	"net/http"
 
@@ -48,24 +49,26 @@ type ResponseJQPipeline struct {
 }
 
 func (t *ResponseJQPipeline) Run(
-	context context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
+	ctx context.Context,
+	reject func(ctx context.Context, pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx context.Context),
 ) {
 
 	if t.Fn == nil {
-		reject(t, Errors.TaskPipelineRequiredHandler)
+		reject(ctx, t, Errors.TaskPipelineRequiredHandler)
 		return
 	}
 
-	ok, taskInstance, logger, _, request, _, response, data := t.UnpackResponse(context)
+	_, _logger := log.Get(ctx)
 
-	if !ok {
-		reject(t, Errors.PipelineContexFailed)
-		return
-	}
+	t.SafeRun(ctx, _logger, func(patchedCtx context.Context) error {
 
-	t.SafeRun(func() error {
+		ok, taskInstance, logger, _, request, _, response, data := t.UnpackResponse(patchedCtx)
+
+		if !ok {
+			reject(ctx, t, Errors.PipelineContexFailed)
+			return Errors.PipelineContexFailed
+		}
 
 		query, err := gojq.Parse(t.Settings.Query)
 		if err != nil {
@@ -79,18 +82,18 @@ func (t *ResponseJQPipeline) Run(
 		}
 
 		iter := query.Run(model)
-		context = NewJQCtx(context, iter)
+		patchedCtx = NewJQCtx(patchedCtx, iter)
 
-		err, newContext := t.Fn(context, taskInstance, logger, request, response, data, iter)
+		err, newContext := t.Fn(patchedCtx, taskInstance, logger, request, response, data, iter)
 		if err != nil {
 			return err
 		}
 		next(newContext)
 		return nil
 
-	}, func(err error) {
-		reject(t, err)
-		t.Cancel(context, logger, err)
+	}, func(ctx context.Context, err error) {
+		reject(ctx, t, err)
+		t.Cancel(ctx, _logger, err)
 	})
 
 }

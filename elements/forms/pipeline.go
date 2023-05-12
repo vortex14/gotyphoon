@@ -4,6 +4,8 @@ import (
 	Context "context"
 	"errors"
 	"fmt"
+	"github.com/vortex14/gotyphoon/elements/models/bar"
+	"sync"
 	"time"
 
 	"github.com/avast/retry-go/v4"
@@ -35,8 +37,10 @@ type RetryOptions struct {
 }
 
 type Options struct {
-	Retry         RetryOptions
-	MaxConcurrent int64
+	Retry            RetryOptions
+	MaxConcurrent    int64
+	NotSharedContext bool
+	ProgressBar      bool
 }
 
 func GetDefaultRetryOptions() *Options {
@@ -67,9 +71,14 @@ type BasePipeline struct {
 	*label.MetaInfo
 	awaitabler.Object
 
-	Options        *Options
-	NotIgnorePanic bool
-	sem            *semaphore.Weighted
+	Options         *Options
+	SharedCtx       *Context.Context
+	SharedCtxStatus bool
+	NotIgnorePanic  bool
+	sem             *semaphore.Weighted
+	syncContext     sync.Once
+
+	bar *bar.Bar
 
 	//stageIndex    int32
 
@@ -95,46 +104,69 @@ type BasePipeline struct {
 	Cn func(ctx Context.Context, logger interfaces.LoggerInterface, err error)
 }
 
+func (p *BasePipeline) semaphoreInit() {
+	if p.sem == nil && p.Options.MaxConcurrent > 0 {
+		p.sem = semaphore.NewWeighted(p.Options.MaxConcurrent)
+	}
+}
+func (p *BasePipeline) initBar() {
+	p.bar = &bar.Bar{Description: fmt.Sprintf("Progress bar, pipeline: %s", p.MetaInfo.Name)}
+}
+
+func (p *BasePipeline) initCtx() {
+	p.syncContext.Do(func() {
+
+		if p.Options == nil {
+			p.Options = GetDefaultRetryOptions()
+		}
+
+		p.semaphoreInit()
+		p.initBar()
+	})
+
+}
+
+func (p *BasePipeline) recover(ctx Context.Context, catch func(ctx Context.Context, err error)) {
+	if !p.NotIgnorePanic {
+		if r := recover(); r != nil {
+			panicE := errors.New(fmt.Sprintf("%s: %s", PanicException, r))
+			catch(ctx, panicE)
+			if p.sem != nil {
+				p.sem.Release(1)
+			}
+		}
+	}
+}
+
 func (p *BasePipeline) SafeRun(
 	context Context.Context,
 	logger interfaces.LoggerInterface,
-	run func() error, catch func(err error)) {
+	run func(patchedCtx Context.Context) error, catch func(ctx Context.Context, err error)) {
 
-	if p.Options == nil {
-		p.Options = GetDefaultRetryOptions()
-	}
+	context = setLabel(context, p.MetaInfo)
 
-	if p.sem == nil && p.Options.MaxConcurrent > 0 {
-		p.sem = semaphore.NewWeighted(p.Options.MaxConcurrent)
+	p.initCtx()
+
+	if p.Options.ProgressBar {
+		context = setBar(context, p.bar)
 	}
 
 	if p.sem != nil {
 		if !p.sem.TryAcquire(1) {
 			logger.Error(Errors.PipelineCrowded)
-			catch(Errors.PipelineCrowded)
+			catch(context, Errors.PipelineCrowded)
 			return
 		}
-
 	}
 
-	defer func() {
-		if !p.NotIgnorePanic {
-			if r := recover(); r != nil {
-				panicE := errors.New(fmt.Sprintf("%s: %s", PanicException, r))
-				catch(panicE)
-				if p.sem != nil {
-					p.sem.Release(1)
-				}
-			}
-		}
-	}()
-	logger = log.PatchLogI(logger, map[string]interface{}{"max_retry": p.Options.Retry.MaxCount})
+	defer p.recover(context, catch)
+
+	logger = log.PatchLogI(logger, log.D{"max_retry": p.Options.Retry.MaxCount})
 	retryCount := 0
 	retryMaxCount := p.Options.Retry.MaxCount
 
 	eR := retry.Do(func() error {
 		retryCount++
-		//logger.Debugf("attempt: %d", retryCount)
 
 		var middlewareErr error
 
@@ -149,7 +181,7 @@ func (p *BasePipeline) SafeRun(
 			return middlewareErr
 		}
 
-		return run()
+		return run(context)
 	},
 		retry.Delay(p.Options.Retry.Delay),
 		retry.Attempts(retryMaxCount),
@@ -169,7 +201,7 @@ func (p *BasePipeline) SafeRun(
 	)
 
 	if eR != nil {
-		catch(eR)
+		catch(context, eR)
 	}
 
 	if p.sem != nil {
@@ -180,13 +212,13 @@ func (p *BasePipeline) SafeRun(
 
 func (p *BasePipeline) Run(
 	context Context.Context,
-	reject func(pipeline interfaces.BasePipelineInterface, err error),
+	reject func(context Context.Context, pipeline interfaces.BasePipelineInterface, err error),
 	next func(ctx Context.Context),
 ) {
 
 	var logCtx interfaces.LoggerInterface
 	if ok, logger := log.Get(context); !ok {
-		reject(p, Errors.CtxLogFailed)
+		reject(context, p, Errors.CtxLogFailed)
 		l := log.New(log.D{})
 		p.Cancel(context, l, Errors.CtxLogFailed)
 		return
@@ -195,13 +227,13 @@ func (p *BasePipeline) Run(
 	}
 	var pError error
 
-	p.SafeRun(context, logCtx, func() error {
+	p.SafeRun(context, logCtx, func(patchedCtx Context.Context) error {
 
 		if utils.IsNill(p.Fn) {
 			return Errors.LambdaRequired
 		}
 
-		err, newContext := p.Fn(context, logCtx)
+		err, newContext := p.Fn(patchedCtx, logCtx)
 		if utils.NotNill(err) {
 			return err
 		}
@@ -210,9 +242,9 @@ func (p *BasePipeline) Run(
 
 		return nil
 
-	}, func(err error) {
+	}, func(context Context.Context, err error) {
 		pError = err
-		reject(p, pError)
+		reject(context, p, pError)
 		p.Cancel(context, logCtx, pError)
 	})
 
@@ -266,4 +298,25 @@ func (p *BasePipeline) RunMiddlewareStack(
 		})
 		next(middlewareContext)
 	}
+}
+
+func InsertPipeline(
+	a []interfaces.BasePipelineInterface,
+	index int, value interfaces.BasePipelineInterface) []interfaces.BasePipelineInterface {
+
+	if len(a) == index {
+		return append(a, value)
+	}
+	a = append(a[:index+1], a[index:]...)
+	a[index] = value
+	return a
+}
+
+func (p *BasePipeline) SetSharedCtx(ctx *Context.Context) {
+	p.SharedCtx = ctx
+	p.SharedCtxStatus = true
+}
+
+func (p *BasePipeline) GetSharedStatus() bool {
+	return p.SharedCtxStatus
 }

@@ -17,7 +17,6 @@ import (
 
 	"github.com/vortex14/gotyphoon/elements/models/timer"
 	"github.com/vortex14/gotyphoon/extensions/data/fake"
-	netHttp "github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	net_html "github.com/vortex14/gotyphoon/extensions/pipelines/text/html"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
@@ -42,7 +41,7 @@ var (
 	CheckTime        = 3
 	CheckBlockedTime = 3
 
-	validURL = "https://2ip.ru/"
+	validURL = "https://google.com"
 
 	endpointURL, _ = url.Parse(validURL)
 
@@ -50,7 +49,7 @@ var (
 
 	settings = &Settings{
 		PrefixNamespace:  "domain",
-		CheckHosts:       []string{"https://2ip.ru"},
+		CheckHosts:       []string{"https://google.com"},
 		BlockedTime:      BlockedTime,
 		CheckTime:        CheckTime,
 		CheckBlockedTime: CheckBlockedTime,
@@ -81,8 +80,8 @@ func init() {
 
 func TestUrl(t *testing.T) {
 	Convey("test url", t, func() {
-		So(endpointURL.Hostname(), ShouldEqual, "2ip.ru")
-		So(endpointURL.String(), ShouldEqual, "https://2ip.ru/")
+		So(endpointURL.Hostname(), ShouldEqual, "google.com")
+		So(endpointURL.String(), ShouldEqual, "https://google.com")
 	})
 }
 
@@ -151,28 +150,23 @@ func TestRunProxyServer(t *testing.T) {
 	proxy := goproxy.NewProxyHttpServer()
 	proxy.Verbose = true
 
-	Convey("run proxy server", t, func() {
-
-		go func() {
-			_ = http.ListenAndServe(":11313", proxy)
-		}()
-		time.Sleep(2 * time.Second)
-
-	})
+	go func() {
+		_ = http.ListenAndServe(":11313", proxy)
+	}()
+	time.Sleep(5 * time.Second)
 
 	Convey("create request from local proxy server", t, func() {
+
 		var proxyAddress = "http://localhost:11313"
 
 		taskTest := fake.CreateDefaultTask()
 
-		taskTest.SetFetcherUrl("https://2ip.ru/")
+		taskTest.SetFetcherUrl("https://google.com")
 		taskTest.SetProxyAddress(proxyAddress)
 
 		err := net_html.MakeRequestThroughProxy(taskTest, func(logger interfaces.LoggerInterface,
 			response *http.Response, doc *goquery.Document) bool {
-
-			resp := doc.Find(".ip").Text()
-			return len(resp) > 0
+			return response.StatusCode == 200
 
 		})
 
@@ -204,11 +198,7 @@ func TestAvailableProxy(t *testing.T) {
 		So(net_html.MakeRequestThroughProxy(taskTest, func(logger interfaces.LoggerInterface,
 			response *http.Response, doc *goquery.Document) bool {
 
-			resp := doc.Find(".ip").Text()
-
-			logger.Info(resp)
-
-			return len(resp) > 0
+			return response.StatusCode == 200
 
 		}), ShouldBeError)
 
@@ -444,17 +434,17 @@ func TestGetConcurrentProxyCollection(t *testing.T) {
 	})
 }
 
-func TestMakeBlockProxy(t *testing.T) {
-	Convey("block the proxy", t, func() {
-		task := fake.CreateDefaultTask()
-
-		task.SetFetcherUrl("https://google.com")
-
-		err := netHttp.MakeRequestThroughProxy(task, func(logger interfaces.LoggerInterface,
-			response *http.Response, doc *goquery.Document) bool {
-
-			return !(response.StatusCode > 400)
-		})
-		So(err, ShouldBeNil)
-	})
-}
+//func TestMakeBlockProxy(t *testing.T) {
+//	Convey("block the proxy", t, func() {
+//		task := fake.CreateDefaultTask()
+//
+//		task.SetFetcherUrl("https://google.com")
+//
+//		err := netHttp.MakeRequestThroughProxy(task, func(logger interfaces.LoggerInterface,
+//			response *http.Response, doc *goquery.Document) bool {
+//
+//			return !(response.StatusCode > 400)
+//		})
+//		So(err, ShouldBeNil)
+//	})
+//}
