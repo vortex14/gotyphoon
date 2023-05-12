@@ -18,7 +18,7 @@ require (
 	github.com/deliveryhero/pipeline v1.0.0
 	github.com/docker/cli v20.10.17+incompatible
 	github.com/docker/docker v20.10.17+incompatible
-	github.com/elazarl/goproxy v0.0.0-20210801061803-8e322dfb79c4
+	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
 	github.com/fatih/color v1.12.0
 	github.com/fatih/structs v1.1.0
 	github.com/fogleman/gg v1.3.0
@@ -49,7 +49,6 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/osamingo/checkdigit v1.0.0
-	github.com/ozankasikci/go-image-merge v0.2.2
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.10.1
 	github.com/prometheus/client_golang v1.12.1

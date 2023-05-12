@@ -13,13 +13,13 @@ import (
 )
 
 type Proxy struct {
-	Proxy string `fake:"{proxy}" json:"proxy"`
-	Agent string `fake:"{useragent}" json:"agent"`
-	Success bool `fake:"{success}" json:"success"`
-	AgentMobile string `fake:"{mobile}" json:"agent_mobile"`
+	Proxy       *string `fake:"{proxy}" json:"proxy"`
+	Agent       string  `fake:"{useragent}" json:"agent"`
+	Success     bool    `fake:"{success}" json:"success"`
+	AgentMobile string  `fake:"{mobile}" json:"agent_mobile"`
 }
 
-func init()  {
+func init() {
 	gofakeit.AddFuncLookup("proxy", gofakeit.Info{
 		Category:    "custom",
 		Description: "Random set proxy",

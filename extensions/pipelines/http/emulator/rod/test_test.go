@@ -55,7 +55,7 @@ func TestCreateBrowser(t *testing.T) {
 func TestRegex(t *testing.T) {
 	r, _ := regexp.Compile("//([a-z-0-9A-Z]+):([a-zA-Z0-9]+)@")
 	d := r.FindAllStringSubmatch("http://44dfgdfg-982:dfhd@37.19.222.193", 1)
-	println(fmt.Sprintf("%d", len(d)))
+	println(fmt.Sprintf("%+v", d))
 }
 
 func TestCreateRodPipeline(t *testing.T) {
