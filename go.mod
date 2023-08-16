@@ -18,7 +18,7 @@ require (
 	github.com/deliveryhero/pipeline v1.0.0
 	github.com/docker/cli v20.10.17+incompatible
 	github.com/docker/docker v20.10.24+incompatible
-	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
+	github.com/elazarl/goproxy v0.0.0-20230731152917-f99041a5c027
 	github.com/fatih/color v1.12.0
 	github.com/fatih/structs v1.1.0
 	github.com/fogleman/gg v1.3.0
@@ -26,7 +26,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.5.1
 	github.com/getkin/kin-openapi v0.118.0
 	github.com/geziyor/geziyor v0.0.0-20220429000531-738852f9321d
-	github.com/gin-gonic/gin v1.9.0
+	github.com/gin-gonic/gin v1.9.1
 	github.com/go-cmd/cmd v1.4.1
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logfmt/logfmt v0.5.1
