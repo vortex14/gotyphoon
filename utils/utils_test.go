@@ -151,3 +151,22 @@ func TestCopyDir(t *testing.T) {
 	})
 
 }
+
+func TestIsFirstUpLetter(t *testing.T) {
+
+	Convey("first case", t, func() {
+
+		status := IsFirstUpLetter("Apple")
+
+		So(status, ShouldBeTrue)
+
+	})
+
+	Convey("first negative case", t, func() {
+
+		status := IsFirstUpLetter("apple")
+
+		So(status, ShouldBeFalse)
+
+	})
+}
