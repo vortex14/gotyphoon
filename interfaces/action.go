@@ -25,6 +25,8 @@ type ActionInterface interface {
 	GetHandlerPath() string
 	AddMethod(name string)
 
+	GetRequestModel() interface{}
+
 	Run(
 		ctx context.Context,
 		logger LoggerInterface,

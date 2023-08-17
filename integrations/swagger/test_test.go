@@ -55,7 +55,7 @@ type Img struct {
 }
 
 type User struct {
-	Name   string `json:"name" description:"test descr" required:"!"`
+	Name   string `json:"name" description:"test descr" binding:"required"`
 	Role   *Role  `json:"role"`
 	Images []*Img `json:"images" description:"photo for profile"`
 	Links  []*Link
@@ -168,7 +168,7 @@ func TestAddNewOperation(t *testing.T) {
 			Description: "some description",
 		}
 
-		tmpl.swagger.AddOperation("/", "GET", operation)
+		tmpl.AddOperation("/", "GET", operation)
 
 		contract, err := tmpl.swagger.MarshalJSON()
 
@@ -497,12 +497,14 @@ func TestCreateContractWithComponentsDefs(t *testing.T) {
 			"3.0.1",
 			[]string{"https", "localhost"})
 
-		CreateBaseSchemasFromStructure(tmpl, &User{})
-
-		MoveRequiredFieldsToTopLevel(&tmpl.swagger)
+		schemaRef := tmpl.CreateBaseSchemasFromStructure(&User{})
+		tmpl.MoveRequiredFieldsToTopLevel()
 
 		contract := tmpl.GetDump()
 
+		_schema, _ := schemaRef.MarshalJSON()
+
+		println(fmt.Sprintf("%s", _schema))
 		println(fmt.Sprintf("%s", contract))
 		So(fmt.Sprintf("%s", contract), ShouldEqual, utils.ClearStrTabAndN(result))
 

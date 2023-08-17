@@ -58,7 +58,7 @@ func CreateBaseSchemasFromStructure(tmpl *OpenApi, source interface{}) {
 				schema.Description = tag.Get("description")
 			}
 
-			if tag.Get("required") == "!" {
+			if tag.Get("binding") == "required" {
 				schema.Required = append(schema.Required, name)
 			}
 

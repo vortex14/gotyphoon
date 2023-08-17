@@ -3,7 +3,11 @@ package swagger
 import (
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3gen"
+	"github.com/vortex14/gotyphoon/utils"
 	"os"
+	"reflect"
+	"strings"
 )
 
 const (
@@ -27,6 +31,10 @@ func (oa *OpenApi) AddComponent(componentType string, name string, ref interface
 	case ComponentTypeSecurity:
 		oa.swagger.Components.SecuritySchemes[name] = ref.(*openapi3.SecuritySchemeRef)
 	}
+}
+
+func (oa *OpenApi) AddOperation(path string, method string, operation *openapi3.Operation) {
+	oa.swagger.AddOperation(path, method, operation)
 }
 
 func (oa *OpenApi) GetDump() []byte {
@@ -78,6 +86,76 @@ func (oa *OpenApi) Generate(openApiFile string) error {
 	return os.WriteFile(oa.cfg.Server.OpenApi.Json.Local, data, 0644)
 }
 
+func (oa *OpenApi) MoveRequiredFieldsToTopLevel() {
+	for _, schemaRef := range oa.swagger.Components.Schemas {
+		var required []string
+		for _, val := range schemaRef.Value.Properties {
+			if len(val.Value.Required) > 0 {
+				required = append(required, val.Value.Required...)
+				val.Value.Required = nil
+			}
+
+		}
+		schemaRef.Value.Required = required
+	}
+}
+
+func (oa *OpenApi) CreateBaseSchemasFromStructure(source interface{}) *openapi3.SchemaRef {
+	customizer := openapi3gen.SchemaCustomizer(
+		func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+
+			schema.Title = ft.Name()
+
+			if len(tag.Get("description")) > 0 {
+				schema.Description = tag.Get("description")
+			}
+
+			if tag.Get("binding") == "required" {
+				schema.Required = append(schema.Required, name)
+			}
+
+			if strings.Contains(ft.String(), ".") {
+				if utils.IsFirstUpLetter(ft.Name()) && !oa.IsExistsSchema(ft.Name()) {
+					oa.AddComponent(ComponentTypeSchema, ft.Name(), schema.NewRef())
+				}
+
+				for key, val := range schema.Properties {
+
+					if utils.IsFirstUpLetter(val.Ref) {
+						if !oa.IsExistsSchema(val.Ref) {
+							oa.AddComponent(ComponentTypeSchema, val.Ref, schema.NewRef())
+						} else {
+							val.Ref = fmt.Sprintf("#/components/schemas/%s", val.Ref)
+						}
+
+					} else {
+						val.Ref = ""
+						val.Value.Title = key
+					}
+
+					if val.Value.Items != nil {
+						val.Value.Items.Ref = fmt.Sprintf("#/components/schemas/%s", val.Value.Items.Ref)
+					}
+				}
+			}
+
+			return nil
+		})
+
+	generator := openapi3gen.NewGenerator(customizer)
+
+	sc, err := generator.GenerateSchemaRef(reflect.TypeOf(source))
+	if err != nil {
+		panic(err)
+	}
+
+	oa.MoveRequiredFieldsToTopLevel()
+
+	println(fmt.Sprintf("%+v", sc))
+
+	return sc
+}
+
 func (oa *OpenApi) addModels() {
 
 	// Build schemas
@@ -109,7 +187,7 @@ func (oa *OpenApi) addModels() {
 func ConstructorNewFromArgs(title, description, version string, host []string) *OpenApi {
 	return &OpenApi{
 		swagger: openapi3.T{
-			OpenAPI: version,
+			OpenAPI: "3.0.1",
 			Info: &openapi3.Info{
 				Title:       title,
 				Description: description,

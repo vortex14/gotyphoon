@@ -51,6 +51,7 @@ type TyphoonServer struct {
 	*label.MetaInfo
 
 	Port      int
+	Host      string
 	IsDebug   bool
 	IsRunning bool
 
@@ -126,10 +127,10 @@ func (s *TyphoonServer) Init() interfaces.ServerInterface {
 func (s *TyphoonServer) InitDocs() interfaces.ServerInterface {
 
 	s.swagger = swagger.ConstructorNewFromArgs(
-		"demo v1.1",
-		"test description",
-		"3.1.0",
-		[]string{"https", "localhost"})
+		s.Name,
+		s.Description,
+		s.Version,
+		[]string{"https", s.Host})
 
 	return s
 }
@@ -339,12 +340,52 @@ func (s *TyphoonServer) initActions(resource interfaces.ResourceInterface) {
 			action.SetLogger(actionLogger)
 			s.LOG.Debug(fmt.Sprintf("need serve path: %s method: %s", handlerPath, method))
 
+			s.AddSwaggerOperation(resource, action, method, handlerPath)
+
 			s.initHandler(method, handlerPath, resource)
 			if s.OnInitAction != nil {
 				s.OnInitAction(resource, action)
 			}
 		}
 	}
+}
+
+func (s *TyphoonServer) AddSwaggerOperation(
+	resource interfaces.ResourceInterface,
+	action interfaces.ActionInterface,
+	method, path string,
+) {
+
+	operation := &openapi3.Operation{
+		Tags:        action.GetTags(),
+		Summary:     action.GetSummary(),
+		Responses:   openapi3.Responses{},
+		Description: action.GetDescription(),
+		OperationID: strings.ToLower(
+			fmt.Sprintf("Handle_%s_%s_%s",
+				strings.ReplaceAll(resource.GetPath(), "/", "_"),
+				action.GetName(),
+				method)),
+	}
+
+	requestModel := action.GetRequestModel()
+	if requestModel != nil {
+
+		requestSchema := s.swagger.CreateBaseSchemasFromStructure(requestModel)
+		requestSchema.Ref = fmt.Sprintf("#/components/schemas/%s", requestSchema.Ref)
+
+		operation.RequestBody = &openapi3.RequestBodyRef{
+			Value: &openapi3.RequestBody{
+				Content: openapi3.Content{
+					"application/json": &openapi3.MediaType{
+						Schema: requestSchema,
+					},
+				},
+			},
+		}
+	}
+
+	s.swagger.AddOperation(path, method, operation)
 }
 
 func (s *TyphoonServer) buildSubResources(parentPath string, newResource interfaces.ResourceInterface) {
@@ -380,6 +421,7 @@ func (s *TyphoonServer) buildSubActions(parentPath string, newResource interface
 			for _, method := range action.GetMethods() {
 				handlerPath := fmt.Sprintf("%s/%s", parentPath, name)
 				s.LOG.Debug("init sub action ", handlerPath)
+				s.AddSwaggerOperation(newResource, action, method, handlerPath)
 				action.SetHandlerPath(handlerPath)
 				if s.OnBuildSubAction != nil {
 					s.OnBuildSubAction(newResource, action)
@@ -420,15 +462,6 @@ func (s *TyphoonServer) initHandler(method string, path string, resource interfa
 	if s.OnServeHandler == nil {
 		s.LOG.Error(Errors.ServerOnHandlerMethodNotImplemented.Error())
 	} else {
-
-		operation := &openapi3.Operation{
-			Tags:        []string{"test tag"},
-			Summary:     "short description",
-			Responses:   openapi3.Responses{},
-			Description: "some description",
-		}
-
-		s.swagger.AddComponent(path, method, operation)
 		s.OnServeHandler(method, path, resource)
 	}
 }

@@ -22,6 +22,19 @@ type Stats struct {
 	Input int64
 }
 
+type BaseModelRequest struct {
+	RequestModel interface{}
+	Required     bool
+}
+
+func (b *BaseModelRequest) GetRequired() bool {
+	return b.Required
+}
+
+func (b *BaseModelRequest) GetRequestModel() interface{} {
+	return b.RequestModel
+}
+
 type Action struct {
 	*label.MetaInfo
 	LOG interfaces.LoggerInterface
@@ -31,6 +44,8 @@ type Action struct {
 	Methods        []string //just yet HTTP Methods
 	AllowedMethods []string
 	handlerPath    string
+
+	BodyRequestModel BaseModelRequest
 
 	//Cn func(ctx context.Context, err error)
 
@@ -211,4 +226,8 @@ func (a *Action) Run(ctx context.Context, logger interfaces.LoggerInterface) {
 
 func (a *Action) SetLogger(logger interfaces.LoggerInterface) {
 	a.LOG = logger
+}
+
+func (a *Action) GetRequestModel() interface{} {
+	return a.BodyRequestModel.RequestModel
 }
