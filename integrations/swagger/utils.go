@@ -2,6 +2,11 @@ package swagger
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/vortex14/gotyphoon/utils"
+	"reflect"
+	"strings"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
 )
@@ -30,7 +35,7 @@ func CreateSchemaFromStruct(someIns interface{}) (*openapi3.SchemaRef, error) {
 
 func MoveRequiredFieldsToTopLevel(swagger *openapi3.T) {
 	for _, schemaRef := range swagger.Components.Schemas {
-		required := []string{}
+		var required []string
 		for _, val := range schemaRef.Value.Properties {
 			if len(val.Value.Required) > 0 {
 				required = append(required, val.Value.Required...)
@@ -40,5 +45,55 @@ func MoveRequiredFieldsToTopLevel(swagger *openapi3.T) {
 		}
 
 		schemaRef.Value.Required = required
+	}
+}
+
+func CreateBaseSchemasFromStructure(tmpl *OpenApi, source interface{}) {
+	customizer := openapi3gen.SchemaCustomizer(
+		func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+
+			schema.Title = ft.Name()
+
+			if len(tag.Get("description")) > 0 {
+				schema.Description = tag.Get("description")
+			}
+
+			if tag.Get("required") == "!" {
+				schema.Required = append(schema.Required, name)
+			}
+
+			if strings.Contains(ft.String(), ".") {
+				if utils.IsFirstUpLetter(ft.Name()) && !tmpl.IsExistsSchema(ft.Name()) {
+					tmpl.AddComponent(ComponentTypeSchema, ft.Name(), schema.NewRef())
+				}
+
+				for key, val := range schema.Properties {
+
+					if utils.IsFirstUpLetter(val.Ref) {
+						if !tmpl.IsExistsSchema(val.Ref) {
+							tmpl.AddComponent(ComponentTypeSchema, val.Ref, schema.NewRef())
+						} else {
+							val.Ref = fmt.Sprintf("#/components/schemas/%s", val.Ref)
+						}
+
+					} else {
+						val.Ref = ""
+						val.Value.Title = key
+					}
+
+					if val.Value.Items != nil {
+						val.Value.Items.Ref = fmt.Sprintf("#/components/schemas/%s", val.Value.Items.Ref)
+					}
+				}
+			}
+
+			return nil
+		})
+
+	generator := openapi3gen.NewGenerator(customizer)
+
+	_, err := generator.GenerateSchemaRef(reflect.TypeOf(source))
+	if err != nil {
+		panic(err)
 	}
 }

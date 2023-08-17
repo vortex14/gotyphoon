@@ -471,67 +471,42 @@ func TestRecursiveType(t *testing.T) {
 }
 
 func TestCreateContractWithComponentsDefs(t *testing.T) {
-	tmpl := ConstructorNewFromArgs(
-		"demo v1.1",
-		"test description",
-		"3.0.1",
-		[]string{"https", "localhost"})
 
-	//_required := make(map[string][]string)
+	Convey("create required schemas", t, func() {
 
-	customizer := openapi3gen.SchemaCustomizer(
-		func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		result := `{"components":{"schemas":{
+						"Img":{"description":"photo for profile",
+						"properties":{"href":{"title":"href","type":"string"},
+						"link":{"$ref":"#/components/schemas/Link"}},
+						"title":"Img","type":"object"},
+						"Link":{"properties":{"source":{"title":"source","type":"string"},
+						"title":{"title":"title","type":"string"}},"title":"Link","type":"object"},
+						"Role":{"properties":{"isAdmin":{"title":"isAdmin","type":"boolean"}},
+						"title":"Role","type":"object"},
+						"User":{"properties":{"images":{"description":"photo for profile",
+						"items":{"$ref":"#/components/schemas/Img"},"title":"images","type":"array"},
+						"name":{"description":"test descr","title":"name","type":"string"},
+						"role":{"$ref":"#/components/schemas/Role"}},"required":["name"],
+						"title":"User","type":"object"}}},
+						"info":{"description":"test description","title":"demo v1.1","version":"3.0.1"},
+						"openapi":"3.0.1","paths":null,"servers":[{"url":"https://localhost/"}]}
+`
+		tmpl := ConstructorNewFromArgs(
+			"demo v1.1",
+			"test description",
+			"3.0.1",
+			[]string{"https", "localhost"})
 
-			schema.Title = ft.Name()
+		CreateBaseSchemasFromStructure(tmpl, &User{})
 
-			if len(tag.Get("description")) > 0 {
-				schema.Description = tag.Get("description")
-			}
+		MoveRequiredFieldsToTopLevel(&tmpl.swagger)
 
-			if tag.Get("required") == "!" {
-				schema.Required = append(schema.Required, name)
-			}
+		contract := tmpl.GetDump()
 
-			if strings.Contains(ft.String(), ".") {
-				if utils.IsFirstUpLetter(ft.Name()) && !tmpl.IsExistsSchema(ft.Name()) {
-					tmpl.AddComponent(ComponentTypeSchema, ft.Name(), schema.NewRef())
-				}
+		println(fmt.Sprintf("%s", contract))
+		So(fmt.Sprintf("%s", contract), ShouldEqual, utils.ClearStrTabAndN(result))
 
-				for key, val := range schema.Properties {
-
-					if utils.IsFirstUpLetter(val.Ref) {
-						if !tmpl.IsExistsSchema(val.Ref) {
-							tmpl.AddComponent(ComponentTypeSchema, val.Ref, schema.NewRef())
-						} else {
-							val.Ref = fmt.Sprintf("#/components/schemas/%s", val.Ref)
-						}
-
-					} else {
-						val.Ref = ""
-						val.Value.Title = key
-					}
-
-					if val.Value.Items != nil {
-						val.Value.Items.Ref = fmt.Sprintf("#/components/schemas/%s", val.Value.Items.Ref)
-					}
-				}
-			}
-
-			return nil
-		})
-
-	generator := openapi3gen.NewGenerator(customizer)
-
-	_, err := generator.GenerateSchemaRef(reflect.TypeOf(&User{}))
-	if err != nil {
-		panic(err)
-	}
-
-	MoveRequiredFieldsToTopLevel(&tmpl.swagger)
-
-	contract, err := tmpl.swagger.MarshalJSON()
-
-	println(fmt.Sprintf("%s", contract))
+	})
 
 }
 

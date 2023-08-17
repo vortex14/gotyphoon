@@ -12,13 +12,13 @@ const (
 	ComponentTypeSchema    = "schema"
 )
 
-type openApi struct {
+type OpenApi struct {
 	swagger      openapi3.T
 	cfg          Config
 	securityReqs openapi3.SecurityRequirements
 }
 
-func (oa *openApi) AddComponent(componentType string, name string, ref interface{}) {
+func (oa *OpenApi) AddComponent(componentType string, name string, ref interface{}) {
 	switch componentType {
 	case ComponentTypeSchema:
 		oa.swagger.Components.Schemas[name] = ref.(*openapi3.SchemaRef)
@@ -29,7 +29,12 @@ func (oa *openApi) AddComponent(componentType string, name string, ref interface
 	}
 }
 
-func (oa *openApi) IsExistsSchema(name string) bool {
+func (oa *OpenApi) GetDump() []byte {
+	contract, _ := oa.swagger.MarshalJSON()
+	return contract
+}
+
+func (oa *OpenApi) IsExistsSchema(name string) bool {
 	status := false
 	if _, ok := oa.swagger.Components.Schemas[name]; ok {
 		status = true
@@ -37,7 +42,7 @@ func (oa *openApi) IsExistsSchema(name string) bool {
 	return status
 }
 
-func (oa *openApi) addSecurity() {
+func (oa *OpenApi) addSecurity() {
 	//for name, security := range oa.cfg.Server.OpenApi.Security {
 	//	oa.AddComponent(ComponentTypeSecurity, name, &openapi3.SecuritySchemeRef{
 	//		Value: &openapi3.SecurityScheme{
@@ -57,7 +62,7 @@ func (oa *openApi) addSecurity() {
 	oa.securityReqs = append(oa.securityReqs, securityReq)
 }
 
-func (oa *openApi) Generate(openApiFile string) error {
+func (oa *OpenApi) Generate(openApiFile string) error {
 
 	oa.addSecurity()
 
@@ -73,7 +78,7 @@ func (oa *openApi) Generate(openApiFile string) error {
 	return os.WriteFile(oa.cfg.Server.OpenApi.Json.Local, data, 0644)
 }
 
-func (oa *openApi) addModels() {
+func (oa *OpenApi) addModels() {
 
 	// Build schemas
 	//for modelName, model := range oa.cfg.Server.Models {
@@ -101,8 +106,8 @@ func (oa *openApi) addModels() {
 	//}
 }
 
-func ConstructorNewFromArgs(title, description, version string, host []string) *openApi {
-	return &openApi{
+func ConstructorNewFromArgs(title, description, version string, host []string) *OpenApi {
+	return &OpenApi{
 		swagger: openapi3.T{
 			OpenAPI: version,
 			Info: &openapi3.Info{

@@ -3,7 +3,9 @@ package forms
 import (
 	"context"
 	"fmt"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
+	"github.com/vortex14/gotyphoon/integrations/swagger"
 
 	// /* ignore for building amd64-linux
 	//	ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
@@ -82,12 +84,19 @@ type TyphoonServer struct {
 
 	BuildGraph bool
 
+	swagger *swagger.OpenApi
+
 	// /* ignore for building amd64-linux
 	//
 	//	Graph           interfaces.GraphInterface
 	//
 	// */
 
+}
+
+func (s *TyphoonServer) GetDocs() []byte {
+	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
+	return nil
 }
 
 func (s *TyphoonServer) SetRouterGroup(resource interfaces.ResourceInterface, group interface{}) {
@@ -115,7 +124,13 @@ func (s *TyphoonServer) Init() interfaces.ServerInterface {
 }
 
 func (s *TyphoonServer) InitDocs() interfaces.ServerInterface {
-	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
+
+	s.swagger = swagger.ConstructorNewFromArgs(
+		"demo v1.1",
+		"test description",
+		"3.1.0",
+		[]string{"https", "localhost"})
+
 	return s
 }
 
@@ -138,6 +153,10 @@ func (s *TyphoonServer) InitLogger() interfaces.ServerInterface {
 	})
 	return s
 }
+
+//func (s *TyphoonServer) Init()  {
+//
+//}
 
 func (s *TyphoonServer) Run() error {
 	if !s.IsRunning && len(s.Resources) > 0 {
@@ -401,6 +420,15 @@ func (s *TyphoonServer) initHandler(method string, path string, resource interfa
 	if s.OnServeHandler == nil {
 		s.LOG.Error(Errors.ServerOnHandlerMethodNotImplemented.Error())
 	} else {
+
+		operation := &openapi3.Operation{
+			Tags:        []string{"test tag"},
+			Summary:     "short description",
+			Responses:   openapi3.Responses{},
+			Description: "some description",
+		}
+
+		s.swagger.AddComponent(path, method, operation)
 		s.OnServeHandler(method, path, resource)
 	}
 }
@@ -487,4 +515,9 @@ func (s *TyphoonServer) GetServerEngine() interface{} {
 
 func (s *TyphoonServer) SetServerEngine(server interface{}) {
 	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
+}
+
+func (s *TyphoonServer) GetSwagger() []byte {
+	return s.swagger.GetDump()
+
 }

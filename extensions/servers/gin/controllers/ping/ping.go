@@ -5,31 +5,32 @@ import (
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	GinExtension "github.com/vortex14/gotyphoon/extensions/servers/gin"
+	"net/http"
 
 	// /* ignore for building amd64-linux
-//
-//	GraphExtension "github.com/vortex14/gotyphoon/extensions/forms/graph"
-//	GinGraphExt "github.com/vortex14/gotyphoon/extensions/servers/gin/graph"
-//
+	//
+	//	GraphExtension "github.com/vortex14/gotyphoon/extensions/forms/graph"
+	//	GinGraphExt "github.com/vortex14/gotyphoon/extensions/servers/gin/graph"
+	//
 	// */
 
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 const (
-	NAME 		= "ping"
+	NAME        = "ping"
 	PATH        = "ping"
 	DESCRIPTION = "Ping-Pong controller extension for Typhoon server"
 
-	PING 		= "Ping"
-	PONG 		= "Pong"
+	PING = "Ping"
+	PONG = "Pong"
 )
 
 type PongResponse struct {
 	Message string `json:"message"`
-	Method string `json:"method"`
-	Status bool	`json:"status"`
-	Path string `json:"path"`
+	Method  string `json:"method"`
+	Status  bool   `json:"status"`
+	Path    string `json:"path"`
 }
 
 // handler
@@ -44,7 +45,7 @@ type PongResponse struct {
 // @Router /ping [post]
 // @Router /ping [patch]
 // @Router /ping [delete]
-func handler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
+func handler(ctx *gin.Context, logger interfaces.LoggerInterface) {
 	logger.Debug(PING)
 	ctx.JSON(200, gin.H{
 		"method":  ctx.Request.Method,
@@ -57,15 +58,14 @@ func handler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 var Controller = &GinExtension.Action{
 	Action: &forms.Action{
 		MetaInfo: &label.MetaInfo{
-			Name: NAME,
-			Path: PATH,
+			Name:        NAME,
+			Path:        PATH,
 			Description: DESCRIPTION,
 		},
-		Methods: []string{interfaces.GET, interfaces.PATCH, interfaces.POST, interfaces.PUT, interfaces.DELETE},
+		Methods: []string{http.MethodGet, http.MethodPatch, http.MethodPost, http.MethodPut, http.MethodDelete},
 	},
 	GinController: handler,
 }
-
 
 // /* ignore for building amd64-linux
 //

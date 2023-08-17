@@ -120,6 +120,7 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 
 	s.Construct(func() {
 		s.InitLogger()
+		s.InitDocs()
 		s.LOG.Debug("init Typhoon Gin Server")
 		s.InitResourcesMap()
 
@@ -215,4 +216,8 @@ func (s *TyphoonGinServer) onAddResource(resource interfaces.ResourceInterface) 
 
 func (s *TyphoonGinServer) GetServerEngine() interface{} {
 	return s.server
+}
+
+func (s *TyphoonGinServer) GetDocs() []byte {
+	return s.GetSwagger()
 }
