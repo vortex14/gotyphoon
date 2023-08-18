@@ -596,3 +596,18 @@ func TestBase(t *testing.T) {
 	println(fmt.Sprintf("%+v", ref.Value.Properties))
 	//s.LOG.Error(fmt.Sprintf("%+v %+v %+v", schParam.Value.Properties, params, _schemas))
 }
+
+func TestBinarySchema(t *testing.T) {
+	type File struct {
+		File []byte `json:"file"`
+	}
+	Convey("create file schema", t, func() {
+		ref := CreateFileSchema()
+		ref.Title = "test"
+
+		b, _ := ref.MarshalJSON()
+
+		So(fmt.Sprintf("%s", b), ShouldEqual, `{"format":"binary","title":"test","type":"string"}`)
+	})
+
+}

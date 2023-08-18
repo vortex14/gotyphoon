@@ -21,6 +21,7 @@ func init() {
 func Constructor(
 	host string,
 	port int,
+	schema string,
 
 	tracingOptions *interfaces.TracingOptions,
 	loggerOptions *log.Options,
@@ -30,9 +31,10 @@ func Constructor(
 
 	discoveryServer := (&gin.TyphoonGinServer{
 		TyphoonServer: &forms.TyphoonServer{
-			Host:  host,
-			Port:  port,
-			Level: interfaces.INFO,
+			Host:   host,
+			Port:   port,
+			Schema: schema,
+			Level:  interfaces.INFO,
 			MetaInfo: &label.MetaInfo{
 				Name:        NAME,
 				Description: DESCRIPTION,

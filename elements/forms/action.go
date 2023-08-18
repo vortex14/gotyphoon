@@ -25,6 +25,7 @@ type Stats struct {
 type BaseModelRequest struct {
 	RequestModel interface{}
 	Required     bool
+	Type         string
 }
 
 type Action struct {
@@ -224,6 +225,10 @@ func (a *Action) SetLogger(logger interfaces.LoggerInterface) {
 
 func (a *Action) GetRequestModel() interface{} {
 	return a.BodyRequestModel.RequestModel
+}
+
+func (a *Action) GetRequestType() string {
+	return a.BodyRequestModel.Type
 }
 
 func (a *Action) IsRequiredRequestModel() bool {

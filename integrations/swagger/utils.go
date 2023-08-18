@@ -105,3 +105,9 @@ func CreateRefSchemaFromStruct(instance interface{}) *openapi3.SchemaRef {
 
 	return schParam
 }
+
+func CreateFileSchema() *openapi3.Schema {
+	ref := openapi3.NewSchema().WithFormat("binary")
+	ref.Type = "string"
+	return ref
+}

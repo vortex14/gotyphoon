@@ -21,6 +21,7 @@ type OpenApi struct {
 	swagger      openapi3.T
 	cfg          Config
 	securityReqs openapi3.SecurityRequirements
+	LOG          interfaces.LoggerInterface
 }
 
 func (oa *OpenApi) AddComponent(componentType string, name string, ref interface{}) {
@@ -115,6 +116,10 @@ func (oa *OpenApi) CreateBaseSchemasFromStructure(source interface{}) *openapi3.
 				schema.Required = append(schema.Required, name)
 			}
 
+			if name == "file" {
+				schema.Format = "binary"
+			}
+
 			if strings.Contains(ft.String(), ".") {
 				if utils.IsFirstUpLetter(ft.Name()) && !oa.IsExistsSchema(ft.Name()) {
 					oa.AddComponent(ComponentTypeSchema, ft.Name(), schema.NewRef())
@@ -180,12 +185,15 @@ func (oa *OpenApi) AddSwaggerOperation(
 	if requestModel != nil {
 
 		requestSchema := oa.CreateBaseSchemasFromStructure(requestModel)
-
+		_type := action.GetRequestType()
+		if len(_type) == 0 {
+			_type = JSON
+		}
 		operation.RequestBody = &openapi3.RequestBodyRef{
 			Value: &openapi3.RequestBody{
 				Required: action.IsRequiredRequestModel(),
 				Content: openapi3.Content{
-					"application/json": &openapi3.MediaType{
+					_type: &openapi3.MediaType{
 						Schema: requestSchema,
 					},
 				},
@@ -287,7 +295,7 @@ func ConstructorNewFromArgs(title, description, version string, host []string) *
 			},
 			Servers: openapi3.Servers{
 				&openapi3.Server{
-					URL: fmt.Sprintf("%s://%s/", host[0], host[1]),
+					URL: fmt.Sprintf("%s://%s:%s", host[0], host[1], host[2]),
 				},
 			},
 			Components: &openapi3.Components{

@@ -22,6 +22,7 @@ const (
 	METRICS = "metrics"
 	GRAPH   = "server-graph"
 	DOCS    = "docs"
+	SWAGGER = "swagger"
 )
 
 func Constructor(path string) interfaces.ResourceInterface {
@@ -35,6 +36,7 @@ func Constructor(path string) interfaces.ResourceInterface {
 			PING:  ping.Controller,
 			GRAPH: graph.Controller,
 			DOCS:  swagger.Controller,
+			//SWAGGER: swagger.ControllerUI,
 		},
 	}).AddResource(test.Constructor())
 }

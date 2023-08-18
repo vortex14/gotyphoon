@@ -10,6 +10,9 @@ import (
 	Gin "github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	Errors "github.com/vortex14/gotyphoon/errors"
@@ -138,11 +141,16 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 	s.Construct(func() {
 		s.InitLogger()
 		s.InitDocs()
+
 		s.LOG.Debug("init Typhoon Gin Server")
 		s.InitResourcesMap()
 
 		s.server = Gin.New()
 		s.server.Use(Gin.Recovery())
+
+		s.server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler,
+			ginSwagger.URL(fmt.Sprintf("http://%s:%d/docs", s.Host, s.Port)),
+			ginSwagger.DefaultModelsExpandDepth(-1)))
 
 		// /* ignore for building amd64-linux
 		//		s.InitGraph()

@@ -6,6 +6,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	"github.com/vortex14/gotyphoon/integrations/swagger"
+	"strconv"
+
 	// /* ignore for building amd64-linux
 	//	ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	// */
@@ -51,6 +53,7 @@ type TyphoonServer struct {
 
 	Port      int
 	Host      string
+	Schema    string
 	IsDebug   bool
 	IsRunning bool
 
@@ -134,8 +137,8 @@ func (s *TyphoonServer) InitDocs() interfaces.ServerInterface {
 		s.Name,
 		s.Description,
 		s.Version,
-		[]string{"https", s.Host})
-
+		[]string{s.Schema, s.Host, strconv.Itoa(s.Port)})
+	s.swagger.LOG = s.LOG
 	return s
 }
 

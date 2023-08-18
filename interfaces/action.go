@@ -26,6 +26,7 @@ type ActionInterface interface {
 	AddMethod(name string)
 
 	GetRequestModel() interface{}
+	GetRequestType() string
 	IsRequiredRequestModel() bool
 	IsValidRequestBody() bool
 

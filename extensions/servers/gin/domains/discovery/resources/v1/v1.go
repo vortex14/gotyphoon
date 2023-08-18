@@ -9,9 +9,10 @@ import (
 )
 
 func Constructor() interfaces.ResourceInterface {
-	return home.Constructor("/api/v1").
+	return home.Constructor("/").
 		AddAction(controllers.MeController).
 		AddAction(controllers.LoginController).
+		AddAction(controllers.FileController).
 		AddResource(service.Constructor("services").Get()).
 		AddResource(projects.Constructor("projects").Get())
 }
