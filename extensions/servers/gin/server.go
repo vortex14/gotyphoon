@@ -63,9 +63,18 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 
 	if action == nil {
 		s.LOG.Error(Errors.ActionPathNotFound.Error())
-		ginCtx.JSON(404, Gin.H{"message": "Not Found", "status": false})
+		ginCtx.JSON(404, forms.ErrorResponse{Message: "not found", Status: false})
 		return
 	}
+
+	if action.IsValidateRequest() {
+		if err := ginCtx.ShouldBindJSON(action.GetRequestModel()); err != nil {
+			s.LOG.Error(Errors.ActionErrRequestModel.Error())
+			ginCtx.JSON(422, forms.ErrorResponse{Message: "unprocessable entity", Status: false})
+			return
+		}
+	}
+
 	action.OnRequest(ginCtx.Request.Method, reservedRequestPath)
 
 	requestLogger = log.Patch(requestLogger, log.D{"controller": action.GetName()})

@@ -25,11 +25,6 @@ type MeResponse struct {
 	Roles []string `json:"roles"`
 }
 
-type TestRequestModel struct {
-	Field1 string `json:"field1" binding:"required"`
-	Field2 int    `json:"field2" binding:"required"`
-}
-
 // handler
 // @Tags Auth
 // @Accept  json
@@ -48,13 +43,11 @@ func meHandler(ctx *gin.Context, logger interfaces.LoggerInterface) {
 
 var MeController = &GinExtension.Action{
 	Action: &forms.Action{
-		BodyRequestModel: forms.BaseModelRequest{
-			RequestModel: &TestRequestModel{},
-		},
 		MetaInfo: &label.MetaInfo{
 			Path:        PATH,
 			Name:        NAMEMeController,
 			Description: DESCRIPTIONMeController,
+			Tags:        []string{"Auth"},
 		},
 		Methods: []string{interfaces.GET},
 	},

@@ -26,6 +26,10 @@ type ActionInterface interface {
 	AddMethod(name string)
 
 	GetRequestModel() interface{}
+	IsRequiredRequestModel() bool
+	IsValidateRequest() bool
+
+	GetResponseModels() map[int]interface{}
 
 	Run(
 		ctx context.Context,

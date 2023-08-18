@@ -12,14 +12,12 @@ import (
 )
 
 const (
-	CheckNSQPath = "check_nsq"
+	CheckNSQPath        = "check_nsq"
 	CheckNSQDescription = "Health check controller of NSQ"
 
 	LocalhostNSQDHost = "localhost"
 	LocalhostNSQDPort = 4161
-
 )
-
 
 var nsqService = &nsq.Service{
 	Config: &interfaces.ConfigProject{
@@ -34,7 +32,7 @@ var nsqService = &nsq.Service{
 // @Description Health check controller of NSQ
 // @Success 200 {object} ServiceResponse
 // @Router /api/v1/services/check_nsq [get]
-func NSQHandler (ctx *gin.Context, logger interfaces.LoggerInterface) {
+func NSQHandler(ctx *gin.Context, logger interfaces.LoggerInterface) {
 	ctx.JSON(200, &ServiceResponse{
 		Status: nsqService.Ping(),
 	})
@@ -42,12 +40,12 @@ func NSQHandler (ctx *gin.Context, logger interfaces.LoggerInterface) {
 
 var NSQController = &GinExtension.Action{
 	Action: &forms.Action{
-		MetaInfo:&label.MetaInfo{
+		MetaInfo: &label.MetaInfo{
 			Name:        CheckNSQPath,
 			Description: CheckNSQDescription,
+			Tags:        []string{"Services"},
 		},
 		Methods: []string{interfaces.GET},
 	},
-	GinController:  NSQHandler,
+	GinController: NSQHandler,
 }
-

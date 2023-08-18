@@ -95,6 +95,11 @@ type TyphoonServer struct {
 
 }
 
+type ErrorResponse struct {
+	Message string `json:"message"`
+	Status  bool   `json:"status"`
+}
+
 func (s *TyphoonServer) GetDocs() []byte {
 	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
 	return nil
@@ -350,6 +355,36 @@ func (s *TyphoonServer) initActions(resource interfaces.ResourceInterface) {
 	}
 }
 
+func (s *TyphoonServer) AddSwaggerResponses(action interfaces.ActionInterface, operation *openapi3.Operation) {
+	_schemaErr := s.swagger.CreateBaseSchemasFromStructure(&ErrorResponse{})
+
+	errorResponseTitle := "Error response"
+	errorResponse := &openapi3.Response{
+		Description: &errorResponseTitle,
+		Content: openapi3.Content{
+			"application/json": &openapi3.MediaType{
+				Schema: _schemaErr,
+			},
+		},
+	}
+	operation.AddResponse(422, errorResponse)
+
+	for status, model := range action.GetResponseModels() {
+		responseTitle := "response"
+		responseSchema := s.swagger.CreateBaseSchemasFromStructure(model)
+		response := &openapi3.Response{
+			Description: &responseTitle,
+			Content: openapi3.Content{
+				"application/json": &openapi3.MediaType{
+					Schema: responseSchema,
+				},
+			},
+		}
+		operation.AddResponse(status, response)
+	}
+
+}
+
 func (s *TyphoonServer) AddSwaggerOperation(
 	resource interfaces.ResourceInterface,
 	action interfaces.ActionInterface,
@@ -372,10 +407,10 @@ func (s *TyphoonServer) AddSwaggerOperation(
 	if requestModel != nil {
 
 		requestSchema := s.swagger.CreateBaseSchemasFromStructure(requestModel)
-		requestSchema.Ref = fmt.Sprintf("#/components/schemas/%s", requestSchema.Ref)
 
 		operation.RequestBody = &openapi3.RequestBodyRef{
 			Value: &openapi3.RequestBody{
+				Required: action.IsRequiredRequestModel(),
 				Content: openapi3.Content{
 					"application/json": &openapi3.MediaType{
 						Schema: requestSchema,
@@ -384,6 +419,8 @@ func (s *TyphoonServer) AddSwaggerOperation(
 			},
 		}
 	}
+
+	s.AddSwaggerResponses(action, operation)
 
 	s.swagger.AddOperation(path, method, operation)
 }

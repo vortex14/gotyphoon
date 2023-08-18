@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	NAME = "projects"
+	NAME        = "projects"
 	DESCRIPTION = "resource of projects for discovery service"
 )
 
@@ -20,7 +20,7 @@ func Constructor(path string) interfaces.ResourceInterface {
 			Description: DESCRIPTION,
 		},
 		Actions: map[string]interfaces.ActionInterface{
-			controllers.UnmoorControllerName: controllers.UnmoorController,
+			controllers.UnmoorControllerName:   controllers.UnmoorController,
 			controllers.ProjectsControllerName: controllers.ProjectsController,
 			controllers.RegisterControllerName: controllers.RegisterController,
 		},

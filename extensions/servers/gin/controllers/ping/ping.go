@@ -61,6 +61,7 @@ var Controller = &GinExtension.Action{
 			Name:        NAME,
 			Path:        PATH,
 			Description: DESCRIPTION,
+			Tags:        []string{"System"},
 		},
 		Methods: []string{http.MethodGet, http.MethodPatch, http.MethodPost, http.MethodPut, http.MethodDelete},
 	},

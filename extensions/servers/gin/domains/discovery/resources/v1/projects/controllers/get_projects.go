@@ -12,18 +12,16 @@ import (
 )
 
 const (
-
-	ProjectsControllerName = "get_projects"
+	ProjectsControllerName        = "get_projects"
 	ProjectsControllerDescription = "Get registered projects in discovery service"
-
 )
 
 type Component struct {
-	MooredAt time.Time `json:"moored_at"`
-	Port int `json:"port" binding:"required"`
-	Host string `json:"host" binding:"required"`
-	Cluster string `json:"cluster" binding:"required"`
-	Component string `json:"component" binding:"required"`
+	MooredAt  time.Time `json:"moored_at"`
+	Port      int       `json:"port" binding:"required"`
+	Host      string    `json:"host" binding:"required"`
+	Cluster   string    `json:"cluster" binding:"required"`
+	Component string    `json:"component" binding:"required"`
 }
 
 type Project struct {
@@ -41,16 +39,17 @@ var Projects = make(map[string]map[string]*Component)
 // @Description Typhoon Discovery projects controller
 // @Success 200 {object} Projects
 // @Router /api/v1/projects/get_projects [get]
-func projectsHandler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
+func projectsHandler(ctx *gin.Context, logger interfaces.LoggerInterface) {
 	ctx.JSON(200, Projects)
 }
 
 var ProjectsController = &GinExtension.Action{
 	Action: &forms.Action{
-		Methods :    []string{interfaces.GET},
+		Methods: []string{interfaces.GET},
 		MetaInfo: &label.MetaInfo{
 			Name:        ProjectsControllerName,
 			Description: ProjectsControllerDescription,
+			Tags:        []string{"Project"},
 		},
 	},
 	GinController: projectsHandler,

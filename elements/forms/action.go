@@ -27,14 +27,6 @@ type BaseModelRequest struct {
 	Required     bool
 }
 
-func (b *BaseModelRequest) GetRequired() bool {
-	return b.Required
-}
-
-func (b *BaseModelRequest) GetRequestModel() interface{} {
-	return b.RequestModel
-}
-
 type Action struct {
 	*label.MetaInfo
 	LOG interfaces.LoggerInterface
@@ -46,6 +38,7 @@ type Action struct {
 	handlerPath    string
 
 	BodyRequestModel BaseModelRequest
+	ResponseModels   map[int]interface{}
 
 	//Cn func(ctx context.Context, err error)
 
@@ -230,4 +223,20 @@ func (a *Action) SetLogger(logger interfaces.LoggerInterface) {
 
 func (a *Action) GetRequestModel() interface{} {
 	return a.BodyRequestModel.RequestModel
+}
+
+func (a *Action) IsRequiredRequestModel() bool {
+	return a.BodyRequestModel.Required
+}
+
+func (a *Action) IsValidateRequest() bool {
+	status := false
+	if a.GetRequestModel() != nil && a.IsRequiredRequestModel() {
+		status = true
+	}
+	return status
+}
+
+func (a *Action) GetResponseModels() map[int]interface{} {
+	return a.ResponseModels
 }

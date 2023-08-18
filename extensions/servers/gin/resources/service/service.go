@@ -8,10 +8,9 @@ import (
 )
 
 const (
-	NAME = "services"
+	NAME        = "services"
 	DESCRIPTION = "Main Service Resource"
 )
-
 
 func Constructor(path string) interfaces.ResourceInterface {
 	return &forms.Resource{

@@ -29,6 +29,7 @@ var Controller = &GinExtension.Action{
 			Name:        NAME,
 			Path:        PATH,
 			Description: DESCRIPTION,
+			Tags:        []string{"Docs"},
 		},
 		Methods: []string{http.MethodGet},
 	},

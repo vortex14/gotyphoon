@@ -151,6 +151,8 @@ func (oa *OpenApi) CreateBaseSchemasFromStructure(source interface{}) *openapi3.
 
 	oa.MoveRequiredFieldsToTopLevel()
 
+	sc.Ref = fmt.Sprintf("#/components/schemas/%s", sc.Ref)
+
 	println(fmt.Sprintf("%+v", sc))
 
 	return sc
