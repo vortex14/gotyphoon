@@ -67,7 +67,15 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 		return
 	}
 
-	if action.IsValidateRequest() {
+	paramsQuery := action.GetParams()
+	if paramsQuery != nil {
+		if err := ginCtx.BindQuery(paramsQuery); err != nil {
+			ginCtx.JSON(422, forms.ErrorResponse{Message: "unavailable query string", Status: false})
+			return
+		}
+	}
+
+	if action.IsValidRequestBody() {
 		if err := ginCtx.ShouldBindJSON(action.GetRequestModel()); err != nil {
 			s.LOG.Error(Errors.ActionErrRequestModel.Error())
 			ginCtx.JSON(422, forms.ErrorResponse{Message: "unprocessable entity", Status: false})
@@ -162,6 +170,8 @@ func (s *TyphoonGinServer) Restart() error {
 }
 
 func (s *TyphoonGinServer) onInitAction(resource interfaces.ResourceInterface, action interfaces.ActionInterface) {
+
+	//action.GetParams()
 
 	// /* ignore for building amd64-linux
 	//

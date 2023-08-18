@@ -97,3 +97,11 @@ func CreateBaseSchemasFromStructure(tmpl *OpenApi, source interface{}) {
 		panic(err)
 	}
 }
+
+func CreateRefSchemaFromStruct(instance interface{}) *openapi3.SchemaRef {
+	_schemas := make(openapi3.Schemas)
+
+	schParam, _ := openapi3gen.NewSchemaRefForValue(instance, _schemas)
+
+	return schParam
+}

@@ -37,6 +37,7 @@ type Action struct {
 	AllowedMethods []string
 	handlerPath    string
 
+	Params           interface{}
 	BodyRequestModel BaseModelRequest
 	ResponseModels   map[int]interface{}
 
@@ -229,7 +230,7 @@ func (a *Action) IsRequiredRequestModel() bool {
 	return a.BodyRequestModel.Required
 }
 
-func (a *Action) IsValidateRequest() bool {
+func (a *Action) IsValidRequestBody() bool {
 	status := false
 	if a.GetRequestModel() != nil && a.IsRequiredRequestModel() {
 		status = true
@@ -239,4 +240,8 @@ func (a *Action) IsValidateRequest() bool {
 
 func (a *Action) GetResponseModels() map[int]interface{} {
 	return a.ResponseModels
+}
+
+func (a *Action) GetParams() interface{} {
+	return a.Params
 }

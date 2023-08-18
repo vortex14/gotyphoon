@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
+	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/utils"
 	"os"
 	"reflect"
@@ -156,6 +157,95 @@ func (oa *OpenApi) CreateBaseSchemasFromStructure(source interface{}) *openapi3.
 	println(fmt.Sprintf("%+v", sc))
 
 	return sc
+}
+
+func (oa *OpenApi) AddSwaggerOperation(
+	resource interfaces.ResourceInterface,
+	action interfaces.ActionInterface,
+	method, path string) *openapi3.Operation {
+
+	operation := &openapi3.Operation{
+		Tags:        action.GetTags(),
+		Summary:     action.GetSummary(),
+		Responses:   openapi3.Responses{},
+		Description: action.GetDescription(),
+		OperationID: strings.ToLower(
+			fmt.Sprintf("Handle_%s_%s_%s",
+				strings.ReplaceAll(resource.GetPath(), "/", "_"),
+				action.GetName(),
+				method)),
+	}
+
+	requestModel := action.GetRequestModel()
+	if requestModel != nil {
+
+		requestSchema := oa.CreateBaseSchemasFromStructure(requestModel)
+
+		operation.RequestBody = &openapi3.RequestBodyRef{
+			Value: &openapi3.RequestBody{
+				Required: action.IsRequiredRequestModel(),
+				Content: openapi3.Content{
+					"application/json": &openapi3.MediaType{
+						Schema: requestSchema,
+					},
+				},
+			},
+		}
+	}
+
+	params := action.GetParams()
+
+	if params != nil {
+
+		schemaRef := CreateRefSchemaFromStruct(params)
+
+		for name, ref := range schemaRef.Value.Properties {
+
+			status := false
+			for i := 0; i < reflect.TypeOf(params).Elem().NumField(); i++ {
+				field := reflect.TypeOf(params).Elem().Field(i)
+				ref.Value.Title = name
+				if strings.ToLower(field.Name) != name {
+					continue
+				}
+				if field.Tag.Get("binding") == "required" {
+					status = true
+				}
+			}
+
+			operation.AddParameter(&openapi3.Parameter{Required: status, Schema: ref, In: "query", Name: name})
+
+			ref.Value.Title = name
+		}
+
+	}
+
+	oa.AddOperation(path, method, operation)
+
+	return operation
+}
+
+func (oa *OpenApi) AddSwaggerResponse(
+
+	title *string,
+	code int,
+	action interfaces.ActionInterface,
+	operation *openapi3.Operation,
+
+	response interface{}) {
+
+	_schema := oa.CreateBaseSchemasFromStructure(response)
+
+	swaggerResponse := &openapi3.Response{
+		Description: title,
+		Content: openapi3.Content{
+			"application/json": &openapi3.MediaType{
+				Schema: _schema,
+			},
+		},
+	}
+	operation.AddResponse(code, swaggerResponse)
+
 }
 
 func (oa *OpenApi) addModels() {

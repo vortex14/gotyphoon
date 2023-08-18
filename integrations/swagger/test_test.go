@@ -519,3 +519,80 @@ func TestGenerateLinkType(t *testing.T) {
 	b, _ := schRef.MarshalJSON()
 	println(fmt.Sprintf("%s", b))
 }
+
+func Extract(app interface{}) {
+	appData := reflect.ValueOf(app)
+	appid := utils.CaseInsenstiveFieldByName(reflect.Indirect(appData), "id")
+	fmt.Println(appid)
+	owner := utils.CaseInsenstiveFieldByName(reflect.Indirect(appData), "owner")
+	fmt.Println(owner.String())
+}
+
+func GetSt() interface{} {
+	type Params struct {
+		Id string `json:"id" binding:"required"`
+	}
+	return &Params{}
+}
+
+func TestParamsForQuery(t *testing.T) {
+	operation := &openapi3.Operation{
+		Tags:        []string{"test tag"},
+		Summary:     "short description",
+		Responses:   openapi3.Responses{},
+		Description: "some description",
+	}
+
+	schemas := make(openapi3.Schemas)
+
+	_params := GetSt()
+
+	println(fmt.Sprintf("%+v", _params))
+
+	schRef, _ := openapi3gen.NewSchemaRefForValue(_params, schemas)
+
+	for name, ref := range schRef.Value.Properties {
+
+		println(">>>", name)
+
+		for i := 0; i < reflect.TypeOf(_params).Elem().NumField(); i++ {
+			field := reflect.TypeOf(_params).Elem().Field(0)
+			if field.Tag.Get("binding") == "required" {
+				println(name, field.Name)
+				println(fmt.Sprintf("%+v", field.Tag))
+			}
+
+		}
+
+		//println(name)
+		//_type := reflect.TypeOf(_params).Elem()
+		//utils.CaseInsenstiveFieldByName(reflect.Indirect(_type), name)
+		//Extract(_params)
+		//field, ok := .FieldByName(ref.Value.)
+		//var required bool
+		//if ok {
+		//	println(field.Tag)
+		//}
+
+		ref.Value.Title = name
+		//operation.AddParameter(&openapi3.Parameter{Required: required, Schema: ref, In: "query", Name: name})
+	}
+
+	//operation.AddParameter(&openapi3.Parameter{Required: true, Schema: schRef, In: "query"})
+
+	b, _ := operation.MarshalJSON()
+
+	println(fmt.Sprintf("%s", b))
+
+}
+
+func TestBase(t *testing.T) {
+	type Params struct {
+		Id string `json:"id" binding:"required"`
+	}
+
+	ref := CreateRefSchemaFromStruct(GetSt())
+
+	println(fmt.Sprintf("%+v", ref.Value.Properties))
+	//s.LOG.Error(fmt.Sprintf("%+v %+v %+v", schParam.Value.Properties, params, _schemas))
+}

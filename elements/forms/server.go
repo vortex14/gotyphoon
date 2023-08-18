@@ -6,7 +6,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	"github.com/vortex14/gotyphoon/integrations/swagger"
-
 	// /* ignore for building amd64-linux
 	//	ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	// */
@@ -356,31 +355,14 @@ func (s *TyphoonServer) initActions(resource interfaces.ResourceInterface) {
 }
 
 func (s *TyphoonServer) AddSwaggerResponses(action interfaces.ActionInterface, operation *openapi3.Operation) {
-	_schemaErr := s.swagger.CreateBaseSchemasFromStructure(&ErrorResponse{})
 
 	errorResponseTitle := "Error response"
-	errorResponse := &openapi3.Response{
-		Description: &errorResponseTitle,
-		Content: openapi3.Content{
-			"application/json": &openapi3.MediaType{
-				Schema: _schemaErr,
-			},
-		},
-	}
-	operation.AddResponse(422, errorResponse)
+	s.swagger.AddSwaggerResponse(&errorResponseTitle, 422, action, operation, &ErrorResponse{})
 
 	for status, model := range action.GetResponseModels() {
 		responseTitle := "response"
-		responseSchema := s.swagger.CreateBaseSchemasFromStructure(model)
-		response := &openapi3.Response{
-			Description: &responseTitle,
-			Content: openapi3.Content{
-				"application/json": &openapi3.MediaType{
-					Schema: responseSchema,
-				},
-			},
-		}
-		operation.AddResponse(status, response)
+
+		s.swagger.AddSwaggerResponse(&responseTitle, status, action, operation, model)
 	}
 
 }
@@ -391,38 +373,10 @@ func (s *TyphoonServer) AddSwaggerOperation(
 	method, path string,
 ) {
 
-	operation := &openapi3.Operation{
-		Tags:        action.GetTags(),
-		Summary:     action.GetSummary(),
-		Responses:   openapi3.Responses{},
-		Description: action.GetDescription(),
-		OperationID: strings.ToLower(
-			fmt.Sprintf("Handle_%s_%s_%s",
-				strings.ReplaceAll(resource.GetPath(), "/", "_"),
-				action.GetName(),
-				method)),
-	}
-
-	requestModel := action.GetRequestModel()
-	if requestModel != nil {
-
-		requestSchema := s.swagger.CreateBaseSchemasFromStructure(requestModel)
-
-		operation.RequestBody = &openapi3.RequestBodyRef{
-			Value: &openapi3.RequestBody{
-				Required: action.IsRequiredRequestModel(),
-				Content: openapi3.Content{
-					"application/json": &openapi3.MediaType{
-						Schema: requestSchema,
-					},
-				},
-			},
-		}
-	}
+	operation := s.swagger.AddSwaggerOperation(resource, action, method, path)
 
 	s.AddSwaggerResponses(action, operation)
 
-	s.swagger.AddOperation(path, method, operation)
 }
 
 func (s *TyphoonServer) buildSubResources(parentPath string, newResource interfaces.ResourceInterface) {

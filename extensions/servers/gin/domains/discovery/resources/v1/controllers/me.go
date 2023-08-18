@@ -9,6 +9,11 @@ import (
 	GinExtension "github.com/vortex14/gotyphoon/extensions/servers/gin"
 )
 
+type MeParams struct {
+	Id string `form:"id" binding:"required" json:"id"`
+	//Name string `uri:"name" binding:"required"`
+}
+
 const (
 	PATH                    = "me"
 	NAMEMeController        = "me"
@@ -34,6 +39,21 @@ type MeResponse struct {
 // @Success 200 {object} MeResponse
 // @Router /api/v1/me [get]
 func meHandler(ctx *gin.Context, logger interfaces.LoggerInterface) {
+	params := &MeParams{}
+
+	if err := ctx.ShouldBindQuery(params); err != nil {
+
+		//m := make(map[string][]string)
+		//for _, v := range ctx. {
+		//	m[v.Key] = []string{v.Value}
+		//}
+		//
+		//println(fmt.Sprintf("%+v; %+v", m, ctx.Params, ctx.Quer))
+
+		ctx.JSON(400, &forms.ErrorResponse{Message: err.Error()})
+		return
+	}
+
 	ctx.JSON(200, &MeResponse{
 		Login: JWTAUTHLOGINDefault,
 		Email: JWTAUTHEmailDefault,
@@ -43,6 +63,7 @@ func meHandler(ctx *gin.Context, logger interfaces.LoggerInterface) {
 
 var MeController = &GinExtension.Action{
 	Action: &forms.Action{
+		Params: &MeParams{},
 		MetaInfo: &label.MetaInfo{
 			Path:        PATH,
 			Name:        NAMEMeController,
