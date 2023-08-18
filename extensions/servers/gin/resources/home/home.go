@@ -5,8 +5,6 @@ import (
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/graph"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/ping"
-	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/swagger"
-	"github.com/vortex14/gotyphoon/extensions/servers/gin/resources/test"
 	"github.com/vortex14/gotyphoon/interfaces"
 )
 
@@ -26,7 +24,7 @@ const (
 )
 
 func Constructor(path string) interfaces.ResourceInterface {
-	return (&forms.Resource{
+	return &forms.Resource{
 		MetaInfo: &label.MetaInfo{
 			Path:        path,
 			Name:        NAMEDefault,
@@ -35,8 +33,6 @@ func Constructor(path string) interfaces.ResourceInterface {
 		Actions: map[string]interfaces.ActionInterface{
 			PING:  ping.Controller,
 			GRAPH: graph.Controller,
-			DOCS:  swagger.Controller,
-			//SWAGGER: swagger.ControllerUI,
 		},
-	}).AddResource(test.Constructor())
+	}
 }

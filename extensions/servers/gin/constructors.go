@@ -8,7 +8,7 @@ import (
 
 func ConstructorCreateBaseLocalhostServer(name, description string, port int) *TyphoonGinServer {
 
-	loggerOpt, tracingOpt, swaggerOpt := ConstructorLocalhostOptions(name)
+	loggerOpt, tracingOpt, _ := ConstructorLocalhostOptions(name)
 
 	return &TyphoonGinServer{
 		TyphoonServer: &forms.TyphoonServer{
@@ -21,7 +21,6 @@ func ConstructorCreateBaseLocalhostServer(name, description string, port int) *T
 			},
 			TracingOptions: tracingOpt,
 			LoggerOptions:  loggerOpt,
-			SwaggerOptions: swaggerOpt,
 		},
 	}
 }

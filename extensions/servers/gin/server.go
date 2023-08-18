@@ -148,9 +148,15 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 		s.server = Gin.New()
 		s.server.Use(Gin.Recovery())
 
-		s.server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler,
-			ginSwagger.URL(fmt.Sprintf("http://%s:%d/docs", s.Host, s.Port)),
-			ginSwagger.DefaultModelsExpandDepth(-1)))
+		if s.ActiveSwagger {
+			s.server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler,
+				ginSwagger.URL(fmt.Sprintf("%s://%s:%d/docs", s.Schema, s.Host, s.Port)),
+				ginSwagger.DefaultModelsExpandDepth(-1)))
+
+			s.server.GET("/docs", func(c *Gin.Context) {
+				c.Writer.Write(s.GetDocs())
+			})
+		}
 
 		// /* ignore for building amd64-linux
 		//		s.InitGraph()

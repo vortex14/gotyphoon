@@ -57,6 +57,8 @@ type TyphoonServer struct {
 	IsDebug   bool
 	IsRunning bool
 
+	ActiveSwagger bool
+
 	Level string
 
 	LOG         *logrus.Entry
@@ -79,7 +81,6 @@ type TyphoonServer struct {
 	OnExit              OnExit
 
 	LoggerOptions  *log.Options
-	SwaggerOptions *interfaces.SwaggerOptions
 	TracingOptions *interfaces.TracingOptions
 
 	ArchonChIN  ArchonChIN

@@ -33,18 +33,6 @@ type PongResponse struct {
 	Path    string `json:"path"`
 }
 
-// handler
-// @Tags main
-// @Accept  json
-// @Produce  json
-// @Summary Ping Controller
-// @Description Typhoon Ping Controller
-// @Success 200 {object} PongResponse
-// @Router /ping [get]
-// @Router /ping [put]
-// @Router /ping [post]
-// @Router /ping [patch]
-// @Router /ping [delete]
 func handler(ctx *gin.Context, logger interfaces.LoggerInterface) {
 	logger.Debug(PING)
 	ctx.JSON(200, gin.H{
@@ -57,13 +45,14 @@ func handler(ctx *gin.Context, logger interfaces.LoggerInterface) {
 
 var Controller = &GinExtension.Action{
 	Action: &forms.Action{
+		ResponseModels: map[int]interface{}{200: &PongResponse{}},
 		MetaInfo: &label.MetaInfo{
 			Name:        NAME,
 			Path:        PATH,
 			Description: DESCRIPTION,
 			Tags:        []string{"System"},
 		},
-		Methods: []string{http.MethodGet, http.MethodPatch, http.MethodPost, http.MethodPut, http.MethodDelete},
+		Methods: []string{http.MethodGet},
 	},
 	GinController: handler,
 }

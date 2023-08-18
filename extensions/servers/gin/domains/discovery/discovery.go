@@ -31,10 +31,11 @@ func Constructor(
 
 	discoveryServer := (&gin.TyphoonGinServer{
 		TyphoonServer: &forms.TyphoonServer{
-			Host:   host,
-			Port:   port,
-			Schema: schema,
-			Level:  interfaces.INFO,
+			ActiveSwagger: true,
+			Host:          host,
+			Port:          port,
+			Schema:        schema,
+			Level:         interfaces.INFO,
 			MetaInfo: &label.MetaInfo{
 				Name:        NAME,
 				Description: DESCRIPTION,
@@ -43,7 +44,6 @@ func Constructor(
 
 			TracingOptions: tracingOptions,
 			LoggerOptions:  loggerOptions,
-			SwaggerOptions: swaggerOptions,
 		},
 	}).
 		Init().
