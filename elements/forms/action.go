@@ -38,6 +38,7 @@ type Action struct {
 	AllowedMethods []string
 	handlerPath    string
 
+	Service          interface{}
 	Params           interface{}
 	BodyRequestModel BaseModelRequest
 	ResponseModels   map[int]interface{}
@@ -249,4 +250,8 @@ func (a *Action) GetResponseModels() map[int]interface{} {
 
 func (a *Action) GetParams() interface{} {
 	return a.Params
+}
+
+func (a *Action) GetService() interface{} {
+	return a.Service
 }

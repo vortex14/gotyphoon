@@ -33,6 +33,8 @@ type ActionInterface interface {
 	GetResponseModels() map[int]interface{}
 	GetParams() interface{}
 
+	GetService() interface{}
+
 	Run(
 		ctx context.Context,
 		logger LoggerInterface,

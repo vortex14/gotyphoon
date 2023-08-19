@@ -88,6 +88,8 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 
 	action.OnRequest(ginCtx.Request.Method, reservedRequestPath)
 
+	ginCtx.Set(TYPHOONActionService, action.GetService())
+
 	requestLogger = log.Patch(requestLogger, log.D{"controller": action.GetName()})
 	requestContext = NewServerCtx(requestContext, s)
 
@@ -154,7 +156,7 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 				ginSwagger.DefaultModelsExpandDepth(-1)))
 
 			s.server.GET("/docs", func(c *Gin.Context) {
-				c.Writer.Write(s.GetDocs())
+				_, _ = c.Writer.Write(s.GetDocs())
 			})
 		}
 
