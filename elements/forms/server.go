@@ -3,7 +3,10 @@ package forms
 import (
 	"context"
 	"fmt"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
+	"github.com/vortex14/gotyphoon/integrations/swagger"
+	"strconv"
 
 	// /* ignore for building amd64-linux
 	//	ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
@@ -49,8 +52,12 @@ type TyphoonServer struct {
 	*label.MetaInfo
 
 	Port      int
+	Host      string
+	Schema    string
 	IsDebug   bool
 	IsRunning bool
+
+	ActiveSwagger bool
 
 	Level string
 
@@ -74,7 +81,6 @@ type TyphoonServer struct {
 	OnExit              OnExit
 
 	LoggerOptions  *log.Options
-	SwaggerOptions *interfaces.SwaggerOptions
 	TracingOptions *interfaces.TracingOptions
 
 	ArchonChIN  ArchonChIN
@@ -82,12 +88,24 @@ type TyphoonServer struct {
 
 	BuildGraph bool
 
+	swagger *swagger.OpenApi
+
 	// /* ignore for building amd64-linux
 	//
 	//	Graph           interfaces.GraphInterface
 	//
 	// */
 
+}
+
+type ErrorResponse struct {
+	Message string `json:"message"`
+	Status  bool   `json:"status"`
+}
+
+func (s *TyphoonServer) GetDocs() []byte {
+	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
+	return nil
 }
 
 func (s *TyphoonServer) SetRouterGroup(resource interfaces.ResourceInterface, group interface{}) {
@@ -115,7 +133,13 @@ func (s *TyphoonServer) Init() interfaces.ServerInterface {
 }
 
 func (s *TyphoonServer) InitDocs() interfaces.ServerInterface {
-	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
+
+	s.swagger = swagger.ConstructorNewFromArgs(
+		s.Name,
+		s.Description,
+		s.Version,
+		[]string{s.Schema, s.Host, strconv.Itoa(s.Port)})
+	s.swagger.LOG = s.LOG
 	return s
 }
 
@@ -138,6 +162,10 @@ func (s *TyphoonServer) InitLogger() interfaces.ServerInterface {
 	})
 	return s
 }
+
+//func (s *TyphoonServer) Init()  {
+//
+//}
 
 func (s *TyphoonServer) Run() error {
 	if !s.IsRunning && len(s.Resources) > 0 {
@@ -320,12 +348,39 @@ func (s *TyphoonServer) initActions(resource interfaces.ResourceInterface) {
 			action.SetLogger(actionLogger)
 			s.LOG.Debug(fmt.Sprintf("need serve path: %s method: %s", handlerPath, method))
 
+			s.AddSwaggerOperation(resource, action, method, handlerPath)
+
 			s.initHandler(method, handlerPath, resource)
 			if s.OnInitAction != nil {
 				s.OnInitAction(resource, action)
 			}
 		}
 	}
+}
+
+func (s *TyphoonServer) AddSwaggerResponses(action interfaces.ActionInterface, operation *openapi3.Operation) {
+
+	errorResponseTitle := "Error response"
+	s.swagger.AddSwaggerResponse(&errorResponseTitle, 422, action, operation, &ErrorResponse{})
+
+	for status, model := range action.GetResponseModels() {
+		responseTitle := "response"
+
+		s.swagger.AddSwaggerResponse(&responseTitle, status, action, operation, model)
+	}
+
+}
+
+func (s *TyphoonServer) AddSwaggerOperation(
+	resource interfaces.ResourceInterface,
+	action interfaces.ActionInterface,
+	method, path string,
+) {
+
+	operation := s.swagger.AddSwaggerOperation(resource, action, method, path)
+
+	s.AddSwaggerResponses(action, operation)
+
 }
 
 func (s *TyphoonServer) buildSubResources(parentPath string, newResource interfaces.ResourceInterface) {
@@ -361,6 +416,7 @@ func (s *TyphoonServer) buildSubActions(parentPath string, newResource interface
 			for _, method := range action.GetMethods() {
 				handlerPath := fmt.Sprintf("%s/%s", parentPath, name)
 				s.LOG.Debug("init sub action ", handlerPath)
+				s.AddSwaggerOperation(newResource, action, method, handlerPath)
 				action.SetHandlerPath(handlerPath)
 				if s.OnBuildSubAction != nil {
 					s.OnBuildSubAction(newResource, action)
@@ -487,4 +543,9 @@ func (s *TyphoonServer) GetServerEngine() interface{} {
 
 func (s *TyphoonServer) SetServerEngine(server interface{}) {
 	s.LOG.Error(Errors.ServerMethodNotImplemented.Error())
+}
+
+func (s *TyphoonServer) GetSwagger() []byte {
+	return s.swagger.GetDump()
+
 }

@@ -25,6 +25,16 @@ type ActionInterface interface {
 	GetHandlerPath() string
 	AddMethod(name string)
 
+	GetRequestModel() interface{}
+	GetRequestType() string
+	IsRequiredRequestModel() bool
+	IsValidRequestBody() bool
+
+	GetResponseModels() map[int]interface{}
+	GetParams() interface{}
+
+	GetService() interface{}
+
 	Run(
 		ctx context.Context,
 		logger LoggerInterface,

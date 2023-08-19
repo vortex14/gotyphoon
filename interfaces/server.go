@@ -46,7 +46,7 @@ type ServerOptionsInterface interface {
 
 type ServerInterface interface {
 	AddResource(resource ResourceInterface) ServerInterface
-
+	GetDocs() []byte
 	ServerExtensionInterface
 	ServerOptionsInterface
 	ManageServerInterface

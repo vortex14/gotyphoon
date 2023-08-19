@@ -22,6 +22,12 @@ type Stats struct {
 	Input int64
 }
 
+type BaseModelRequest struct {
+	RequestModel interface{}
+	Required     bool
+	Type         string
+}
+
 type Action struct {
 	*label.MetaInfo
 	LOG interfaces.LoggerInterface
@@ -31,6 +37,11 @@ type Action struct {
 	Methods        []string //just yet HTTP Methods
 	AllowedMethods []string
 	handlerPath    string
+
+	Service          interface{}
+	Params           interface{}
+	BodyRequestModel BaseModelRequest
+	ResponseModels   map[int]interface{}
 
 	//Cn func(ctx context.Context, err error)
 
@@ -211,4 +222,36 @@ func (a *Action) Run(ctx context.Context, logger interfaces.LoggerInterface) {
 
 func (a *Action) SetLogger(logger interfaces.LoggerInterface) {
 	a.LOG = logger
+}
+
+func (a *Action) GetRequestModel() interface{} {
+	return a.BodyRequestModel.RequestModel
+}
+
+func (a *Action) GetRequestType() string {
+	return a.BodyRequestModel.Type
+}
+
+func (a *Action) IsRequiredRequestModel() bool {
+	return a.BodyRequestModel.Required
+}
+
+func (a *Action) IsValidRequestBody() bool {
+	status := false
+	if a.GetRequestModel() != nil && a.IsRequiredRequestModel() {
+		status = true
+	}
+	return status
+}
+
+func (a *Action) GetResponseModels() map[int]interface{} {
+	return a.ResponseModels
+}
+
+func (a *Action) GetParams() interface{} {
+	return a.Params
+}
+
+func (a *Action) GetService() interface{} {
+	return a.Service
 }

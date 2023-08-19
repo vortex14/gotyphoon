@@ -10,6 +10,9 @@ import (
 	Gin "github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	Errors "github.com/vortex14/gotyphoon/errors"
@@ -63,10 +66,29 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 
 	if action == nil {
 		s.LOG.Error(Errors.ActionPathNotFound.Error())
-		ginCtx.JSON(404, Gin.H{"message": "Not Found", "status": false})
+		ginCtx.JSON(404, forms.ErrorResponse{Message: "not found", Status: false})
 		return
 	}
+
+	paramsQuery := action.GetParams()
+	if paramsQuery != nil {
+		if err := ginCtx.BindQuery(paramsQuery); err != nil {
+			ginCtx.JSON(422, forms.ErrorResponse{Message: "unavailable query string", Status: false})
+			return
+		}
+	}
+
+	if action.IsValidRequestBody() {
+		if err := ginCtx.ShouldBindJSON(action.GetRequestModel()); err != nil {
+			s.LOG.Error(Errors.ActionErrRequestModel.Error())
+			ginCtx.JSON(422, forms.ErrorResponse{Message: "unprocessable entity", Status: false})
+			return
+		}
+	}
+
 	action.OnRequest(ginCtx.Request.Method, reservedRequestPath)
+
+	ginCtx.Set(TYPHOONActionService, action.GetService())
 
 	requestLogger = log.Patch(requestLogger, log.D{"controller": action.GetName()})
 	requestContext = NewServerCtx(requestContext, s)
@@ -120,11 +142,23 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 
 	s.Construct(func() {
 		s.InitLogger()
+		s.InitDocs()
+
 		s.LOG.Debug("init Typhoon Gin Server")
 		s.InitResourcesMap()
 
 		s.server = Gin.New()
 		s.server.Use(Gin.Recovery())
+
+		if s.ActiveSwagger {
+			s.server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler,
+				ginSwagger.URL(fmt.Sprintf("%s://%s:%d/docs", s.Schema, s.Host, s.Port)),
+				ginSwagger.DefaultModelsExpandDepth(-1)))
+
+			s.server.GET("/docs", func(c *Gin.Context) {
+				_, _ = c.Writer.Write(s.GetDocs())
+			})
+		}
 
 		// /* ignore for building amd64-linux
 		//		s.InitGraph()
@@ -152,6 +186,8 @@ func (s *TyphoonGinServer) Restart() error {
 }
 
 func (s *TyphoonGinServer) onInitAction(resource interfaces.ResourceInterface, action interfaces.ActionInterface) {
+
+	//action.GetParams()
 
 	// /* ignore for building amd64-linux
 	//
@@ -215,4 +251,8 @@ func (s *TyphoonGinServer) onAddResource(resource interfaces.ResourceInterface) 
 
 func (s *TyphoonGinServer) GetServerEngine() interface{} {
 	return s.server
+}
+
+func (s *TyphoonGinServer) GetDocs() []byte {
+	return s.GetSwagger()
 }

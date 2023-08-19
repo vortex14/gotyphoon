@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	UnmoorControllerName = "unmoor"
+	UnmoorControllerName        = "unmoor"
 	unmoorControllerDescription = "Unmoor projects from discovery"
 )
 
@@ -31,7 +31,7 @@ type unmoorRequest struct {
 // @Description Typhoon unmoor projects controller
 // @Success 200 {object} Status
 // @Router /api/v1/projects/unmoor [post]
-func unmoorHandler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
+func unmoorHandler(ctx *gin.Context, logger interfaces.LoggerInterface) {
 	var project *unmoorRequest
 	if err := ctx.ShouldBindJSON(&project); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -43,7 +43,6 @@ func unmoorHandler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 	logger.WithFields(logrus.Fields{
 		"Project": project.Project,
 	}).Info("to unmoor project ...")
-
 
 	if regProject := Projects[project.Project]; regProject != nil {
 		delete(Projects, project.Project)
@@ -57,10 +56,9 @@ var UnmoorController = &GinExtension.Action{
 		MetaInfo: &label.MetaInfo{
 			Name:        UnmoorControllerName,
 			Description: unmoorControllerDescription,
+			Tags:        []string{"Project"},
 		},
-		Methods :    []string{interfaces.POST},
+		Methods: []string{interfaces.POST},
 	},
 	GinController: unmoorHandler,
-
 }
-

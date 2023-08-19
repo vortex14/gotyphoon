@@ -14,8 +14,9 @@ var (
 
 	ActionAddMethodNotImplemented = Errors.New("action add method not implemented")
 
-	ActionPathNotFound = Errors.New("action path not found in context. need set RoutePath")
-	ActionFailed       = Errors.New("action failed")
+	ActionPathNotFound    = Errors.New("action path not found in context. need set RoutePath")
+	ActionFailed          = Errors.New("action failed")
+	ActionErrRequestModel = Errors.New("request model isn't correct for action")
 
 	ServerOnHandlerMethodNotImplemented = Errors.New("server on handler method not implemented")
 

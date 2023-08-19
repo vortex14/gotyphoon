@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	RegisterControllerName = "register"
+	RegisterControllerName        = "register"
 	RegisterControllerDescription = "Registering projects controller for Discovery server"
 )
 
@@ -31,7 +31,7 @@ type Status struct {
 // @Description Typhoon registering projects controller
 // @Success 200 {object} Status
 // @Router /api/v1/projects/register [post]
-func registerHandler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
+func registerHandler(ctx *gin.Context, logger interfaces.LoggerInterface) {
 	var project *Project
 	if err := ctx.ShouldBindJSON(&project); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -41,10 +41,10 @@ func registerHandler (ctx *gin.Context, logger interfaces.LoggerInterface ) {
 	}
 	project.MooredAt = time.Now().UTC()
 	logger.WithFields(logrus.Fields{
-		"Host": project.Host,
-		"Port": project.Port,
-		"Cluster": project.Cluster,
-		"Project": project.Project,
+		"Host":      project.Host,
+		"Port":      project.Port,
+		"Cluster":   project.Cluster,
+		"Project":   project.Project,
 		"Component": project.Component.Component,
 	}).Info("Registering of Typhoon component")
 
@@ -72,8 +72,9 @@ var RegisterController = &GinExtension.Action{
 		MetaInfo: &label.MetaInfo{
 			Name:        RegisterControllerName,
 			Description: RegisterControllerDescription,
+			Tags:        []string{"Project"},
 		},
-		Methods :    []string{interfaces.POST},
+		Methods: []string{interfaces.POST},
 	},
 	GinController: registerHandler,
 }

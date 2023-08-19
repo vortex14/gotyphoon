@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	CTX = "GIN_CTX"
-	TYPHOONServer = "TYPHOON_SERVER"
+	CTX                  = "GIN_CTX"
+	TYPHOONServer        = "TYPHOON_SERVER"
+	TYPHOONActionService = "ACTION_SERVICE"
 )
 
-
-func GetTyphoonGinServer(server interfaces.ServerInterface) (bool, *TyphoonGinServer){
+func GetTyphoonGinServer(server interfaces.ServerInterface) (bool, *TyphoonGinServer) {
 	ginServer, ok := server.(*TyphoonGinServer)
 	return ok, ginServer
 }
@@ -30,20 +30,34 @@ func GetGinGroup(group interface{}) *gin.RouterGroup {
 	return group.(*gin.RouterGroup)
 }
 
-func NewRequestCtx(context Context.Context, ginCtx *gin.Context) Context.Context{
+func NewRequestCtx(context Context.Context, ginCtx *gin.Context) Context.Context {
 	return ctx.Update(context, CTX, ginCtx)
 }
 
-func GetRequestCtx(context Context.Context) (bool, *gin.Context){
+func GetRequestCtx(context Context.Context) (bool, *gin.Context) {
 	request, ok := ctx.Get(context, CTX).(*gin.Context)
 	return ok, request
 }
 
-func GetServerCtx(context Context.Context) (bool, interfaces.ServerInterface){
+func GetServerCtx(context Context.Context) (bool, interfaces.ServerInterface) {
 	request, ok := ctx.Get(context, TYPHOONServer).(interfaces.ServerInterface)
 	return ok, request
 }
 
-func NewServerCtx(context Context.Context, server interfaces.ServerInterface) Context.Context{
+func NewServerCtx(context Context.Context, server interfaces.ServerInterface) Context.Context {
 	return ctx.Update(context, TYPHOONServer, server)
+}
+
+func PackActionServiceIntoContext(service interface{}, context Context.Context) Context.Context {
+	if service != nil {
+		return ctx.Update(context, TYPHOONActionService, service)
+	}
+	return context
+}
+
+func GetActionService(context Context.Context) (bool, interface{}) {
+
+	service, ok := ctx.Get(context, TYPHOONActionService).(interface{})
+	return ok, service
+
 }

@@ -10,16 +10,18 @@ import (
 )
 
 const (
-	NAME = "Discovery"
+	NAME        = "Discovery"
 	DESCRIPTION = "Project discovery service"
 )
 
-func init()  {
+func init() {
 	log.InitD()
 }
 
 func Constructor(
+	host string,
 	port int,
+	schema string,
 
 	tracingOptions *interfaces.TracingOptions,
 	loggerOptions *log.Options,
@@ -27,22 +29,23 @@ func Constructor(
 
 ) interfaces.ServerInterface {
 
-	discoveryServer := (
-		&gin.TyphoonGinServer{
-			TyphoonServer: &forms.TyphoonServer{
-				Port: port,
-				Level: interfaces.INFO,
-				MetaInfo: &label.MetaInfo{
-					Name:        NAME,
-					Description: DESCRIPTION,
-				},
-
-				TracingOptions: tracingOptions,
-				LoggerOptions: loggerOptions,
-				SwaggerOptions: swaggerOptions,
+	discoveryServer := (&gin.TyphoonGinServer{
+		TyphoonServer: &forms.TyphoonServer{
+			ActiveSwagger: true,
+			Host:          host,
+			Port:          port,
+			Schema:        schema,
+			Level:         interfaces.INFO,
+			MetaInfo: &label.MetaInfo{
+				Name:        NAME,
+				Description: DESCRIPTION,
+				Version:     "1.0.1",
 			},
 
-		}).
+			TracingOptions: tracingOptions,
+			LoggerOptions:  loggerOptions,
+		},
+	}).
 		Init().
 		InitLogger().
 		AddResource(v1.Constructor().Get())

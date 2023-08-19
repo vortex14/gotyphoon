@@ -46,6 +46,7 @@ var RedisController = &GinExtension.Action{
 		MetaInfo: &label.MetaInfo{
 			Name:        CheckRedisPath,
 			Description: CheckRedisDescription,
+			Tags:        []string{"Services"},
 		},
 		Methods: []string{interfaces.GET},
 	},

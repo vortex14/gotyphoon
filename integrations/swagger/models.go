@@ -2,7 +2,7 @@ package swagger
 
 import "github.com/vortex14/gotyphoon/interfaces"
 
-type OpenApi struct {
+type openApi struct {
 	Title       string `yaml:"title" json:"title" mapstructure:"title"`
 	Description string `yaml:"description" json:"description" mapstructure:"description"`
 	Contacts    struct {
@@ -52,7 +52,7 @@ type Server struct {
 	Routes       map[string]interfaces.ResourceInterface `yaml:"routes" json:"routes" mapstructure:"routes"`
 	Timeout      string                                  `yaml:"timeout" json:"timeout" mapstructure:"timeout"`
 	Domains      []string                                `yaml:"domains" json:"domains" mapstructure:"domains"`
-	OpenApi      OpenApi                                 `yaml:"openapi" json:"openapi,omitempty" mapstructure:"openapi,omitempty"`
+	OpenApi      openApi                                 `yaml:"openapi" json:"openapi,omitempty" mapstructure:"openapi,omitempty"`
 	JwtSecret    string                                  `yaml:"jwt-secret" json:"jwt-secret" mapstructure:"jwt-secret"`
 	ApiVersion   string                                  `yaml:"apiVersion" json:"apiVersion" mapstructure:"apiVersion"`
 	Models       map[string]Model                        `yaml:"models" json:"models" mapstructure:"models"`

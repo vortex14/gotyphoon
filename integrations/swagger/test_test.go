@@ -55,7 +55,7 @@ type Img struct {
 }
 
 type User struct {
-	Name   string `json:"name" description:"test descr" required:"!"`
+	Name   string `json:"name" description:"test descr" binding:"required"`
 	Role   *Role  `json:"role"`
 	Images []*Img `json:"images" description:"photo for profile"`
 	Links  []*Link
@@ -168,7 +168,7 @@ func TestAddNewOperation(t *testing.T) {
 			Description: "some description",
 		}
 
-		tmpl.swagger.AddOperation("/", "GET", operation)
+		tmpl.AddOperation("/", "GET", operation)
 
 		contract, err := tmpl.swagger.MarshalJSON()
 
@@ -471,67 +471,44 @@ func TestRecursiveType(t *testing.T) {
 }
 
 func TestCreateContractWithComponentsDefs(t *testing.T) {
-	tmpl := ConstructorNewFromArgs(
-		"demo v1.1",
-		"test description",
-		"3.0.1",
-		[]string{"https", "localhost"})
 
-	//_required := make(map[string][]string)
+	Convey("create required schemas", t, func() {
 
-	customizer := openapi3gen.SchemaCustomizer(
-		func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
+		result := `{"components":{"schemas":{
+						"Img":{"description":"photo for profile",
+						"properties":{"href":{"title":"href","type":"string"},
+						"link":{"$ref":"#/components/schemas/Link"}},
+						"title":"Img","type":"object"},
+						"Link":{"properties":{"source":{"title":"source","type":"string"},
+						"title":{"title":"title","type":"string"}},"title":"Link","type":"object"},
+						"Role":{"properties":{"isAdmin":{"title":"isAdmin","type":"boolean"}},
+						"title":"Role","type":"object"},
+						"User":{"properties":{"images":{"description":"photo for profile",
+						"items":{"$ref":"#/components/schemas/Img"},"title":"images","type":"array"},
+						"name":{"description":"test descr","title":"name","type":"string"},
+						"role":{"$ref":"#/components/schemas/Role"}},"required":["name"],
+						"title":"User","type":"object"}}},
+						"info":{"description":"test description","title":"demo v1.1","version":"3.0.1"},
+						"openapi":"3.0.1","paths":null,"servers":[{"url":"https://localhost/"}]}
+`
+		tmpl := ConstructorNewFromArgs(
+			"demo v1.1",
+			"test description",
+			"3.0.1",
+			[]string{"https", "localhost"})
 
-			schema.Title = ft.Name()
+		schemaRef := tmpl.CreateBaseSchemasFromStructure(&User{})
+		tmpl.MoveRequiredFieldsToTopLevel()
 
-			if len(tag.Get("description")) > 0 {
-				schema.Description = tag.Get("description")
-			}
+		contract := tmpl.GetDump()
 
-			if tag.Get("required") == "!" {
-				schema.Required = append(schema.Required, name)
-			}
+		_schema, _ := schemaRef.MarshalJSON()
 
-			if strings.Contains(ft.String(), ".") {
-				if utils.IsFirstUpLetter(ft.Name()) && !tmpl.IsExistsSchema(ft.Name()) {
-					tmpl.AddComponent(ComponentTypeSchema, ft.Name(), schema.NewRef())
-				}
+		println(fmt.Sprintf("%s", _schema))
+		println(fmt.Sprintf("%s", contract))
+		So(fmt.Sprintf("%s", contract), ShouldEqual, utils.ClearStrTabAndN(result))
 
-				for key, val := range schema.Properties {
-
-					if utils.IsFirstUpLetter(val.Ref) {
-						if !tmpl.IsExistsSchema(val.Ref) {
-							tmpl.AddComponent(ComponentTypeSchema, val.Ref, schema.NewRef())
-						} else {
-							val.Ref = fmt.Sprintf("#/components/schemas/%s", val.Ref)
-						}
-
-					} else {
-						val.Ref = ""
-						val.Value.Title = key
-					}
-
-					if val.Value.Items != nil {
-						val.Value.Items.Ref = fmt.Sprintf("#/components/schemas/%s", val.Value.Items.Ref)
-					}
-				}
-			}
-
-			return nil
-		})
-
-	generator := openapi3gen.NewGenerator(customizer)
-
-	_, err := generator.GenerateSchemaRef(reflect.TypeOf(&User{}))
-	if err != nil {
-		panic(err)
-	}
-
-	MoveRequiredFieldsToTopLevel(&tmpl.swagger)
-
-	contract, err := tmpl.swagger.MarshalJSON()
-
-	println(fmt.Sprintf("%s", contract))
+	})
 
 }
 
@@ -541,4 +518,96 @@ func TestGenerateLinkType(t *testing.T) {
 	schRef, _ := openapi3gen.NewSchemaRefForValue(&User{}, schemas)
 	b, _ := schRef.MarshalJSON()
 	println(fmt.Sprintf("%s", b))
+}
+
+func Extract(app interface{}) {
+	appData := reflect.ValueOf(app)
+	appid := utils.CaseInsenstiveFieldByName(reflect.Indirect(appData), "id")
+	fmt.Println(appid)
+	owner := utils.CaseInsenstiveFieldByName(reflect.Indirect(appData), "owner")
+	fmt.Println(owner.String())
+}
+
+func GetSt() interface{} {
+	type Params struct {
+		Id string `json:"id" binding:"required"`
+	}
+	return &Params{}
+}
+
+func TestParamsForQuery(t *testing.T) {
+	operation := &openapi3.Operation{
+		Tags:        []string{"test tag"},
+		Summary:     "short description",
+		Responses:   openapi3.Responses{},
+		Description: "some description",
+	}
+
+	schemas := make(openapi3.Schemas)
+
+	_params := GetSt()
+
+	println(fmt.Sprintf("%+v", _params))
+
+	schRef, _ := openapi3gen.NewSchemaRefForValue(_params, schemas)
+
+	for name, ref := range schRef.Value.Properties {
+
+		println(">>>", name)
+
+		for i := 0; i < reflect.TypeOf(_params).Elem().NumField(); i++ {
+			field := reflect.TypeOf(_params).Elem().Field(0)
+			if field.Tag.Get("binding") == "required" {
+				println(name, field.Name)
+				println(fmt.Sprintf("%+v", field.Tag))
+			}
+
+		}
+
+		//println(name)
+		//_type := reflect.TypeOf(_params).Elem()
+		//utils.CaseInsenstiveFieldByName(reflect.Indirect(_type), name)
+		//Extract(_params)
+		//field, ok := .FieldByName(ref.Value.)
+		//var required bool
+		//if ok {
+		//	println(field.Tag)
+		//}
+
+		ref.Value.Title = name
+		//operation.AddParameter(&openapi3.Parameter{Required: required, Schema: ref, In: "query", Name: name})
+	}
+
+	//operation.AddParameter(&openapi3.Parameter{Required: true, Schema: schRef, In: "query"})
+
+	b, _ := operation.MarshalJSON()
+
+	println(fmt.Sprintf("%s", b))
+
+}
+
+func TestBase(t *testing.T) {
+	type Params struct {
+		Id string `json:"id" binding:"required"`
+	}
+
+	ref := CreateRefSchemaFromStruct(GetSt())
+
+	println(fmt.Sprintf("%+v", ref.Value.Properties))
+	//s.LOG.Error(fmt.Sprintf("%+v %+v %+v", schParam.Value.Properties, params, _schemas))
+}
+
+func TestBinarySchema(t *testing.T) {
+	type File struct {
+		File []byte `json:"file"`
+	}
+	Convey("create file schema", t, func() {
+		ref := CreateFileSchema()
+		ref.Title = "test"
+
+		b, _ := ref.MarshalJSON()
+
+		So(fmt.Sprintf("%s", b), ShouldEqual, `{"format":"binary","title":"test","type":"string"}`)
+	})
+
 }
