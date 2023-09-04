@@ -1,6 +1,6 @@
 module github.com/vortex14/gotyphoon
 
-go 1.21.0
+go 1.19
 
 require (
 	github.com/Bose/go-gin-logrus v1.0.3
