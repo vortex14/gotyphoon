@@ -152,7 +152,7 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 
 		if s.ActiveSwagger {
 			s.server.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler,
-				ginSwagger.URL(fmt.Sprintf("%s://%s:%d/docs", s.Schema, s.Host, s.Port)),
+				ginSwagger.URL(fmt.Sprintf("%s://%s/docs", s.Schema, s.Host)),
 				ginSwagger.DefaultModelsExpandDepth(-1)))
 
 			s.server.GET("/docs", func(c *Gin.Context) {
