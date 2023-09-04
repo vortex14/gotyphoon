@@ -3,11 +3,10 @@ package forms
 import (
 	"context"
 	"fmt"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	"github.com/vortex14/gotyphoon/integrations/swagger"
-	"strconv"
-
 	// /* ignore for building amd64-linux
 	//	ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	// */
@@ -138,7 +137,7 @@ func (s *TyphoonServer) InitDocs() interfaces.ServerInterface {
 		s.Name,
 		s.Description,
 		s.Version,
-		[]string{s.Schema, s.Host, strconv.Itoa(s.Port)})
+		[]string{s.Schema, s.Host})
 	s.swagger.LOG = s.LOG
 	return s
 }
