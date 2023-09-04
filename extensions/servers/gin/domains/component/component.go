@@ -8,7 +8,6 @@ import (
 	"github.com/vortex14/gotyphoon/log"
 )
 
-
 func Constructor(
 	name string,
 	labels *label.MetaInfo,
@@ -20,18 +19,16 @@ func Constructor(
 
 ) interfaces.ServerInterface {
 
-	componentServer := (
-		&gin.TyphoonGinServer{
-			TyphoonServer: &forms.TyphoonServer{
-				MetaInfo: labels,
-				Port: project.LoadConfig().GetComponentPort(name),
-				Level: project.GetLogLevel(),
+	componentServer := (&gin.TyphoonGinServer{
+		TyphoonServer: &forms.TyphoonServer{
+			MetaInfo: labels,
+			Port:     project.LoadConfig().GetComponentPort(name),
+			Level:    project.GetLogLevel(),
 
-				TracingOptions: tracingOptions,
-				SwaggerOptions: swaggerOptions,
-				LoggerOptions: loggerOptions,
-			},
-		}).
+			TracingOptions: tracingOptions,
+			LoggerOptions:  loggerOptions,
+		},
+	}).
 		Init().
 		InitLogger().
 		InitTracer()
