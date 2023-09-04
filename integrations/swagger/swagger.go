@@ -2,13 +2,14 @@ package swagger
 
 import (
 	"fmt"
+	"os"
+	"reflect"
+	"strings"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/utils"
-	"os"
-	"reflect"
-	"strings"
 )
 
 const (
@@ -295,7 +296,7 @@ func ConstructorNewFromArgs(title, description, version string, host []string) *
 			},
 			Servers: openapi3.Servers{
 				&openapi3.Server{
-					URL: fmt.Sprintf("%s://%s:%s", host[0], host[1], host[2]),
+					URL: fmt.Sprintf("%s://%s", host[0], host[1]),
 				},
 			},
 			Components: &openapi3.Components{
