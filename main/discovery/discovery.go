@@ -7,7 +7,7 @@ import (
 
 func main() {
 	logrus.Info("starting discovery local server ...")
-	_ = discovery.Constructor("localhost", 12735, "http",
+	_ = discovery.Constructor("localhost:12735", 12735, "http",
 		nil,
 		nil,
 		nil).Run()

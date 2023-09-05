@@ -50,7 +50,7 @@ func meHandler(ctx *gin.Context, logger interfaces.LoggerInterface) {
 		//
 		//println(fmt.Sprintf("%+v; %+v", m, ctx.Params, ctx.Quer))
 
-		ctx.JSON(400, &forms.ErrorResponse{Message: err.Error()})
+		ctx.JSON(400, &forms.ErrorResponse{Error: err.Error()})
 		return
 	}
 

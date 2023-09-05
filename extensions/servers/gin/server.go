@@ -66,7 +66,7 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 
 	if action == nil {
 		s.LOG.Error(Errors.ActionPathNotFound.Error())
-		ginCtx.JSON(404, forms.ErrorResponse{Message: "not found", Status: false})
+		ginCtx.JSON(404, forms.ErrorResponse{Error: "not found"})
 		return
 	}
 
@@ -82,7 +82,7 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 	paramsQuery := action.GetParams()
 	if paramsQuery != nil {
 		if err := ginCtx.BindQuery(paramsQuery); err != nil {
-			ginCtx.JSON(422, forms.ErrorResponse{Message: "unavailable query string", Status: false})
+			ginCtx.JSON(422, forms.ErrorResponse{Error: "unavailable query string"})
 			return
 		}
 	}
@@ -90,7 +90,7 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 	if action.IsValidRequestBody() {
 		if err := ginCtx.ShouldBindJSON(action.GetRequestModel()); err != nil {
 			s.LOG.Error(Errors.ActionErrRequestModel.Error())
-			ginCtx.JSON(422, forms.ErrorResponse{Message: "unprocessable entity", Status: false})
+			ginCtx.JSON(422, forms.ErrorResponse{Error: "unprocessable entity"})
 			return
 		}
 	}

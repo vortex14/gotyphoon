@@ -74,7 +74,7 @@ type HeaderModel struct {
 
 var TestAction = &gin.Action{
 	Action: &forms.Action{
-		Params: &MeParams{},
+		//Params: &MeParams{},
 		Headers: forms.HeaderRequestModel{
 			ErrorModel: ErrorResponseHeaderModel{
 				Message: "header error",
