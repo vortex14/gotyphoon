@@ -98,8 +98,7 @@ type TyphoonServer struct {
 }
 
 type ErrorResponse struct {
-	Message string `json:"message"`
-	Status  bool   `json:"status"`
+	Error string `json:"error"`
 }
 
 func (s *TyphoonServer) GetDocs() []byte {
