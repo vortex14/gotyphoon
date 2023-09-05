@@ -82,7 +82,7 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 	paramsQuery := action.GetParams()
 	if paramsQuery != nil {
 		if err := ginCtx.BindQuery(paramsQuery); err != nil {
-			ginCtx.JSON(422, forms.ErrorResponse{Error: "unavailable query string"})
+			ginCtx.JSON(422, forms.ErrorResponse{Error: err.Error()})
 			return
 		}
 	}
@@ -90,7 +90,7 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 	if action.IsValidRequestBody() {
 		if err := ginCtx.ShouldBindJSON(action.GetRequestModel()); err != nil {
 			s.LOG.Error(Errors.ActionErrRequestModel.Error())
-			ginCtx.JSON(422, forms.ErrorResponse{Error: "unprocessable entity"})
+			ginCtx.JSON(422, forms.ErrorResponse{Error: err.Error()})
 			return
 		}
 	}
