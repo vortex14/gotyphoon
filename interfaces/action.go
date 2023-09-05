@@ -30,6 +30,10 @@ type ActionInterface interface {
 	IsRequiredRequestModel() bool
 	IsValidRequestBody() bool
 
+	GetHeadersModel() interface{}
+	GetHeadersErrModel() interface{}
+	GetErrorHeadersStatusCode() int
+
 	GetResponseModels() map[int]interface{}
 	GetParams() interface{}
 

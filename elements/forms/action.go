@@ -3,6 +3,7 @@ package forms
 import (
 	"context"
 	"fmt"
+
 	"github.com/sirupsen/logrus"
 
 	"errors"
@@ -28,6 +29,12 @@ type BaseModelRequest struct {
 	Type         string
 }
 
+type HeaderRequestModel struct {
+	ErrorModel      interface{}
+	Model           interface{}
+	ErrorStatusCode int
+}
+
 type Action struct {
 	*label.MetaInfo
 	LOG interfaces.LoggerInterface
@@ -40,6 +47,7 @@ type Action struct {
 
 	Service          interface{}
 	Params           interface{}
+	Headers          HeaderRequestModel
 	BodyRequestModel BaseModelRequest
 	ResponseModels   map[int]interface{}
 
@@ -226,6 +234,18 @@ func (a *Action) SetLogger(logger interfaces.LoggerInterface) {
 
 func (a *Action) GetRequestModel() interface{} {
 	return a.BodyRequestModel.RequestModel
+}
+
+func (a *Action) GetHeadersModel() interface{} {
+	return a.Headers.Model
+}
+
+func (a *Action) GetHeadersErrModel() interface{} {
+	return a.Headers.ErrorModel
+}
+
+func (a *Action) GetErrorHeadersStatusCode() int {
+	return a.Headers.ErrorStatusCode
 }
 
 func (a *Action) GetRequestType() string {

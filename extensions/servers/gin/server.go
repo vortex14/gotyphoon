@@ -70,6 +70,15 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 		return
 	}
 
+	headers := action.GetHeadersModel()
+	if headers != nil {
+		if err := ginCtx.ShouldBindHeader(headers); err != nil {
+			s.LOG.Error("request header error")
+			ginCtx.JSON(action.GetErrorHeadersStatusCode(), action.GetHeadersErrModel())
+			return
+		}
+	}
+
 	paramsQuery := action.GetParams()
 	if paramsQuery != nil {
 		if err := ginCtx.BindQuery(paramsQuery); err != nil {

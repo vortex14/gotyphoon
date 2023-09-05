@@ -23,9 +23,17 @@ type Options struct {
 
 func (o *Options) InitFormatter() {
 	color.Yellow("Init Log Formatter ... line: %t, file: %t, short: %t", o.ShowLine, o.ShowFile, o.ShortFileName)
-	formatter := runtime.Formatter{ChildFormatter: &logrus.TextFormatter{
-		FullTimestamp: o.FullTimestamp,
-	}}
+	var formatter runtime.Formatter
+
+	if o.JsonFormat {
+		formatter = runtime.Formatter{ChildFormatter: &logrus.JSONFormatter{}}
+
+	} else {
+		formatter = runtime.Formatter{ChildFormatter: &logrus.TextFormatter{
+			FullTimestamp: o.FullTimestamp,
+		}}
+	}
+
 	formatter.Line = o.ShowLine
 	formatter.File = o.ShowFile
 	formatter.BaseNameOnly = o.ShortFileName

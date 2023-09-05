@@ -72,6 +72,26 @@ func InitD() {
 	})
 }
 
+// InitP custom logger configuration
+func InitP(json bool, level string) {
+	logOnce.Do(func() {
+		(&TyphoonLogger{
+			Name: "App",
+			Options: Options{
+				BaseOptions: &BaseOptions{
+					Name:          "App-Logger",
+					Level:         level,
+					ShowLine:      true,
+					ShowFile:      true,
+					ShortFileName: false,
+					FullTimestamp: true,
+					JsonFormat:    json,
+				},
+			},
+		}).Init()
+	})
+}
+
 func Init(opts *BaseOptions) {
 	logOnce.Do(func() {
 		(&TyphoonLogger{
