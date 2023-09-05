@@ -160,7 +160,7 @@ func (oa *OpenApi) CreateBaseSchemasFromStructure(source interface{}) *openapi3.
 
 	sc.Ref = fmt.Sprintf("#/components/schemas/%s", sc.Ref)
 
-	println(fmt.Sprintf("%+v", sc))
+	//println(fmt.Sprintf("%+v", sc))
 
 	return sc
 }
@@ -210,19 +210,58 @@ func (oa *OpenApi) AddSwaggerOperation(
 
 		for name, ref := range schemaRef.Value.Properties {
 
-			status := false
+			newParam := &openapi3.Parameter{
+				Schema:   ref,
+				Required: false,
+				In:       "query",
+				Name:     name,
+			}
+
 			for i := 0; i < reflect.TypeOf(params).Elem().NumField(); i++ {
 				field := reflect.TypeOf(params).Elem().Field(i)
 				ref.Value.Title = name
-				if strings.ToLower(field.Name) != name {
-					continue
+
+				if len(field.Tag.Get("description")) > 0 {
+					newParam.Description = field.Tag.Get("description")
 				}
+
 				if field.Tag.Get("binding") == "required" {
-					status = true
+					newParam.Required = true
 				}
+
 			}
 
-			operation.AddParameter(&openapi3.Parameter{Required: status, Schema: ref, In: "query", Name: name})
+			operation.AddParameter(newParam)
+
+			ref.Value.Title = name
+		}
+
+	}
+
+	headers := action.GetHeadersModel()
+
+	if headers != nil {
+		schemaHeaderRef := CreateRefSchemaFromStruct(headers)
+
+		for name, ref := range schemaHeaderRef.Value.Properties {
+
+			newHeaderParam := &openapi3.Parameter{Required: false, Schema: ref, In: "header", Name: name}
+
+			for i := 0; i < reflect.TypeOf(headers).Elem().NumField(); i++ {
+				field := reflect.TypeOf(headers).Elem().Field(i)
+				ref.Value.Title = name
+
+				if len(field.Tag.Get("description")) > 0 {
+					newHeaderParam.Description = field.Tag.Get("description")
+				}
+
+				if field.Tag.Get("binding") == "required" {
+					newHeaderParam.Required = true
+				}
+
+			}
+
+			operation.AddParameter(newHeaderParam)
 
 			ref.Value.Title = name
 		}
