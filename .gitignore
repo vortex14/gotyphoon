@@ -5,3 +5,5 @@ venv
 build
 tmp
 main/ci/agent/agent
+main
+build-errors.log
