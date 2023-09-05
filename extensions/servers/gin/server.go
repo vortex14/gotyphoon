@@ -88,11 +88,19 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 	}
 
 	if action.IsValidRequestBody() {
-		if err := ginCtx.ShouldBindJSON(action.GetRequestModel()); err != nil {
+
+		body := action.GetRequestModel()
+
+		err := ginCtx.ShouldBindJSON(body)
+
+		if err != nil {
 			s.LOG.Error(Errors.ActionErrRequestModel.Error())
 			ginCtx.JSON(422, forms.ErrorResponse{Error: err.Error()})
 			return
+		} else {
+			ginCtx.Set("body", body)
 		}
+
 	}
 
 	action.OnRequest(ginCtx.Request.Method, reservedRequestPath)
