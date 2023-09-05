@@ -103,6 +103,18 @@ func (oa *OpenApi) MoveRequiredFieldsToTopLevel() {
 	}
 }
 
+func (oa *OpenApi) GetFieldFromStruct(jsonName string, sourceStruct interface{}) *reflect.StructField {
+	for i := 0; i < reflect.TypeOf(sourceStruct).Elem().NumField(); i++ {
+		field := reflect.TypeOf(sourceStruct).Elem().Field(i)
+
+		if field.Tag.Get("json") == jsonName {
+			return &field
+		}
+
+	}
+	return nil
+}
+
 func (oa *OpenApi) CreateBaseSchemasFromStructure(source interface{}) *openapi3.SchemaRef {
 	customizer := openapi3gen.SchemaCustomizer(
 		func(name string, ft reflect.Type, tag reflect.StructTag, schema *openapi3.Schema) error {
@@ -217,18 +229,16 @@ func (oa *OpenApi) AddSwaggerOperation(
 				Name:     name,
 			}
 
-			for i := 0; i < reflect.TypeOf(params).Elem().NumField(); i++ {
-				field := reflect.TypeOf(params).Elem().Field(i)
-				ref.Value.Title = name
+			field := oa.GetFieldFromStruct(name, params)
 
-				if len(field.Tag.Get("description")) > 0 {
-					newParam.Description = field.Tag.Get("description")
-				}
+			ref.Value.Title = name
 
-				if field.Tag.Get("binding") == "required" {
-					newParam.Required = true
-				}
+			if len(field.Tag.Get("description")) > 0 {
+				newParam.Description = field.Tag.Get("description")
+			}
 
+			if field.Tag.Get("binding") == "required" {
+				newParam.Required = true
 			}
 
 			operation.AddParameter(newParam)
@@ -247,18 +257,14 @@ func (oa *OpenApi) AddSwaggerOperation(
 
 			newHeaderParam := &openapi3.Parameter{Required: false, Schema: ref, In: "header", Name: name}
 
-			for i := 0; i < reflect.TypeOf(headers).Elem().NumField(); i++ {
-				field := reflect.TypeOf(headers).Elem().Field(i)
-				ref.Value.Title = name
+			field := oa.GetFieldFromStruct(name, headers)
 
-				if len(field.Tag.Get("description")) > 0 {
-					newHeaderParam.Description = field.Tag.Get("description")
-				}
+			if len(field.Tag.Get("description")) > 0 {
+				newHeaderParam.Description = field.Tag.Get("description")
+			}
 
-				if field.Tag.Get("binding") == "required" {
-					newHeaderParam.Required = true
-				}
-
+			if field.Tag.Get("binding") == "required" {
+				newHeaderParam.Required = true
 			}
 
 			operation.AddParameter(newHeaderParam)

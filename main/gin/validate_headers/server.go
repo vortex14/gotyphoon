@@ -59,7 +59,7 @@ type MeParams struct {
 //}
 
 func init() {
-	LOG.InitP(true, "DEBUG")
+	LOG.InitP(false, "DEBUG")
 }
 
 type ErrorResponseHeaderModel struct {
@@ -68,7 +68,8 @@ type ErrorResponseHeaderModel struct {
 }
 
 type HeaderModel struct {
-	UserId int `header:"user-id" binding:"required" json:"user-id" description:"Это юзер хедер"`
+	UserId int    `header:"user-id" binding:"required" json:"user-id" description:"Это юзер хедер"`
+	Test   string `binding:"required" json:"test" description:"Another"`
 }
 
 var TestAction = &gin.Action{
@@ -111,7 +112,7 @@ func main() {
 		TyphoonServer: &forms.TyphoonServer{
 			ActiveSwagger: true,
 			Host:          "localhost",
-			Port:          81,
+			Port:          80,
 			Schema:        "http",
 			Level:         interfaces.DEBUG,
 			MetaInfo: &label.MetaInfo{
