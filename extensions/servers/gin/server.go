@@ -87,21 +87,21 @@ func (s *TyphoonGinServer) onRequestHandler(ginCtx *Gin.Context) {
 		}
 	}
 
-	if action.IsValidRequestBody() {
+	//if action.IsValidRequestBody() {
 
-		body := action.GetRequestModel()
-		data := *&body
-		err := ginCtx.ShouldBindJSON(data)
+	//body := action.GetRequestModel()
+	//data := *&body
+	//err := ginCtx.ShouldBindJSON(data)
+	//
+	//if err != nil {
+	//	s.LOG.Error(Errors.ActionErrRequestModel.Error())
+	//	ginCtx.JSON(422, forms.ErrorResponse{Error: err.Error()})
+	//	return
+	//} else {
+	//	ginCtx.Set("body", data)
+	//}
 
-		if err != nil {
-			s.LOG.Error(Errors.ActionErrRequestModel.Error())
-			ginCtx.JSON(422, forms.ErrorResponse{Error: err.Error()})
-			return
-		} else {
-			ginCtx.Set("body", data)
-		}
-
-	}
+	//}
 
 	action.OnRequest(ginCtx.Request.Method, reservedRequestPath)
 
