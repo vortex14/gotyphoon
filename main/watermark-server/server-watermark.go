@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/vortex14/gotyphoon/extensions/data/fake"
 	"image"
 	"image/color"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/vortex14/gotyphoon/extensions/data/fake"
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/fogleman/gg"
