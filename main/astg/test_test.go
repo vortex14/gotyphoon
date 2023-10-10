@@ -1,12 +1,34 @@
 package main
 
 import (
+	"fmt"
 	"go/ast"
+	"go/format"
 	"go/printer"
 	"go/token"
 	"os"
 	"testing"
 )
+
+func TestGenerateCommentForPKG(t *testing.T) {
+	fset := token.NewFileSet()
+
+	// Create the AST for the given code
+	file := &ast.File{
+		Name: ast.NewIdent("grpc"),
+		Doc: &ast.CommentGroup{
+			List: []*ast.Comment{
+				{Text: "// Package grpc ...\n"},
+			},
+		},
+	}
+
+	// Generate the code from the AST
+	err := printer.Fprint(os.Stdout, fset, file)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+}
 
 func TestNewImport(t *testing.T) {
 	// Create a new file set
@@ -534,5 +556,295 @@ func TestNewPbErrorIntoMap(t *testing.T) {
 	cfg.Fprint(os.Stdout, fset, f)
 
 	// Format the code
+
+}
+
+func TestCreateSpaceBK(t *testing.T) {
+	// Create the AST for the given code.
+	fset := token.NewFileSet()
+	file := &ast.File{
+		Name: ast.NewIdent("main"),
+		Decls: []ast.Decl{
+			&ast.GenDecl{
+				Tok: token.VAR,
+				Specs: []ast.Spec{
+					&ast.ValueSpec{
+						Names: []*ast.Ident{
+							ast.NewIdent("ReasonToCode"),
+						},
+						Type: &ast.MapType{
+							Key:   ast.NewIdent("pb.ErrorReason"),
+							Value: ast.NewIdent("codes.Code"),
+						},
+						Values: []ast.Expr{
+							&ast.CompositeLit{
+								Type: &ast.MapType{
+									Key:   ast.NewIdent("pb.ErrorReason"),
+									Value: ast.NewIdent("codes.Code"),
+								},
+								Elts: []ast.Expr{
+									&ast.KeyValueExpr{
+										Key:   ast.NewIdent("pb.ErrorReason_TOKEN_REQUIRED"),
+										Value: ast.NewIdent("codes.Unauthenticated"),
+									},
+									&ast.KeyValueExpr{
+										Key:   ast.NewIdent("pb.ErrorReason_TOKEN_AUTH_INVALID"),
+										Value: ast.NewIdent("codes.Unauthenticated"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Format the AST with separate line declarations for key-value pairs.
+	var output []byte
+	ast.Inspect(file, func(n ast.Node) bool {
+		if n != nil {
+			if pos := fset.Position(n.Pos()); pos.Line > 0 {
+				output = append(output, []byte(fmt.Sprintf("\n// Line %d\n", pos.Line))...)
+			}
+		}
+		return true
+	})
+
+	println(fmt.Sprintf(">>>>> %s", output))
+	err := format.Node(os.Stdout, fset, file)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func TestUsersOfSlice(t *testing.T) {
+
+	//tests := []*User{&User{Name: "vortex", Age: 12}}
+	// Create the AST by parsing the source code.
+	// Create an empty AST
+	fset := token.NewFileSet()
+	f := &ast.File{
+		Name:  ast.NewIdent("main"),
+		Decls: []ast.Decl{},
+	}
+
+	// Add the User struct type to the AST.
+	userStruct := &ast.TypeSpec{
+		Name: ast.NewIdent("User"),
+		Type: &ast.StructType{
+			Fields: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{ast.NewIdent("Name")},
+						Type:  ast.NewIdent("string"),
+					},
+					{
+						Names: []*ast.Ident{ast.NewIdent("Age")},
+						Type:  ast.NewIdent("int"),
+					},
+				},
+			},
+		},
+	}
+	f.Decls = append(f.Decls, &ast.GenDecl{
+		Tok:   token.TYPE,
+		Specs: []ast.Spec{userStruct},
+	})
+
+	// Add the Test function to the AST.
+	testFunc := &ast.FuncDecl{
+		Name: ast.NewIdent("Test"),
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Names: []*ast.Ident{ast.NewIdent("users")},
+						Type: &ast.ArrayType{
+							Elt: ast.NewIdent("*User"),
+						},
+					},
+				},
+			},
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{
+						Type: ast.NewIdent("error"),
+					},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ReturnStmt{
+					Results: []ast.Expr{ast.NewIdent("nil")},
+				},
+			},
+		},
+	}
+	f.Decls = append(f.Decls, testFunc)
+
+	// Add the main function to the AST.
+	mainFunc := &ast.FuncDecl{
+		Name: ast.NewIdent("main"),
+		Type: &ast.FuncType{},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.AssignStmt{
+					Lhs: []ast.Expr{ast.NewIdent("tests")},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{
+						&ast.CompositeLit{
+							Type: &ast.ArrayType{
+								Elt: ast.NewIdent("*User"),
+							},
+							Elts: []ast.Expr{
+								&ast.UnaryExpr{
+									Op: token.AND,
+									X: &ast.CompositeLit{
+										Type: ast.NewIdent("User"),
+										Elts: []ast.Expr{
+											&ast.KeyValueExpr{
+												Key:   ast.NewIdent("Name"),
+												Value: &ast.BasicLit{Kind: token.STRING, Value: "\"vortex\""},
+											},
+											&ast.KeyValueExpr{
+												Key:   ast.NewIdent("Age"),
+												Value: &ast.BasicLit{Kind: token.INT, Value: "12"},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	f.Decls = append(f.Decls, mainFunc)
+
+	ast.SortImports(fset, f)
+	cfg := &printer.Config{Mode: printer.UseSpaces, Tabwidth: 4}
+	cfg.Fprint(os.Stdout, fset, f)
+
+}
+
+func TestCommentForConst(t *testing.T) {
+	// Create the AST for the given code
+	fset := token.NewFileSet()
+	f := &ast.File{
+		Name: ast.NewIdent("main"),
+		Decls: []ast.Decl{
+			&ast.GenDecl{
+				Tok: token.CONST,
+				Doc: &ast.CommentGroup{
+					List: []*ast.Comment{
+						{Text: "// my const"},
+					},
+				},
+				Specs: []ast.Spec{
+					&ast.ValueSpec{
+						Names: []*ast.Ident{ast.NewIdent("A")},
+						Doc: &ast.CommentGroup{
+							List: []*ast.Comment{
+								{Text: "\n// data \n"},
+							},
+						},
+						Values: []ast.Expr{
+							&ast.BasicLit{
+								Kind:  token.INT,
+								Value: "1",
+							},
+						},
+					},
+					&ast.ValueSpec{
+						Names: []*ast.Ident{ast.NewIdent("B")},
+						Values: []ast.Expr{
+							&ast.BasicLit{
+								Kind:  token.INT,
+								Value: "2",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	cfg := &printer.Config{Mode: printer.UseSpaces, Tabwidth: 4}
+	cfg.Fprint(os.Stdout, fset, f)
+}
+
+func TestCreateStructWithMethods(t *testing.T) {
+
+	fset := token.NewFileSet()
+
+	// Create the main package
+	pkg := &ast.File{
+		Name: ast.NewIdent("main"),
+	}
+
+	// Create the handler struct
+	handlerType := &ast.TypeSpec{
+		Name: ast.NewIdent("handler"),
+		Type: &ast.StructType{
+			Fields: &ast.FieldList{},
+		},
+	}
+
+	// Add the handler struct to the main package
+	pkg.Decls = append(pkg.Decls, &ast.GenDecl{
+		Tok: token.TYPE,
+		Specs: []ast.Spec{
+			handlerType,
+		},
+	})
+
+	// Create the MyMethod1 method
+	myMethod1 := &ast.FuncDecl{
+		Name: ast.NewIdent("MyMethod1"),
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{ast.NewIdent("h")},
+					Type:  &ast.StarExpr{X: ast.NewIdent("handler")},
+				},
+			},
+		},
+		Type: &ast.FuncType{
+			Params:  &ast.FieldList{},
+			Results: nil,
+		},
+		Body: &ast.BlockStmt{},
+	}
+
+	// Add the MyMethod1 method to the main package
+	pkg.Decls = append(pkg.Decls, myMethod1)
+
+	// Create the MyMethod2 method
+	myMethod2 := &ast.FuncDecl{
+		Name: ast.NewIdent("MyMethod2"),
+		Recv: &ast.FieldList{
+			List: []*ast.Field{
+				{
+					Names: []*ast.Ident{ast.NewIdent("h")},
+					Type:  &ast.StarExpr{X: ast.NewIdent("handler")},
+				},
+			},
+		},
+		Type: &ast.FuncType{
+			Params:  &ast.FieldList{},
+			Results: nil,
+		},
+		Body: &ast.BlockStmt{},
+	}
+
+	// Add the MyMethod2 method to the main package
+	pkg.Decls = append(pkg.Decls, myMethod2)
+
+	// Print the AST to Go source code
+	format.Node(os.Stdout, fset, pkg)
 
 }
