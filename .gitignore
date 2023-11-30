@@ -5,6 +5,6 @@ venv
 build
 tmp
 main/ci/agent/agent
-main
+#main
 build-errors.log
 .air.toml

@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	NAME               = "Fakes"
-	PATH               = "/"
-	WATERMARK          = "image.typhoon.dev"
-	DESCRIPTION        = "Server for data fakes"
+	NAME        = "Fakes"
+	PATH        = "/"
+	WATERMARK   = "image.typhoon.dev"
+	DESCRIPTION = "Server for data fakes"
 
-	ResourceName       = "data fakers resource"
+	ResourceName = "data fakers resource"
 
 	FakeUPCPath        = "upc"
 	FakeTaskPath       = "task"
@@ -29,7 +29,6 @@ const (
 	FakeCustomerPath   = "customer"
 	FakeCategoryPath   = "category"
 	FakeCategoriesPath = "categories"
-
 )
 
 func Constructor(
@@ -40,44 +39,42 @@ func Constructor(
 	swaggerOptions *interfaces.SwaggerOptions,
 
 ) interfaces.ServerInterface {
-	return (
-		&gin.TyphoonGinServer{
-			TyphoonServer: &forms.TyphoonServer{
-				Port: port,
-				Level: interfaces.INFO,
-				MetaInfo: &label.MetaInfo{
-					Name        : NAME,
-					Description : DESCRIPTION,
-				},
-				TracingOptions  : tracingOptions,
-				LoggerOptions   : loggerOptions,
-				SwaggerOptions  : swaggerOptions,
+	return (&gin.TyphoonGinServer{
+		TyphoonServer: &forms.TyphoonServer{
+			Port:  port,
+			Level: interfaces.INFO,
+			MetaInfo: &label.MetaInfo{
+				Name:        NAME,
+				Description: DESCRIPTION,
 			},
-		}).
+			TracingOptions: tracingOptions,
+			LoggerOptions:  loggerOptions,
+		},
+	}).
 		Init().
 		InitLogger().
 		AddResource(
 			&forms.Resource{
 				MetaInfo: &label.MetaInfo{
-					Path: PATH,
-					Name: ResourceName,
+					Path:        "/",
+					Name:        ResourceName,
 					Description: DESCRIPTION,
 				},
 				Actions: map[string]interfaces.ActionInterface{
-					ping.PATH          : ping.Controller,
-					graph.PATH         : graph.Controller,
-					FakeUPCPath        : CreateUpcAction(),
-					FakeTaskPath       : CreateTaskAction(),
-					FakeProxyPath      : CreateProxyAction(),
-					FakeImagePath      : CreateImageAction(),
-					FakeChargePath     : CreateChargeAction(),
-					FakeProductPath    : CrateProductAction(),
-					FakePaymentPath    : CreatePaymentAction(),
-					FakeCategoryPath   : CreateCategoryAction(),
-					FakeCustomerPath   : CreateCustomerAction(),
-					FakeShippingPath   : CreateShippingAction(),
-					FakeCategoriesPath : CreateCategoriesAction(),
+					ping.PATH:          ping.Controller,
+					graph.PATH:         graph.Controller,
+					FakeUPCPath:        CreateUpcAction(),
+					FakeTaskPath:       CreateTaskAction(),
+					FakeProxyPath:      CreateProxyAction(),
+					FakeImagePath:      CreateImageAction(),
+					FakeChargePath:     CreateChargeAction(),
+					FakeProductPath:    CrateProductAction(),
+					FakePaymentPath:    CreatePaymentAction(),
+					FakeCategoryPath:   CreateCategoryAction(),
+					FakeCustomerPath:   CreateCustomerAction(),
+					FakeShippingPath:   CreateShippingAction(),
+					FakeCategoriesPath: CreateCategoriesAction(),
 				},
 			},
 		)
-	}
+}

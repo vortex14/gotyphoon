@@ -20,6 +20,16 @@ func init() {
 	log.InitD()
 }
 
+func TestNewPipeline(t *testing.T) {
+	pl := &BasePipeline{MetaInfo: &label.MetaInfo{Name: "stage-1", Required: true}, Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
+		logger.Info("run stage 1")
+		return nil, ctx
+	}}
+
+	println(pl.Name)
+
+}
+
 func TestSkipStages(t *testing.T) {
 	Convey("skip stages", t, func() {
 		pg := &PipelineGroup{

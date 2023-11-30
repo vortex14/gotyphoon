@@ -10,6 +10,8 @@ import (
 	Gin "github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
+	"github.com/itsjamie/gin-cors"
+
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
@@ -142,7 +144,15 @@ func (s *TyphoonGinServer) SetRouterGroup(resource interfaces.ResourceInterface,
 }
 
 func (s *TyphoonGinServer) onCors() {
-
+	s.server.Use(cors.Middleware(cors.Config{
+		Origins:         "*",
+		Methods:         "GET, PUT, POST, DELETE",
+		RequestHeaders:  "Origin, Authorization, Content-Type",
+		ExposedHeaders:  "",
+		MaxAge:          50 * time.Second,
+		Credentials:     false,
+		ValidateHeaders: false,
+	}))
 }
 
 func (s *TyphoonGinServer) OnStartGin(port int) error {
@@ -165,6 +175,7 @@ func (s *TyphoonGinServer) Init() interfaces.ServerInterface {
 		s.InitResourcesMap()
 
 		s.server = Gin.New()
+		s.onCors()
 		s.server.Use(Gin.Recovery())
 
 		if s.ActiveSwagger {
