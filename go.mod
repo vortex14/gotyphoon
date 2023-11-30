@@ -42,6 +42,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/go-retryablehttp v0.7.4
 	github.com/itchyny/gojq v0.12.13
+	github.com/itsjamie/gin-cors v0.0.0-20220228161158-ef28d3d2a0a8
 	github.com/kbinani/screenshot v0.0.0-20230812210009-b87d31814237
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mongodb/mongo-tools v0.0.0-20230816203804-9779cd4620f9
