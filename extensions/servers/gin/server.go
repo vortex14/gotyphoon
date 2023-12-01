@@ -147,7 +147,7 @@ func (s *TyphoonGinServer) onCors() {
 	s.server.Use(cors.Middleware(cors.Config{
 		Origins:         "*",
 		Methods:         "GET, PUT, POST, DELETE",
-		RequestHeaders:  "Origin, Authorization, Content-Type",
+		RequestHeaders:  "*",
 		ExposedHeaders:  "",
 		MaxAge:          50 * time.Second,
 		Credentials:     false,
