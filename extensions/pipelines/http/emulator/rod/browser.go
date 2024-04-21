@@ -3,7 +3,6 @@ package rod
 import (
 	"context"
 	uR "github.com/EDDYCJY/fake-useragent"
-
 	"github.com/vortex14/gotyphoon/log"
 	"math/rand"
 	"time"

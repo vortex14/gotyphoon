@@ -2,7 +2,6 @@ package chromedp
 
 import (
 	"context"
-
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 
@@ -11,7 +10,7 @@ import (
 	"github.com/vortex14/gotyphoon/log"
 )
 
-func init()  {
+func init() {
 	log.InitD()
 }
 
@@ -20,13 +19,12 @@ type ChromeHeadless struct {
 
 	LOG interfaces.LoggerInterface
 
-	Proxy string
-	ctx context.Context
+	Proxy  string
+	ctx    context.Context
 	cancel context.CancelFunc
-
 }
 
-func (c *ChromeHeadless) init()  {
+func (c *ChromeHeadless) init() {
 	c.Construct(func() {
 		var cx context.Context
 		c.LOG = log.New(log.D{"service": "chromeless"})
@@ -47,7 +45,7 @@ func (c *ChromeHeadless) init()  {
 	})
 }
 
-func (c *ChromeHeadless) Close()  {
+func (c *ChromeHeadless) Close() {
 	c.Destruct(func() {
 		c.cancel()
 	})
@@ -64,17 +62,17 @@ func (c *ChromeHeadless) setHeaders(host string, headers map[string]interface{},
 }
 
 func (c *ChromeHeadless) Request(url string) string {
-	if c.ctx == nil { c.init() }
+	if c.ctx == nil {
+		c.init()
+	}
 	// run task list
 	var res string
-	err := chromedp.Run(c.ctx, c.setHeaders(url, map[string]interface{}{
-	},
-	&res,
+	err := chromedp.Run(c.ctx, c.setHeaders(url, map[string]interface{}{},
+		&res,
 	))
 	if err != nil {
 		c.LOG.Error(err.Error())
 	}
-
 
 	return res
 }

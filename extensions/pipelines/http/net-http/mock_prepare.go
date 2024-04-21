@@ -1,6 +1,7 @@
 package net_http
 
 import (
+	"context"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Task "github.com/vortex14/gotyphoon/elements/models/task"
@@ -8,8 +9,6 @@ import (
 	"github.com/vortex14/gotyphoon/extensions/middlewares"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/log"
-
-	"context"
 )
 
 func ConstructorMockTaskMiddleware(required bool) interfaces.MiddlewareInterface {

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func init()  {
+func init() {
 	log.InitD()
 }
 
@@ -20,10 +20,9 @@ func (o *Observer) CollectionUpdate(collection, operation, id string, doc ddp.Up
 	o.LOG.Debug(doc)
 }
 
-func main()  {
+func main() {
 	// Turn up logging
 	logger := log.New(log.D{"ddp": true})
-
 
 	logger.Info("start !")
 
@@ -34,7 +33,7 @@ func main()  {
 	// Connect to the server
 	err := client.Connect()
 	if err != nil {
-		logger.Error(">>>>",err.Error())
+		logger.Error(">>>>", err.Error())
 		return
 	}
 	logger.Info("connected")
@@ -59,14 +58,12 @@ func main()  {
 	logger = log.Patch(logger, log.D{"version": client.Version(), "session": client.Session()})
 	// We know client.Sub is synchronous and will only respond after we connect.
 
-
 	links := client.CollectionByName("links")
-	observer:= &Observer{
+	observer := &Observer{
 		LOG: logger,
 	}
 	links.AddUpdateListener(observer)
 	//logger.Info(fmt.Sprintf("collection count :%d", len(tasks.FindAll())))
-
 
 	time.Sleep(5 * time.Second)
 

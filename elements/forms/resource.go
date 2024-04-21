@@ -3,31 +3,31 @@ package forms
 import (
 	"context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/log"
 	// /* ignore for building amd64-linux
-//	"github.com/vortex14/gotyphoon/utils"
+	//	"github.com/vortex14/gotyphoon/utils"
 	// */
 	"github.com/fatih/color"
 	"github.com/sirupsen/logrus"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 )
 
 type Resource struct {
 	*label.MetaInfo
 
-	Auth        [] interfaces.ResourceAuthInterface
-	LOG         interfaces.LoggerInterface
-	Actions     map[string] interfaces.ActionInterface
-	Resources   map[string] interfaces.ResourceInterface
-	Middlewares [] interfaces.MiddlewareInterface
+	Auth            []interfaces.ResourceAuthInterface
+	LOG             interfaces.LoggerInterface
+	Actions         map[string]interfaces.ActionInterface
+	Resources       map[string]interfaces.ResourceInterface
+	Middlewares     []interfaces.MiddlewareInterface
 	OnSetRouteGroup func(group interface{})
-	routerGroup interface{}
+	routerGroup     interface{}
 
 	// /* ignore for building amd64-linux
-//	parentGraph    interfaces.GraphInterface
-    // */
+	//	parentGraph    interfaces.GraphInterface
+	// */
 
 }
 
@@ -36,16 +36,19 @@ func (r *Resource) SetRouterGroup(group interface{}) {
 }
 
 func (r *Resource) SetRouteGroup(group interface{}) {
-	if r.OnSetRouteGroup == nil { r.LOG.Error(Errors.ServerMethodNotImplemented.Error()); return }
+	if r.OnSetRouteGroup == nil {
+		r.LOG.Error(Errors.ServerMethodNotImplemented.Error())
+		return
+	}
 
 	r.OnSetRouteGroup(group)
 }
 
-func (r *Resource) GetActions() map[string] interfaces.ActionInterface {
+func (r *Resource) GetActions() map[string]interfaces.ActionInterface {
 	return r.Actions
 }
 
-func (r *Resource) GetResources() map[string] interfaces.ResourceInterface {
+func (r *Resource) GetResources() map[string]interfaces.ResourceInterface {
 	return r.Resources
 }
 
@@ -64,14 +67,20 @@ func (r *Resource) GetCountActions() int {
 func (r *Resource) HasResource(path string) (bool, interfaces.ResourceInterface) {
 	var found bool
 	var resource interfaces.ResourceInterface
-	if foundResource, ok := r.Resources[path]; ok { found = true; resource = foundResource }
+	if foundResource, ok := r.Resources[path]; ok {
+		found = true
+		resource = foundResource
+	}
 	return found, resource
 }
 
 func (r *Resource) HasAction(path string) (bool, interfaces.ActionInterface) {
 	var found bool
 	var action interfaces.ActionInterface
-	if a, ok := r.Actions[path]; ok { found = true; action = a }
+	if a, ok := r.Actions[path]; ok {
+		found = true
+		action = a
+	}
 	return found, action
 }
 
@@ -79,20 +88,25 @@ func (r *Resource) RunMiddlewareStack(
 	ctx context.Context,
 	reject func(err error),
 
-	) {
+) {
 	var failed bool
 	var forceSkip bool
 	var baseException error
 	for _, middleware := range r.Middlewares {
-		if failed || forceSkip { break }
-		logger :=  log.New(log.D{"middleware": middleware.GetName(), "resource": r.GetName()})
+		if failed || forceSkip {
+			break
+		}
+		logger := log.New(log.DebugLevel, log.D{"middleware": middleware.GetName(), "resource": r.GetName()})
 		middleware.Pass(ctx, logger, func(err error) {
 
-			if middleware.IsRequired() {baseException = err; err = Errors.MiddlewareRequired}
+			if middleware.IsRequired() {
+				baseException = err
+				err = Errors.MiddlewareRequired
+			}
 			switch err {
 			case Errors.ForceSkipMiddlewares:
 				forceSkip = true
-				logger.Warning(Errors.ForceSkipMiddlewares.Error())
+				logger.Warn(Errors.ForceSkipMiddlewares.Error())
 			case Errors.MiddlewareRequired:
 				reject(baseException)
 				failed = true
@@ -100,7 +114,7 @@ func (r *Resource) RunMiddlewareStack(
 				reject(Errors.ForceSkipRequest)
 				forceSkip = true
 			default:
-				logger.Warning(err.Error())
+				logger.Warn(err.Error())
 			}
 
 		}, func(context context.Context) {
@@ -113,7 +127,7 @@ func (r *Resource) IsAuth() bool {
 	return len(r.Auth) > 0
 }
 
-func (r *Resource) InitAuth(server interfaces.ServerInterface)  {
+func (r *Resource) InitAuth(server interfaces.ServerInterface) {
 	for _, auth := range r.Auth {
 		auth.SetLogger(r.LOG)
 		auth.SetServerEngine(server)
@@ -122,15 +136,21 @@ func (r *Resource) InitAuth(server interfaces.ServerInterface)  {
 }
 
 func (r *Resource) AddAction(action interfaces.ActionInterface) interfaces.ResourceInterface {
-	if found := r.Actions[action.GetPath()]; found != nil { color.Red("%s", Errors.ActionAlreadyExists.Error()) }
+	if found := r.Actions[action.GetPath()]; found != nil {
+		color.Red("%s", Errors.ActionAlreadyExists.Error())
+	}
 	logrus.Info(fmt.Sprintf("Registered new action <%s> for resource: < %s > ", action.GetPath(), r.GetName()))
 	r.Actions[action.GetPath()] = action
 	return r
 }
 
 func (r *Resource) AddResource(resource interfaces.ResourceInterface) interfaces.ResourceInterface {
-	if r.Resources == nil { r.Resources = make(map[string]interfaces.ResourceInterface) }
-	if found := r.Resources[resource.GetPath()]; found != nil { color.Red("%s", Errors.ResourceAlreadyExist.Error()) }
+	if r.Resources == nil {
+		r.Resources = make(map[string]interfaces.ResourceInterface)
+	}
+	if found := r.Resources[resource.GetPath()]; found != nil {
+		color.Red("%s", Errors.ResourceAlreadyExist.Error())
+	}
 	r.Resources[resource.GetPath()] = resource
 	return r
 }

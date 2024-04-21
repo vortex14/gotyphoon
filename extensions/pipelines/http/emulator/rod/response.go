@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-rod/rod"
-
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/task"
 	Errors "github.com/vortex14/gotyphoon/errors"

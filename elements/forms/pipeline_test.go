@@ -3,6 +3,8 @@ package forms
 import (
 	"github.com/avast/retry-go/v4"
 	"github.com/google/uuid"
+	"github.com/vortex14/gotyphoon/log"
+	"go.uber.org/zap"
 	"golang.org/x/sync/semaphore"
 
 	"context"
@@ -13,21 +15,16 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 )
-
-func init() {
-	log.InitD()
-}
 
 func TestNewPipeline(t *testing.T) {
 	pl := &BasePipeline{MetaInfo: &label.MetaInfo{Name: "stage-1", Required: true}, Fn: func(ctx context.Context, logger interfaces.LoggerInterface) (error, context.Context) {
 		logger.Info("run stage 1")
 		return nil, ctx
 	}}
-
-	println(pl.Name)
-
+	if pl.Name != "stage-1" {
+		t.Fatal("name isn't valid")
+	}
 }
 
 func TestSkipStages(t *testing.T) {
@@ -89,7 +86,7 @@ func TestSkipStages(t *testing.T) {
 }
 
 func TestPipelineLabel(t *testing.T) {
-	l := log.New(map[string]interface{}{"test": "test"})
+	l := log.New(log.DebugLevel, map[string]interface{}{"test": "test"})
 	ctx := log.NewCtx(context.Background(), l)
 	Convey("test pipeline label", t, func() {
 
@@ -105,7 +102,7 @@ func TestPipelineLabel(t *testing.T) {
 				return nil, nil
 			},
 			Cn: func(ctx context.Context, logger interfaces.LoggerInterface, err error) {
-				logger.Error(err)
+				logger.Error("pipeline", zap.Error(err))
 			},
 		}
 		var err error
@@ -120,7 +117,7 @@ func TestPipelineLabel(t *testing.T) {
 }
 
 func TestPanicPipeline(t *testing.T) {
-	l := log.New(map[string]interface{}{"test": "test"})
+	l := log.New(log.DebugLevel, map[string]interface{}{"test": "test"})
 	ctx := log.NewCtx(context.Background(), l)
 	Convey("Create a pipeline with panic operation", t, func() {
 		var errCallback error
@@ -137,12 +134,12 @@ func TestPanicPipeline(t *testing.T) {
 			},
 			Cn: func(ctx context.Context, logger interfaces.LoggerInterface, err error) {
 				errCallback = err
-				logger.Error(err)
+				logger.Error("pipeline.cn", zap.Error(err))
 			},
 		}
 		var err error
 		Pipe.Run(ctx, func(context context.Context, pipeline interfaces.BasePipelineInterface, error error) {
-			l.Error(error)
+			l.Error("err", zap.Error(error))
 			err = error
 
 		}, func(ctx context.Context) {
@@ -154,7 +151,7 @@ func TestPanicPipeline(t *testing.T) {
 }
 
 func TestPipelineRetry(t *testing.T) {
-	l := log.New(map[string]interface{}{"test": "test"})
+	l := log.New(log.DebugLevel, map[string]interface{}{"test": "test"})
 	ctx := log.NewCtx(context.Background(), l)
 	Convey("Create a pipeline with error operation and check retry process", t, func() {
 		countIter := 0
@@ -167,7 +164,7 @@ func TestPipelineRetry(t *testing.T) {
 				return Errors.New("error operation"), nil
 			},
 			Cn: func(ctx context.Context, logger interfaces.LoggerInterface, err error) {
-				logger.Error(err)
+				logger.Error("pipeline.cn", zap.Error(err))
 				So(err, ShouldBeError)
 			},
 		}
@@ -177,7 +174,7 @@ func TestPipelineRetry(t *testing.T) {
 
 		}, func(ctx context.Context) {
 		})
-		l.Debug(err)
+		l.Debug("err", zap.Error(err))
 		So(countIter, ShouldEqual, 7)
 		So(err, ShouldBeError)
 	})
@@ -203,7 +200,7 @@ func TestRetry(t *testing.T) {
 }
 
 func TestRetryDelayPipeline(t *testing.T) {
-	l := log.New(map[string]interface{}{"test": "test"})
+	l := log.New(log.DebugLevel, map[string]interface{}{"test": "test"})
 	ctx := log.NewCtx(context.Background(), l)
 	Convey("Create a pipeline with error operation and check retry process with delay", t, func() {
 		countIter := 0
@@ -216,7 +213,7 @@ func TestRetryDelayPipeline(t *testing.T) {
 				return Errors.New("error operation"), nil
 			},
 			Cn: func(ctx context.Context, logger interfaces.LoggerInterface, err error) {
-				logger.Error(err)
+				logger.Error("pipeline.cn", zap.Error(err))
 				So(err, ShouldBeError)
 			},
 		}
@@ -226,7 +223,7 @@ func TestRetryDelayPipeline(t *testing.T) {
 
 		}, func(ctx context.Context) {
 		})
-		l.Debug(err)
+		l.Debug("error", zap.Error(err))
 		So(countIter, ShouldEqual, 7)
 		So(err, ShouldBeError)
 	})
@@ -251,11 +248,11 @@ func TestSemPipeline(t *testing.T) {
 
 		for i := 0; i < 10; i++ {
 
-			l := log.New(map[string]interface{}{"number": i, "uuid": uuid.New().String()})
+			l := log.New(log.DebugLevel, map[string]interface{}{"number": i, "uuid": uuid.New().String()})
 			ctx := log.NewCtx(context.Background(), l)
 			go p.Run(ctx, func(context context.Context, pipeline interfaces.BasePipelineInterface, err error) {
 				crowded++
-				l.Error(err)
+				l.Error("p.err", zap.Error(err))
 			}, func(ctx context.Context) {
 				success++
 				l.Debug("a good data")

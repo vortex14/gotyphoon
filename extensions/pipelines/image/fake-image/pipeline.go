@@ -5,10 +5,9 @@ import (
 	"github.com/fogleman/gg"
 	"github.com/vortex14/gotyphoon/elements/forms"
 	"github.com/vortex14/gotyphoon/elements/models/task"
-	"github.com/vortex14/gotyphoon/log"
-
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 type ImagePipeline struct {

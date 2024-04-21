@@ -1,18 +1,18 @@
 package osignal
 
 import (
+	"github.com/vortex14/gotyphoon/log"
 	"os"
 	"os/signal"
 
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 )
 
 type OSignal struct {
 	singleton.Singleton
-	buff chan os.Signal
-	LOG interfaces.LoggerInterface
+	buff     chan os.Signal
+	LOG      interfaces.LoggerInterface
 	Callback func(logger interfaces.LoggerInterface, sig os.Signal)
 }
 

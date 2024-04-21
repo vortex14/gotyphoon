@@ -2,6 +2,7 @@ package net_http
 
 import (
 	Context "context"
+	"github.com/vortex14/gotyphoon/log"
 	"golang.org/x/net/context"
 	"net/http"
 
@@ -10,7 +11,6 @@ import (
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/extensions/pipelines"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 )
 
 type HttpRequestPipeline struct {

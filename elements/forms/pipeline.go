@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/vortex14/gotyphoon/elements/models/bar"
+	"github.com/vortex14/gotyphoon/log"
+	"go.uber.org/zap"
 	"sync"
 	"time"
 
@@ -16,7 +18,6 @@ import (
 	"golang.org/x/sync/semaphore"
 
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 )
 
 const (
@@ -153,7 +154,7 @@ func (p *BasePipeline) SafeRun(
 
 	if p.sem != nil {
 		if !p.sem.TryAcquire(1) {
-			logger.Error(Errors.PipelineCrowded)
+			logger.Error(Errors.PipelineCrowded.Error())
 			catch(context, Errors.PipelineCrowded)
 			return
 		}
@@ -172,7 +173,7 @@ func (p *BasePipeline) SafeRun(
 
 		p.RunMiddlewareStack(context, func(middleware interfaces.MiddlewareInterface, _err error) {
 			middlewareErr = _err
-			logger.Error("exit from middleware stack . Error: ", middlewareErr.Error())
+			logger.Error("exit from middleware stack .", zap.Error(middlewareErr))
 		}, func(returnedContext Context.Context) {
 			context = returnedContext
 		})
@@ -187,15 +188,18 @@ func (p *BasePipeline) SafeRun(
 		retry.Attempts(retryMaxCount),
 		retry.RetryIf(func(_err error) bool {
 			var status bool
-			switch _err {
-			case Errors.ForceSkipPipelines:
+			switch {
+			case errors.Is(_err, Errors.ForceSkipPipelines):
 				status = false
-			case Errors.ForceSkipMiddlewares:
+			case errors.Is(_err, Errors.ForceSkipMiddlewares):
 				status = false
 			default:
 				status = true
 			}
-			logger.Errorf("RetryIf .... %t, delay: %+v; count: %d", status, p.Options.Retry.Delay, retryCount)
+			logger.Error("RetryIf ....",
+				zap.Bool("status", status),
+				zap.String("delay", p.Options.Retry.Delay.String()),
+				zap.Int("retryCount", retryCount))
 			return status
 		}),
 	)
@@ -219,7 +223,7 @@ func (p *BasePipeline) Run(
 	var logCtx interfaces.LoggerInterface
 	if ok, logger := log.Get(context); !ok {
 		reject(context, p, Errors.CtxLogFailed)
-		l := log.New(log.D{})
+		l := log.New(log.DebugLevel, log.D{})
 		p.Cancel(context, l, Errors.CtxLogFailed)
 		return
 	} else {
@@ -254,7 +258,7 @@ func (p *BasePipeline) Cancel(ctx Context.Context, logger interfaces.LoggerInter
 	if p.Cn == nil {
 		return
 	}
-	logger.Error(p.Cn, utils.IsNill(p.Cn))
+	logger.Error("not found p.Cn", zap.Bool("p.Cn", utils.IsNill(p.Cn)))
 	p.Cn(ctx, logger, err)
 }
 
@@ -275,22 +279,22 @@ func (p *BasePipeline) RunMiddlewareStack(
 			break
 		}
 
-		logger := log.New(log.D{"middleware": middleware.GetName(), "pipeline": p.GetName()})
+		logger := log.New(log.DebugLevel, log.D{"middleware": middleware.GetName(), "pipeline": p.GetName()})
 		logger.Debug("Run")
 		middleware.Pass(middlewareContext, logger, func(err error) {
 			if middleware.IsRequired() {
 				baseException = err
 				err = Errors.MiddlewareRequired
 			}
-			switch err {
-			case Errors.ForceSkipMiddlewares:
+			switch {
+			case errors.Is(err, Errors.ForceSkipMiddlewares):
 				forceSkip = true
-				logger.Warning(Errors.ForceSkipMiddlewares.Error())
-			case Errors.MiddlewareRequired:
+				logger.Warn(Errors.ForceSkipMiddlewares.Error())
+			case errors.Is(err, Errors.MiddlewareRequired):
 				reject(middleware, baseException)
 				failed = true
 			default:
-				logger.Warning(err.Error())
+				logger.Warn(err.Error())
 			}
 
 		}, func(returnedMiddlewareContext Context.Context) {

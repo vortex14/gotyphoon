@@ -3,16 +3,11 @@ package forms
 import (
 	"context"
 	"fmt"
-
 	"github.com/sirupsen/logrus"
+	"github.com/vortex14/gotyphoon/log"
+	"go.uber.org/zap"
 
 	"errors"
-
-	// /* ignore for building amd64-linux
-	//	"fmt"
-	//	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
-	// */
-	"github.com/vortex14/gotyphoon/log"
 
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
@@ -75,7 +70,7 @@ func (a *Action) AddMethod(name string) {
 }
 
 func (a *Action) Cancel(ctx context.Context, logger interfaces.LoggerInterface, err error) {
-	logger.Warning(Errors.ActionFailed)
+	logger.Warn("Action.cancel", zap.Error(Errors.ActionFailed))
 }
 
 func (a *Action) IsPipeline() bool {
@@ -111,7 +106,7 @@ func (a *Action) GetHandlerPath() string {
 }
 
 func (a *Action) InitPipelineGraph() {
-	pipelineLogger := log.Patch(a.LOG.(*logrus.Entry), log.D{"pipeline-group": a.GetPipeline().GetName()})
+	pipelineLogger := log.Patch(a.LOG.(*zap.Logger), log.D{"pipeline-group": a.GetPipeline().GetName()})
 	a.Pipeline.SetLogger(pipelineLogger)
 	// /* ignore for building amd64-linux
 	//	a.Pipeline.SetGraph(a.Graph)

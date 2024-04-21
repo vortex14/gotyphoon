@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/log"
+	"go.uber.org/zap"
 	"os"
 	"strconv"
 	"time"
@@ -15,15 +17,13 @@ import (
 	MongoOptions "go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
-	"github.com/vortex14/gotyphoon/elements/models/singleton"
-	Errors "github.com/vortex14/gotyphoon/errors"
-	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
-
 	"github.com/mongodb/mongo-tools/common/db"
 	mongoTools "github.com/mongodb/mongo-tools/common/options"
 	exportOptions "github.com/mongodb/mongo-tools/mongoexport"
 	importOptions "github.com/mongodb/mongo-tools/mongoimport"
+	"github.com/vortex14/gotyphoon/elements/models/singleton"
+	Errors "github.com/vortex14/gotyphoon/errors"
+	"github.com/vortex14/gotyphoon/interfaces"
 )
 
 type Service struct {
@@ -62,10 +62,10 @@ func (s *Service) initClient() {
 		if err == nil {
 			s.client = client
 			s.initDbs()
-			s.LOG = log.New(log.D{"service": "mongo"})
+			s.LOG = log.New(log.DebugLevel, log.D{"service": "mongo"})
 			//color.Green("Mongo client success %s", connectionString)
 		} else {
-			s.LOG.Error("Mongo client error: %s ", connectionString)
+			s.LOG.Error("Mongo client error", zap.String("connectionString", connectionString))
 		}
 	})
 }

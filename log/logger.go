@@ -21,7 +21,7 @@ type Options struct {
 	*BaseOptions
 }
 
-func (o *Options) InitFormatter() {
+func (o *Options) InitFormatterLogrus() {
 	color.Yellow("Init Log Formatter ... line: %t, file: %t, short: %t", o.ShowLine, o.ShowFile, o.ShortFileName)
 	var formatter runtime.Formatter
 
@@ -41,6 +41,9 @@ func (o *Options) InitFormatter() {
 	logrus.SetOutput(os.Stdout)
 	color.Yellow("Set Log Level: %s", o.Level)
 	logrus.SetLevel(o.GetLevel(o.Level))
+}
+
+func (o *Options) InitFormatter() {
 }
 
 type TyphoonLogger struct {

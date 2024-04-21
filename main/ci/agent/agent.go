@@ -15,7 +15,7 @@ import (
 	"github.com/vortex14/gotyphoon/utils"
 )
 
-func init()  {
+func init() {
 	log.InitD()
 }
 
@@ -43,7 +43,7 @@ type Agent struct {
 	Channel    string
 }
 
-func (a *Agent) GetTasks()  {
+func (a *Agent) GetTasks() {
 	a.LOG.Debug("get tasks")
 	config := a.project.LoadConfig()
 	setting := &interfaces.Queue{Topic: config.Topic, Concurrent: config.Concurrent, Channel: config.Channel}
@@ -66,7 +66,7 @@ func (a *Agent) GetTasks()  {
 	}
 }
 
-func (a *Agent) Init()  {
+func (a *Agent) Init() {
 	a.Construct(func() {
 		a.LOG = log.New(log.D{"agent": "ci-agent"})
 		a.project = &typhoon.Project{
@@ -76,7 +76,10 @@ func (a *Agent) Init()  {
 
 		nsqService := &nsq.Service{Project: a.project}
 		status := nsqService.Ping()
-		if !status { color.Red("Connection failed to NSQ"); os.Exit(1) } else {
+		if !status {
+			color.Red("Connection failed to NSQ")
+			os.Exit(1)
+		} else {
 			color.Green("NSQ connected !")
 		}
 		a.messageBus = nsqService
@@ -86,14 +89,12 @@ func (a *Agent) Init()  {
 	})
 }
 
-
-func main()  {
+func main() {
 
 	agent := Agent{
 		ConfigFile: "config.agent.local.yaml",
 	}
 	agent.Init()
-
 
 	agent.Await()
 

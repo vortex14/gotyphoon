@@ -2,6 +2,7 @@ package events_metric_v1
 
 import (
 	"context"
+	"github.com/vortex14/gotyphoon/log"
 	"time"
 
 	Gin "github.com/gin-gonic/gin"
@@ -12,22 +13,19 @@ import (
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin"
+	GinExtension "github.com/vortex14/gotyphoon/extensions/servers/gin"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/graph"
 	"github.com/vortex14/gotyphoon/extensions/servers/gin/controllers/ping"
 	GinMiddlewares "github.com/vortex14/gotyphoon/extensions/servers/gin/middlewares"
 	"github.com/vortex14/gotyphoon/integrations/mongo"
 	"github.com/vortex14/gotyphoon/interfaces"
 	"github.com/vortex14/gotyphoon/interfaces/server"
-	"github.com/vortex14/gotyphoon/log"
-
-	GinExtension "github.com/vortex14/gotyphoon/extensions/servers/gin"
 	Mongo "go.mongodb.org/mongo-driver/mongo"
 )
 
 const (
 	TRACKER = "tracker"
 )
-
 
 type Track struct {
 	Event        string      `json:"event" binding:"required"`
@@ -57,7 +55,7 @@ type AgentMetric struct {
 	LOG          interfaces.LoggerInterface
 }
 
-func (m *AgentMetric) Run()  {
+func (m *AgentMetric) Run() {
 	m.Construct(func() {
 		m.LOG = log.New(log.D{"agent": "metric", "created_at": time.Now().String()})
 		m.LOG.Info("init !")
@@ -75,7 +73,7 @@ func (m *AgentMetric) Run()  {
 	})
 }
 
-func (m *AgentMetric) createServer()  {
+func (m *AgentMetric) createServer() {
 	m.server = gin.ConstructorCreateBaseLocalhostServer(m.ServerName, m.ServerDescription, m.ServerPort)
 	m.server.
 		Init().
@@ -112,7 +110,7 @@ func (m *AgentMetric) createServer()  {
 								return
 							}
 
-							filter :=  m.mongoService.GetFilterOptions("event", track.Event)
+							filter := m.mongoService.GetFilterOptions("event", track.Event)
 							update := m.mongoService.GetIncOptions(bson.D{{"count", 1}})
 
 							now := time.Now()
@@ -131,10 +129,10 @@ func (m *AgentMetric) createServer()  {
 								"request":    track,
 								"updated_at": now.UTC(),
 								"stats": Gin.H{
-									"new_id": doc.UpsertedID,
+									"new_id":   doc.UpsertedID,
 									"modified": doc.ModifiedCount,
 									"upserted": doc.UpsertedCount,
-									"matched": doc.MatchedCount,
+									"matched":  doc.MatchedCount,
 								},
 							})
 						},

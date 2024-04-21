@@ -2,10 +2,12 @@ package forms
 
 import (
 	Context "context"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
+	"github.com/vortex14/gotyphoon/log"
 	"golang.org/x/sync/semaphore"
 	"sync"
 
@@ -15,8 +17,6 @@ import (
 	//	graphvizExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	//*/
 	"github.com/vortex14/gotyphoon/interfaces"
-
-	"github.com/vortex14/gotyphoon/log"
 )
 
 //const name =
@@ -76,8 +76,8 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 	var mainContext Context.Context
 
 	mainContext = context
-
-	mainContext = log.PatchCtx(mainContext, log.D{"group": g.GetName(), "call_id": uuid.New().String()})
+	logState := log.D{"group": g.GetName(), "call_id": uuid.New().String()}
+	mainContext = log.PatchCtx(mainContext, logState)
 
 	semStatus := g.initSemaphore()
 	g.initCtx()
@@ -91,8 +91,8 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 		if failedFlow || forceSkip {
 			break
 		}
-
-		mainContext = log.PatchCtx(mainContext, log.D{"pipeline": pipeline.GetName()})
+		logState["pipeline"] = pipeline.GetName()
+		mainContext = log.PatchCtx(mainContext, logState)
 
 		_, logger := log.Get(mainContext)
 
@@ -105,10 +105,10 @@ func (g *PipelineGroup) Run(context Context.Context) error {
 		}
 
 		pipeline.Run(mainContext, func(canceledCtx Context.Context, p interfaces.BasePipelineInterface, err error) {
-			switch err {
-			case Errors.ForceSkipPipelines:
+			switch {
+			case errors.Is(err, Errors.ForceSkipPipelines):
 				forceSkip = true
-				logger.Warning(Errors.ForceSkipPipelines.Error())
+				logger.Warn(Errors.ForceSkipPipelines.Error())
 			default:
 				errStack = err
 				logger.Error(fmt.Sprintf("Pipeline name: %s ; Exit from group. Error: %s", p.GetName(), err.Error()))

@@ -12,7 +12,7 @@ import (
 	"github.com/vortex14/gotyphoon/log"
 )
 
-func init()  {
+func init() {
 	log.InitD()
 }
 
@@ -20,12 +20,12 @@ type Capturer struct {
 	singleton.Singleton
 	awaitabler.Object
 
-	Count int
-	Active bool
-	Quality int
-	Delay float32
+	Count        int
+	Active       bool
+	Quality      int
+	Delay        float32
 	IsFullScreen bool
-	Output chan []byte
+	Output       chan []byte
 
 	LOG interfaces.LoggerInterface
 }
@@ -48,7 +48,9 @@ func (c *Capturer) Capture() *Capturer {
 			defer close(c.Output)
 			c.LOG.Debug("start ")
 			for {
-				if !c.Active { return }
+				if !c.Active {
+					return
+				}
 				n := screenshot.NumActiveDisplays()
 				for i := 0; i < n; i++ {
 					for {
@@ -69,14 +71,13 @@ func (c *Capturer) Capture() *Capturer {
 
 						time.Sleep(time.Duration(c.Delay) * time.Second)
 
-						c.Count ++
+						c.Count++
 					}
 
 				}
 			}
 
 		}()
-
 
 	})
 

@@ -1,6 +1,6 @@
 module github.com/vortex14/gotyphoon
 
-go 1.19
+go 1.21
 
 require (
 	github.com/Bose/go-gin-logrus v1.0.3
@@ -68,6 +68,7 @@ require (
 	github.com/vortex14/2captcha-go v1.0.1
 	github.com/xanzy/go-gitlab v0.90.0
 	go.mongodb.org/mongo-driver v1.12.1
+	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.12.0
 	golang.org/x/net v0.14.0
 	golang.org/x/sync v0.3.0
@@ -188,6 +189,7 @@ require (
 	github.com/ysmood/gson v0.7.3 // indirect
 	github.com/ysmood/leakless v0.8.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/multierr v1.7.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/image v0.6.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect

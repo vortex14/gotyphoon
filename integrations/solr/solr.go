@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/vortex14/gotyphoon/integrations/docker"
+	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"
 	"strings"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 )
 
 type Document = SolrSF9V.M

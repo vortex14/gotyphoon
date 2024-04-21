@@ -3,6 +3,7 @@ package net_http
 import (
 	"context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/log"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -17,7 +18,6 @@ import (
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/extensions/models"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"
 )
 

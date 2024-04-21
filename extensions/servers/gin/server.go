@@ -3,6 +3,7 @@ package gin
 import (
 	"context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/log"
 	"time"
 
 	ginlogrus "github.com/Bose/go-gin-logrus"
@@ -19,7 +20,6 @@ import (
 	"github.com/vortex14/gotyphoon/elements/forms"
 	Errors "github.com/vortex14/gotyphoon/errors"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 	"github.com/vortex14/gotyphoon/utils"
 )
 

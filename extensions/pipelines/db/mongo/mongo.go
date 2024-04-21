@@ -3,6 +3,7 @@ package mongo
 import (
 	Context "context"
 	"fmt"
+	"github.com/vortex14/gotyphoon/log"
 	"sync"
 
 	M "go.mongodb.org/mongo-driver/mongo"
@@ -13,7 +14,6 @@ import (
 	"github.com/vortex14/gotyphoon/extensions/pipelines"
 	"github.com/vortex14/gotyphoon/integrations/mongo"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 )
 
 type Pipeline struct {

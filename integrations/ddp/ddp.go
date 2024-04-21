@@ -2,11 +2,10 @@ package ddp
 
 import (
 	"github.com/gopackage/ddp"
-	"github.com/vortex14/gotyphoon/log"
-
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	"github.com/vortex14/gotyphoon/interfaces"
+	"github.com/vortex14/gotyphoon/log"
 )
 
 type Collection struct {
@@ -14,17 +13,15 @@ type Collection struct {
 	Fn func(collection, operation, id string, doc ddp.Update)
 }
 
-
 type DDP struct {
 	singleton.Singleton
 
 	client       *ddp.Client
-	EndpointWS   string  // ws://localhost:3000/websocket
-	EndpointHTTP string  // http://localhost/
+	EndpointWS   string // ws://localhost:3000/websocket
+	EndpointHTTP string // http://localhost/
 	LOG          interfaces.LoggerInterface
 
-	Collections  []*Collection
-
+	Collections []*Collection
 }
 
 func (d *DDP) init() {
@@ -35,21 +32,20 @@ func (d *DDP) init() {
 
 		err := d.client.Connect()
 		if err != nil {
-			d.LOG.Error(">>>>",err.Error())
+			d.LOG.Error(">>>>", err.Error())
 			d.client = nil
 			return
 		}
 	})
 }
 
-func (d *DDP) Connect()  {
+func (d *DDP) Connect() {
 	if d.init(); d.client != nil {
 		d.LOG.Debug("connected !")
 	}
 
-
 }
 
-func (d *DDP) Close()  {
+func (d *DDP) Close() {
 	d.client.Close()
 }

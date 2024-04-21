@@ -1,12 +1,12 @@
 package watcher
 
 import (
+	"github.com/vortex14/gotyphoon/log"
 	"time"
 
 	lessWatcher "github.com/radovskyb/watcher"
 	"github.com/vortex14/gotyphoon/elements/models/watcher"
 	"github.com/vortex14/gotyphoon/interfaces"
-	"github.com/vortex14/gotyphoon/log"
 )
 
 type EventFSLess struct {

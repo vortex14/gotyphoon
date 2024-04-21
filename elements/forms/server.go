@@ -3,10 +3,11 @@ package forms
 import (
 	"context"
 	"fmt"
-
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/vortex14/gotyphoon/elements/models/singleton"
 	"github.com/vortex14/gotyphoon/integrations/swagger"
+	"go.uber.org/zap"
+
 	// /* ignore for building amd64-linux
 	//	ghvzExt "github.com/vortex14/gotyphoon/extensions/models/graphviz"
 	// */
@@ -16,8 +17,6 @@ import (
 	"sync"
 
 	"github.com/fatih/color"
-	"github.com/sirupsen/logrus"
-
 	"github.com/vortex14/gotyphoon/ctx"
 	"github.com/vortex14/gotyphoon/elements/models/label"
 	Errors "github.com/vortex14/gotyphoon/errors"
@@ -60,7 +59,7 @@ type TyphoonServer struct {
 
 	Level string
 
-	LOG         *logrus.Entry
+	LOG         *zap.Logger
 	logInstance sync.Once
 	Logger      *log.TyphoonLogger
 
@@ -126,7 +125,7 @@ func (s *TyphoonServer) RunServer(port int) error {
 }
 
 func (s *TyphoonServer) Init() interfaces.ServerInterface {
-	s.LOG.Error("Init() ", Errors.ServerMethodNotImplemented.Error())
+	s.LOG.Error("Init() ", zap.Error(Errors.ServerMethodNotImplemented))
 	return s
 }
 
@@ -147,7 +146,7 @@ func (s *TyphoonServer) InitTracer() interfaces.ServerInterface {
 }
 
 func (s *TyphoonServer) InitLogger() interfaces.ServerInterface {
-	s.LOG = log.New(log.D{"server": s.Name})
+	s.LOG = log.New(log.DebugLevel, log.D{"server": s.Name})
 	s.logInstance.Do(func() {
 		if s.LoggerOptions == nil {
 			return
@@ -311,7 +310,7 @@ func (s *TyphoonServer) RunMiddlewareStack(
 
 					return
 				} else {
-					middlewareLogger.Warning(err.Error())
+					middlewareLogger.Warn(err.Error())
 				}
 			}, func(context context.Context) {
 				requestContext = context
@@ -329,7 +328,7 @@ func (s *TyphoonServer) initActions(resource interfaces.ResourceInterface) {
 	for _, action := range resource.GetActions() {
 
 		if len(action.GetMethods()) == 0 {
-			s.LOG.Warning(Errors.ActionMethodsNotFound.Error())
+			s.LOG.Warn(Errors.ActionMethodsNotFound.Error())
 			continue
 		}
 
@@ -391,7 +390,9 @@ func (s *TyphoonServer) buildSubResources(parentPath string, newResource interfa
 				resourcePath = fmt.Sprintf("/%s", resourceName)
 			}
 
-			s.LOG.Debug("init subresource ", resourcePath, newResource.GetName(), newResource)
+			s.LOG.Debug("init subresource ",
+				zap.String("resourcePath", resourcePath),
+				zap.String("name", newResource.GetName()))
 
 			subResource.SetLogger(s.LOG)
 
@@ -413,7 +414,7 @@ func (s *TyphoonServer) buildSubActions(parentPath string, newResource interface
 		for name, action := range newResource.GetActions() {
 			for _, method := range action.GetMethods() {
 				handlerPath := fmt.Sprintf("%s/%s", parentPath, name)
-				s.LOG.Debug("init sub action ", handlerPath)
+				s.LOG.Debug("init sub action ", zap.String("handlerPath", handlerPath))
 				s.AddSwaggerOperation(newResource, action, method, handlerPath)
 				action.SetHandlerPath(handlerPath)
 				if s.OnBuildSubAction != nil {

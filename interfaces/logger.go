@@ -1,6 +1,6 @@
 package interfaces
 
-import "github.com/sirupsen/logrus"
+import "go.uber.org/zap"
 
 const (
 	DEBUG   = "DEBUG"
@@ -10,19 +10,9 @@ const (
 )
 
 type LoggerInterface interface {
-	Debug(args ...interface{})
-	Info(args ...interface{})
-	Warning(args ...interface{})
-	Error(args ...interface{})
-
-	Debugf(format string, args ...interface{})
-	Infof(format string, args ...interface{})
-	Printf(format string, args ...interface{})
-	Warnf(format string, args ...interface{})
-	Warningf(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
-	Fatalf(format string, args ...interface{})
-	Panicf(format string, args ...interface{})
-
-	WithFields(fields logrus.Fields) *logrus.Entry
+	Debug(msg string, fields ...zap.Field)
+	Info(msg string, fields ...zap.Field)
+	Warn(msg string, fields ...zap.Field)
+	Error(msg string, fields ...zap.Field)
+	With(fields ...zap.Field) *zap.Logger
 }
